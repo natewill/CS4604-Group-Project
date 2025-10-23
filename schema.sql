@@ -6,6 +6,8 @@ CREATE DATABASE cache_me_if_you_can_db;
 USE cache_me_if_you_can_db;
 
 -- Create the tables with their attributes
+
+-- Runners, Status & Routes have no foreign keys, so we can create them first
 CREATE TABLE Runners (
     Runner_ID       INT AUTO_INCREMENT PRIMARY KEY,
     First_Name      VARCHAR(100),
@@ -17,6 +19,27 @@ CREATE TABLE Runners (
     Distance_Preference VARCHAR(100)
 );
 
+CREATE TABLE Status (
+    Status_ID           INT PRIMARY KEY,
+    Status_Description  VARCHAR(100)
+);
+
+CREATE TABLE Routes (
+    Route_ID            INT AUTO_INCREMENT PRIMARY KEY,
+    Distance            DECIMAL(6,2)
+);
+
+-- Here is where dependencies start, so we have to create Routes before Route_Points
+CREATE TABLE Route_Points (
+    Route_Point_ID  INT AUTO_INCREMENT PRIMARY KEY,
+    Route_ID        INT NOT NULL,
+    Latitude        DECIMAL(9,6),
+    Longitude       DECIMAL(9,6),
+    Route_Index     INT,
+    FOREIGN KEY (Route_ID) REFERENCES Routes(Route_ID)
+);
+
+-- Now we can create Runs and Run_Participation since all their foreign keys exist
 CREATE TABLE Runs (
     Run_ID          INT AUTO_INCREMENT PRIMARY KEY,
     Leader_ID       INT NOT NULL,
@@ -27,8 +50,8 @@ CREATE TABLE Runs (
     Pace            VARCHAR(20),
     Date            DATE,
     Start_Time      TIME,
-    FOREIGN KEY (Leader_ID) REFERENCES Runner(Runner_ID),
-    FOREIGN KEY (Run_Route) REFERENCES Route(Route_ID),
+    FOREIGN KEY (Leader_ID) REFERENCES Runners(Runner_ID),
+    FOREIGN KEY (Run_Route) REFERENCES Routes(Route_ID),
     FOREIGN KEY (Run_Status_ID) REFERENCES Status(Status_ID)
 );
 
@@ -36,31 +59,8 @@ CREATE TABLE Run_Participation (
     Participation_Runner_ID INT NOT NULL,
     Participation_Run_ID    INT NOT NULL,
     PRIMARY KEY (Participation_Runner_ID, Participation_Run_ID),
-    FOREIGN KEY (Participation_Runner_ID) REFERENCES Runner(Runner_ID),
-    FOREIGN KEY (Participation_Run_ID) REFERENCES Run(Run_ID)
-);
-
-CREATE TABLE Routes (
-    Route_ID            INT AUTO_INCREMENT PRIMARY KEY,
-    Start_Route_Point   INT NOT NULL,
-    End_Route_Point     INT NOT NULL,
-    Distance            DECIMAL(6,2),
-    FOREIGN KEY (Start_Route_Point) REFERENCES Route_Points(Route_Point_ID),
-    FOREIGN KEY (End_Route_Point) REFERENCES Route_Points(Route_Point_ID)
-);
-
-CREATE TABLE Route_Points (
-    Route_Point_ID  INT AUTO_INCREMENT PRIMARY KEY,
-    Route_ID        INT NOT NULL,
-    Latitude        DECIMAL(9,6),
-    Longitude       DECIMAL(9,6),
-    Route_Index     INT
-    FOREIGN KEY (Route_ID) REFERENCES ROUTE(ROUTE_ID)
-);
-
-CREATE TABLE Status (
-    Status_ID           INT PRIMARY KEY,
-    Status_Description  VARCHAR(100)
+    FOREIGN KEY (Participation_Runner_ID) REFERENCES Runners(Runner_ID),
+    FOREIGN KEY (Participation_Run_ID) REFERENCES Runs(Run_ID)
 );
 
 -- Now lets populate some data into our tables
@@ -91,38 +91,24 @@ VALUES
 (20, 'Alexander', 'V', 'King', 'alex.king@vt.edu', 1, '7-8', '5-20'),
 (21, 'Nate', 'D', 'Williams', 'natewilliams@vt.edu', 1, '11-12', '2-3');
 
--- Runs
-INSERT INTO Runs (Run_ID, Leader_ID, Run_Route, Run_Status_ID, Name, Description, Pace, Date, Start_Time)
+-- Status
+INSERT INTO Status (Status_ID, Status_Description)
 VALUES
-(1, 1, 1, 1, 'Morning Easy Run Loop', 'A relaxed run to start the day', '09:00', '2026-01-01', '06:30:00'),
-(2, 1, 2, 1, 'Interval Training', 'High-intensity intervals for speed', '07:00', '2025-12-02', '18:00:00'),
-(3, 1, 3, 2, 'Long Distance Run', 'Endurance building long run', '08:15', '2024-07-03', '07:00:00'),
-(4, 21, 4, 1, 'First Run in Weeks', 'Slow tempo run on Huckle Berry', '11:00', '2025-10-25', '07:15:00'),
-(5, 8, 5, 2, 'Endurance Run', 'Climbing hills on a trail', '08:30', '2025-09-07', '08:00:00'),
-(6, 12, 6, 4, 'Rain Run', 'Short run, so wet, wow such a wet run', '09:15', '2025-10-20', '18:30:00'),
-(7, 21, 7, 3, 'Sprint Run', 'Sprinted to class.', '07:45', '2025-10-20', '13:00:00');
-
--- Run Participation
-INSERT INTO Run_Participation (Participation_Runner_ID, Participation_Run_ID)
-VALUES
-(1, 1), (2, 1), (3, 1), (4, 1),
-(1, 2), (5, 2), (6, 2),
-(1, 3), (8, 3), (9, 3),
-(21, 4), (20, 4),
-(8, 5), (11, 5), (12, 5),
-(12, 6),
-(21, 7);
+(1, 'Scheduled'),
+(2, 'Completed'),
+(3, 'Cancelled'),
+(4, 'In Progress');
 
 -- Routes
-INSERT INTO Routes (Route_ID, Start_Route_Point, End_Route_Point, Distance)
+INSERT INTO Routes (Route_ID, Distance)
 VALUES
-(1, 1, 6, 5.0),
-(2, 7, 10, 2.6),
-(3, 11, 22, 4.6),
-(4, 23, 36, 0.3),
-(5, 37, 46, 2.1),
-(6, 47, 59, 3.4),
-(7, 60, 69, 1.3);
+(1, 5.0),
+(2, 2.6),
+(3, 4.6),
+(4, 0.3),
+(5, 2.1),
+(6, 3.4),
+(7, 1.3);
 
 -- Route Points
 INSERT INTO Route_Points (Route_Point_ID, Route_ID, Latitude, Longitude, Route_Index)
@@ -203,11 +189,24 @@ VALUES
 (68, 7, 37.228400, -80.422180, 8),
 (69, 7, 37.228640, -80.422180, 9);
 
-
--- Status
-INSERT INTO Status (Status_ID, Status_Description)
+-- Runs
+INSERT INTO Runs (Run_ID, Leader_ID, Run_Route, Run_Status_ID, Name, Description, Pace, Date, Start_Time)
 VALUES
-(1, 'Scheduled'),
-(2, 'Completed'),
-(3, 'Cancelled'),
-(4, 'In Progress');
+(1, 1, 1, 1, 'Morning Easy Run Loop', 'A relaxed run to start the day', '09:00', '2026-01-01', '06:30:00'),
+(2, 1, 2, 1, 'Interval Training', 'High-intensity intervals for speed', '07:00', '2025-12-02', '18:00:00'),
+(3, 1, 3, 2, 'Long Distance Run', 'Endurance building long run', '08:15', '2024-07-03', '07:00:00'),
+(4, 21, 4, 1, 'First Run in Weeks', 'Slow tempo run on Huckle Berry', '11:00', '2025-10-25', '07:15:00'),
+(5, 8, 5, 2, 'Endurance Run', 'Climbing hills on a trail', '08:30', '2025-09-07', '08:00:00'),
+(6, 12, 6, 4, 'Rain Run', 'Short run, so wet, wow such a wet run', '09:15', '2025-10-20', '18:30:00'),
+(7, 21, 7, 3, 'Sprint Run', 'Sprinted to class.', '07:45', '2025-10-20', '13:00:00');
+
+-- Run Participation
+INSERT INTO Run_Participation (Participation_Runner_ID, Participation_Run_ID)
+VALUES
+(1, 1), (2, 1), (3, 1), (4, 1),
+(1, 2), (5, 2), (6, 2),
+(1, 3), (8, 3), (9, 3),
+(21, 4), (20, 4),
+(8, 5), (11, 5), (12, 5),
+(12, 6),
+(21, 7);
