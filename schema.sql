@@ -8,66 +8,66 @@ USE cache_me_if_you_can_db;
 -- Create the tables with their attributes
 
 -- Runners, Status & Routes have no foreign keys, so we can create them first
-CREATE TABLE Runners (
-    Runner_ID       INT AUTO_INCREMENT PRIMARY KEY,
-    First_Name      VARCHAR(100),
-    Middle_Initial  CHAR(1),
-    Last_Name       VARCHAR(100),
-    Email           VARCHAR(100),
-    Is_Leader       BOOLEAN DEFAULT FALSE,
-    Pace_Preference VARCHAR(100),
-    Distance_Preference VARCHAR(100)
+CREATE TABLE runners (
+    runner_id       INT AUTO_INCREMENT PRIMARY KEY,
+    first_name      VARCHAR(100),
+    middle_initial  CHAR(1),
+    last_name       VARCHAR(100),
+    email           VARCHAR(100),
+    is_leader       BOOLEAN DEFAULT FALSE,
+    pace_preference VARCHAR(100),
+    distance_preference VARCHAR(100)
 );
 
-CREATE TABLE Status (
-    Status_ID           INT PRIMARY KEY,
-    Status_Description  VARCHAR(100)
+CREATE TABLE status (
+    status_id           INT PRIMARY KEY,
+    status_description  VARCHAR(100)
 );
 
-CREATE TABLE Routes (
-    Route_ID            INT AUTO_INCREMENT PRIMARY KEY,
-    Distance            DECIMAL(6,2)
+CREATE TABLE routes (
+    route_id            INT AUTO_INCREMENT PRIMARY KEY,
+    distance            DECIMAL(6,2)
 );
 
 -- Here is where dependencies start, so we have to create Routes before Route_Points
-CREATE TABLE Route_Points (
-    Route_Point_ID  INT AUTO_INCREMENT PRIMARY KEY,
-    Route_ID        INT NOT NULL,
-    Latitude        DECIMAL(9,6),
-    Longitude       DECIMAL(9,6),
-    Route_Index     INT,
-    FOREIGN KEY (Route_ID) REFERENCES Routes(Route_ID)
+CREATE TABLE route_points (
+    route_point_id  INT AUTO_INCREMENT PRIMARY KEY,
+    route_id        INT NOT NULL,
+    latitude        DECIMAL(9,6),
+    longitude       DECIMAL(9,6),
+    route_index     INT,
+    FOREIGN KEY (route_id) REFERENCES routes(route_id)
 );
 
 -- Now we can create Runs and Run_Participation since all their foreign keys exist
-CREATE TABLE Runs (
-    Run_ID          INT AUTO_INCREMENT PRIMARY KEY,
-    Leader_ID       INT NOT NULL,
-    Run_Route       INT NOT NULL,
-    Run_Status_ID   INT NOT NULL,
-    Name            VARCHAR(50),
-    Description     VARCHAR(250),
-    Pace            VARCHAR(20),
-    Date            DATE,
-    Start_Time      TIME,
-    FOREIGN KEY (Leader_ID) REFERENCES Runners(Runner_ID),
-    FOREIGN KEY (Run_Route) REFERENCES Routes(Route_ID),
-    FOREIGN KEY (Run_Status_ID) REFERENCES Status(Status_ID)
+CREATE TABLE runs (
+    run_id          INT AUTO_INCREMENT PRIMARY KEY,
+    leader_id       INT NOT NULL,
+    run_route       INT NOT NULL,
+    run_status_id   INT NOT NULL,
+    name            VARCHAR(50),
+    description     VARCHAR(250),
+    pace            VARCHAR(20),
+    date            DATE,
+    start_time      TIME,
+    FOREIGN KEY (leader_id) REFERENCES runners(runner_id),
+    FOREIGN KEY (run_route) REFERENCES routes(route_id),
+    FOREIGN KEY (run_status_id) REFERENCES status(status_id)
 );
 
-CREATE TABLE Run_Participation (
-    Participation_Runner_ID INT NOT NULL,
-    Participation_Run_ID    INT NOT NULL,
-    PRIMARY KEY (Participation_Runner_ID, Participation_Run_ID),
-    FOREIGN KEY (Participation_Runner_ID) REFERENCES Runners(Runner_ID),
-    FOREIGN KEY (Participation_Run_ID) REFERENCES Runs(Run_ID)
+CREATE TABLE run_participation (
+    participation_runner_id INT NOT NULL,
+    participation_run_id    INT NOT NULL,
+    PRIMARY KEY (participation_runner_id, participation_run_id),
+    FOREIGN KEY (participation_runner_id) REFERENCES runners(runner_id),
+    FOREIGN KEY (participation_run_id) REFERENCES runs(run_id)
 );
 
 -- Now lets populate some data into our tables
 
 -- Runners
-INSERT INTO RUNNERS(Runner_ID, First_Name, Middle_Initial, Last_Name, Email, 
-    Is_Leader, Pace_Preference, Distance_Preference)
+INSERT INTO runners(runner_id, first_name, middle_initial, last_name, email, 
+    is_leader, pace_preference, distance_preference)
 VALUES
 (1, 'Jett', 'W', 'Morrow', 'jettmorrow@vt.edu', 1, '8-9', '3-15'),
 (2, 'Adam', 'Z', 'Schantz', 'adams03@vt.edu', 1, '7-9', '3-26'),
@@ -92,7 +92,7 @@ VALUES
 (21, 'Nate', 'D', 'Williams', 'natewilliams@vt.edu', 1, '11-12', '2-3');
 
 -- Status
-INSERT INTO Status (Status_ID, Status_Description)
+INSERT INTO status (status_id, status_description)
 VALUES
 (1, 'Scheduled'),
 (2, 'Completed'),
@@ -100,7 +100,7 @@ VALUES
 (4, 'In Progress');
 
 -- Routes
-INSERT INTO Routes (Route_ID, Distance)
+INSERT INTO routes (route_id, distance)
 VALUES
 (1, 5.0),
 (2, 2.6),
@@ -111,7 +111,7 @@ VALUES
 (7, 1.3);
 
 -- Route Points
-INSERT INTO Route_Points (Route_Point_ID, Route_ID, Latitude, Longitude, Route_Index)
+INSERT INTO route_points (route_point_id, route_id, latitude, longitude, route_index)
 VALUES
 (1, 1, 37.235524, -80.422459, 0),
 (2, 1, 37.229329, -80.413987, 1),
@@ -190,7 +190,7 @@ VALUES
 (69, 7, 37.228640, -80.422180, 9);
 
 -- Runs
-INSERT INTO Runs (Run_ID, Leader_ID, Run_Route, Run_Status_ID, Name, Description, Pace, Date, Start_Time)
+INSERT INTO runs (run_id, leader_id, run_route, run_status_id, name, description, pace, date, start_time)
 VALUES
 (1, 1, 1, 1, 'Morning Easy Run Loop', 'A relaxed run to start the day', '09:00', '2026-01-01', '06:30:00'),
 (2, 1, 2, 1, 'Interval Training', 'High-intensity intervals for speed', '07:00', '2025-12-02', '18:00:00'),
@@ -201,7 +201,7 @@ VALUES
 (7, 21, 7, 3, 'Sprint Run', 'Sprinted to class.', '07:45', '2025-10-20', '13:00:00');
 
 -- Run Participation
-INSERT INTO Run_Participation (Participation_Runner_ID, Participation_Run_ID)
+INSERT INTO run_participation (participation_runner_id, participation_run_id)
 VALUES
 (1, 1), (2, 1), (3, 1), (4, 1),
 (1, 2), (5, 2), (6, 2),
