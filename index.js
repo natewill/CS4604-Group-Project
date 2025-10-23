@@ -33,9 +33,9 @@ db.query("SELECT * FROM route_points", (err, results) => {
   }
 });
 
-// Example route: get all rows from 'mytable'
-app.get("/api/mytable", (req, res) => {
-  db.query("SELECT * FROM route_points", (err, results) => {
+// Example route: get all rows from runners
+app.get("/api/runners", (req, res) => {
+  db.query("SELECT * FROM runners", (err, results) => {
     if (err) {
       console.error(err);
       return res.status(500).json({ error: "Database query failed" });
