@@ -40,21 +40,13 @@ CREATE TABLE Run_Participation (
     FOREIGN KEY (Participation_Run_ID) REFERENCES Run(Run_ID)
 );
 
-CREATE TABLE Locations (
-    Location_ID     INT AUTO_INCREMENT PRIMARY KEY,
-    Street_Addr     VARCHAR(100),
-    City            VARCHAR(100),
-    State           VARCHAR(100),
-    Zip_Code        VARCHAR(10)
-);
-
 CREATE TABLE Routes (
     Route_ID            INT AUTO_INCREMENT PRIMARY KEY,
-    Starting_Location   INT NOT NULL,
-    Ending_Location     INT NOT NULL,
+    Start_Route_Point   INT NOT NULL,
+    End_Route_Point     INT NOT NULL,
     Distance            DECIMAL(6,2),
-    FOREIGN KEY (Starting_Location) REFERENCES Location(Location_ID),
-    FOREIGN KEY (Ending_Location) REFERENCES Location(Location_ID)
+    FOREIGN KEY (Start_Route_Point) REFERENCES Route_Points(Route_Point_ID),
+    FOREIGN KEY (End_Route_Point) REFERENCES Route_Points(Route_Point_ID)
 );
 
 CREATE TABLE Route_Points (
@@ -62,6 +54,7 @@ CREATE TABLE Route_Points (
     Route_ID        INT NOT NULL,
     Latitude        DECIMAL(9,6),
     Longitude       DECIMAL(9,6),
+    Route_Index     INT
     FOREIGN KEY (Route_ID) REFERENCES ROUTE(ROUTE_ID)
 );
 
@@ -100,23 +93,51 @@ VALUES
 -- Runs
 INSERT INTO Runs (Run_ID, Leader_ID, Run_Route, Run_Status_ID, Name, Description, Pace, Date, Start_Time)
 VALUES
+(1, 1, 1, 1, 'Morning Easy Run Loop', 'A relaxed run to start the day', '9', '2026-01-01', '06:30:00'),
+(2, 1, 2, 1, 'Interval Training', 'High-intensity intervals for speed', '7', '2025-12-02', '18:00:00'),
+(3, 1, 3, 2, 'Long Distance Run', 'Endurance building long run', '8', '2024-07-03', '07:00:00'),
 
 -- Run Participation
 INSERT INTO Run_Participation (Participation_Runner_ID, Participation_Run_ID)
 VALUES
-
--- Locations
-INSERT INTO Locations (Location_ID, Street_Addr, City, State, Zip_Code)
-VALUES
-
+(1, 1), (2, 1), (3, 1), (4, 1),
+(1, 2), (5, 2), (6, 2),
+(1, 3), (8, 3), (9, 3),
 
 -- Routes
-INSERT INTO Routes (Route_ID, Starting_Location, Ending_Location, Distance)
+INSERT INTO Routes (Route_ID, Start_Route_Point, End_Route_Point, Distance)
 VALUES
+(1, 1, 6, 5.0),
+(2, 7, 10, 2.6),
+(3, 11, 22, 4.6),
 
 -- Route Points
-INSERT INTO Route_Points (Route_Point_ID, Route_ID, Latitude, Longitude)
+INSERT INTO Route_Points (Route_Point_ID, Route_ID, Latitude, Longitude, Route_Index)
 VALUES
+(1, 1, 37.235524, -80.422459, 0),
+(2, 1, 37.229329, -80.413987, 1),
+(3, 1, 37.217361, -80.419206, 2),
+(4, 1, 37.231532, -80.428855, 3),
+(5, 1, 37.233363, -80.425063, 4),
+(6, 1, 37.235524, -80.422459, 5),
+
+(7, 2, 37.224943, -80.413677, 0),
+(8, 2, 37.217354, -80.419161, 1),
+(9, 2, 37.209545, -80.423656, 2),
+(10, 2, 37.207156, -80.418926, 3),
+
+(11, 2, 37.224943, -80.413677, 0),
+(12, 3, 37.217354, -80.419161, 1),
+(13, 3, 37.209545, -80.423656, 2),
+(14, 3, 37.214996, -80.428814, 3),
+(15, 3, 37.213620, -80.442088, 4)
+(16, 3, 37.214316, -80.442643, 5),
+(17, 3, 37.214154, -80.443026, 6),
+(18, 3, 37.214177, -80.444300, 7),
+(19, 3, 37.216314, -80.449690, 8),
+(20, 3, 37.217063, -80.450893, 9),
+(21, 3, 37.216975, -80.451591, 10)
+(22, 2, 37.216202, -80.451976, 11),
 
 -- Status
 INSERT INTO Status (Status_ID, Status_Description)
