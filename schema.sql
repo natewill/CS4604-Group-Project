@@ -98,9 +98,9 @@ VALUES
 (2, 1, 2, 1, 'Interval Training', 'High-intensity intervals for speed', '7', '2025-12-02', '18:00:00'),
 (3, 1, 3, 2, 'Long Distance Run', 'Endurance building long run', '8', '2024-07-03', '07:00:00'),
 (4, 21, 4, 1, 'First Run in Weeks', 'Slow tempo run on Huckle Berry', '11', '2025-10-25', '07:15:00'),
-(5, 8, 5, 2, 'Endurance Run', 'Climbing hills on a trail', '8:15', '2025-09-07', '08:00:00'),
-(6, 12, 6, 4, 'Rain Run', 'Short run, so wet, wow such a wet run', '9:00', '2025-10-20', '18:30:00'),
-(7, 21, 7, 3, 'Sprint Run', 'Sprinted to class.', '7:00', '2025-10-20', '13:00:00');
+(5, 8, 5, 2, 'Endurance Run', 'Climbing hills on a trail', '8', '2025-09-07', '08:00:00'),
+(6, 12, 6, 4, 'Rain Run', 'Short run, so wet, wow such a wet run', '9', '2025-10-20', '18:30:00'),
+(7, 21, 7, 3, 'Sprint Run', 'Sprinted to class.', '7', '2025-10-20', '13:00:00');
 
 -- Run Participation
 INSERT INTO Run_Participation (Participation_Runner_ID, Participation_Run_ID)
