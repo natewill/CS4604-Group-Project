@@ -11,7 +11,7 @@ app.use(express.json()); // allows us to parse JSON bodies
 const db = mysql2.createConnection({
   host: "localhost", // MySQL server
   user: "root", // MySQL username
-  password: "St33lers", // MySQL password
+  password: "natewill", // MySQL password
   database: "cache_me_if_you_can_db", // This specifies which database to use
 });
 
