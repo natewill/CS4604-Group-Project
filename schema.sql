@@ -69,8 +69,8 @@ CREATE TABLE Status (
 INSERT INTO RUNNERS(Runner_ID, First_Name, Middle_Initial, Last_Name, Email, 
     Is_Leader, Pace_Preference, Distance_Preference)
 VALUES
-(1, 'Jett', 'W', 'Morrow', 'jettmorrow@vt.edu', 1, '8-9 min/mile', '3-15 miles'),
-(2, 'Adam', 'Z', 'Schantz', 'adams03@vt.edu', 1, '7-9 min/mile', '3-26 miles'),
+(1, 'Jett', 'W', 'Morrow', 'jettmorrow@vt.edu', 1, '8-9', '3-15'),
+(2, 'Adam', 'Z', 'Schantz', 'adams03@vt.edu', 1, '7-9', '3-26'),
 (3, 'Emily', 'R', 'Nguyen', 'emily.nguyen@vt.edu', 0, '9-10', '2-6'),
 (4, 'Liam', 'T', 'Chen', 'liam.chen@vt.edu', 0, '6-7', '5-20'),
 (5, 'Sofia', 'M', 'Patel', 'sofia.patel@vt.edu', 1, '7-8', '4-13'),
@@ -89,18 +89,18 @@ VALUES
 (18, 'Henry', 'G', 'Young', 'henry.young@vt.edu', 1, '6-7', '10-26'),
 (19, 'Harper', 'Q', 'Allen', 'harper.allen@vt.edu', 0, '8-9', '3-10'),
 (20, 'Alexander', 'V', 'King', 'alex.king@vt.edu', 1, '7-8', '5-20'),
-(21, 'Nate', 'D', 'Williams', 'natewilliams@vt.edu', 1, '11-12', '2-3 miles');
+(21, 'Nate', 'D', 'Williams', 'natewilliams@vt.edu', 1, '11-12', '2-3');
 
 -- Runs
 INSERT INTO Runs (Run_ID, Leader_ID, Run_Route, Run_Status_ID, Name, Description, Pace, Date, Start_Time)
 VALUES
-(1, 1, 1, 1, 'Morning Easy Run Loop', 'A relaxed run to start the day', '9', '2026-01-01', '06:30:00'),
-(2, 1, 2, 1, 'Interval Training', 'High-intensity intervals for speed', '7', '2025-12-02', '18:00:00'),
-(3, 1, 3, 2, 'Long Distance Run', 'Endurance building long run', '8', '2024-07-03', '07:00:00'),
-(4, 21, 4, 1, 'First Run in Weeks', 'Slow tempo run on Huckle Berry', '11', '2025-10-25', '07:15:00'),
-(5, 8, 5, 2, 'Endurance Run', 'Climbing hills on a trail', '8', '2025-09-07', '08:00:00'),
-(6, 12, 6, 4, 'Rain Run', 'Short run, so wet, wow such a wet run', '9', '2025-10-20', '18:30:00'),
-(7, 21, 7, 3, 'Sprint Run', 'Sprinted to class.', '7', '2025-10-20', '13:00:00');
+(1, 1, 1, 1, 'Morning Easy Run Loop', 'A relaxed run to start the day', '09:00', '2026-01-01', '06:30:00'),
+(2, 1, 2, 1, 'Interval Training', 'High-intensity intervals for speed', '07:00', '2025-12-02', '18:00:00'),
+(3, 1, 3, 2, 'Long Distance Run', 'Endurance building long run', '08:15', '2024-07-03', '07:00:00'),
+(4, 21, 4, 1, 'First Run in Weeks', 'Slow tempo run on Huckle Berry', '11:00', '2025-10-25', '07:15:00'),
+(5, 8, 5, 2, 'Endurance Run', 'Climbing hills on a trail', '08:30', '2025-09-07', '08:00:00'),
+(6, 12, 6, 4, 'Rain Run', 'Short run, so wet, wow such a wet run', '09:15', '2025-10-20', '18:30:00'),
+(7, 21, 7, 3, 'Sprint Run', 'Sprinted to class.', '07:45', '2025-10-20', '13:00:00');
 
 -- Run Participation
 INSERT INTO Run_Participation (Participation_Runner_ID, Participation_Run_ID)
