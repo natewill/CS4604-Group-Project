@@ -44,7 +44,43 @@ app.get("/api/runners", (req, res) => {
   });
 });
 
-const PORT = 5000;
+//get a summary of the database
+app.get("/api/summary", (req, res) => { //make a summary endpoint to display important parts of database
+  db.query("SELECT DATABASE() AS name", (err, dbResult) => { //select name of database
+    if (err) {
+      console.error(err);
+      return res.status(500).json({ error: "Database query failed (name)" });
+    }
+    const dbName = dbResult[0].name;
+
+    db.query("SELECT COUNT(*) AS count FROM runners", (err, runnersResult) => { //select number of rows in 'runners'
+      if (err) {
+        console.error(err);
+        return res.status(500).json({ error: "Database query failed (runners)" });
+      }
+      const runnersCount = runnersResult[0].count;
+
+      db.query("SELECT COUNT(*) AS count FROM runs", (err, runsResult) => { //select number of rows in 'runs'
+        if (err) {
+          console.error(err);
+          return res.status(500).json({ error: "Database query failed (runs)" });
+        }
+        const runsCount = runsResult[0].count;
+
+        // final response once all three are done in a json format
+        res.json({ 
+          dbName,
+          runnersCount,
+          runsCount,
+        });
+      });
+    });
+  });
+});
+
+app.use(express.static('public')); //display the home page
+
+const PORT = 5050; 
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });
