@@ -65,7 +65,7 @@ CREATE TABLE run_participation (
 );
 
 -- Now lets populate some data into our tables
-
+-- Salt: running1
 -- Runners
 INSERT INTO runners(runner_id, first_name, middle_initial, last_name, email, user_password,
    is_leader, pace_preference, distance_preference)
