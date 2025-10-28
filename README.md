@@ -4,11 +4,13 @@ Cache Me If You Can Group Project:
 
 - In the server directory create a .env file with these fields and values
   specific to your local machine
+  ```
   DB_HOST=localhost
   DB_USER=root
   DB_PASS={REPLACE_ME}
   DB_NAME=cache_me_if_you_can_db
   PORT=5050
+  ```
 
 Server
 
