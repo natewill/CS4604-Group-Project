@@ -70,7 +70,7 @@ async function login(email, plain_pw){
 }
 
 //params
-//- runner_data
+//runner_data -
 /*
 {
     first_name: string,
@@ -85,17 +85,8 @@ async function login(email, plain_pw){
     max_dist_pref, int
 }
 */
-// - plain_pw - unhashed plain pw as string
+//plain_pw - unhashed plain pw as string -
 async function signup(runner_data, plain_pw){
-  //check if email in database already
-  //with the getPwandID function before running this function
-  //then run this function
-  //check if email already in database in this function just incase, return -1
-  //else
-  //hash password
-  //insert into database
-  //return runner id if everything works out
-
   var emailInDb = await getPwAndIdFromEmail(runner_data.email);
 
   if(emailInDb){
