@@ -57,12 +57,12 @@ function getPwAndIdFromEmail(email) {
 //email - email of user as a string
 //plain_pw - non hashed password as a string
 async function login(email, plain_pw){ 
-  const runnerInDb = await getPwAndIdFromEmail(email);
+  const runnerInDb = await getPwAndIdFromEmail(email.trim().toLowerCase());
   if(!runnerInDb){
     return -1 //-1 means email not in database
   } 
 
-  if(verifyPassword(runnerInDb.user_password, plain_pw)){
+  if(await verifyPassword(runnerInDb.user_password, plain_pw)){
     return runnerInDb.runner_id
   } else {
     return -2 // -2 means email in database but wrong password
@@ -87,17 +87,32 @@ async function login(email, plain_pw){
 */
 //plain_pw - unhashed plain pw as string -
 async function signup(runner_data, plain_pw){
-  var emailInDb = await getPwAndIdFromEmail(runner_data.email);
+
+  runner_data.email = runner_data.email.trim().toLowerCase();
+
+  var emailInDb = await getPwAndIdFromEmail(runner_data.email)
 
   if(emailInDb){
     return -1
   } 
 
-  runner_data.user_password = await hashPassword(plain_pw)
+  // only pass columns that actually exist in the table
+  const row = {
+    first_name: runner_data.first_name ?? null,
+    last_name: runner_data.last_name ?? null,
+    middle_initial: runner_data.middle_initial ?? null,
+    email: normEmail,
+    user_password: await hashPassword(plain_pw),
+    is_leader: !!runner_data.is_leader,        
+    min_pace: runner_data.min_pace ?? null,
+    max_pace: runner_data.max_pace ?? null,
+    min_dist_pref: runner_data.min_dist_pref ?? null,
+    max_dist_pref: runner_data.max_dist_pref ?? null,
+  };
 
   return new Promise((resolve, reject) => {
     db.query(
-      "INSERT INTO runners SET ?", runner_data, (err, result) => {
+      "INSERT INTO runners SET ?", row, (err, result) => {
         if (err) return reject(err)
         resolve(result.insertId);
       }
