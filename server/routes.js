@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const db = require("./connection");
+const { signup, signin, getPwAndIdFromEmail } = require("./accounts");
 
 // GET all runners
 router.get("/api/runners", (req, res) => {
@@ -33,5 +34,59 @@ router.get("/api/summary", (req, res) => {
     });
   });
 });
+
+router.post("/signup/check", async (req, res) => {
+  const email = String(req.body.email || "").trim().toLowerCase();
+  if (!email) return res.status(400).json({ error: "email required" });
+
+  if(await getPwAndIdFromEmail(email)){
+
+  }
+
+
+});
+
+router.post("/signup", async (req, res) => {
+  try {
+    // req.body comes from your React signup form
+    const {
+      first_name,
+      last_name,
+      middle_initial,
+      email,
+      is_leader,
+      min_pace,
+      max_pace,
+      min_dist_pref,
+      max_dist_pref,
+      password,
+    } = req.body;
+
+    // build runner_data dict
+    const runner_data = {
+      first_name,
+      last_name,
+      middle_initial,
+      email,
+      user_password: null,   // gets filled in signup()
+      is_leader: !!is_leader,
+      min_pace,
+      max_pace,
+      min_dist_pref,
+      max_dist_pref,
+    };
+
+    const result = await signup(runner_data, password);
+
+    if (result === -1) {
+      return res.status(409).json({ error: "email already exists" });
+    }
+
+    return res.status(201).json({ runner_id: result, email });
+  } catch (err) {
+    console.error("signup error:", err);
+    res.status(500).json({ error: "server error" });
+  }
+})
 
 module.exports = router;

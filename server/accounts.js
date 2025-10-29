@@ -101,7 +101,7 @@ async function signup(runner_data, plain_pw){
     first_name: runner_data.first_name ?? null,
     last_name: runner_data.last_name ?? null,
     middle_initial: runner_data.middle_initial ?? null,
-    email: normEmail,
+    email: runner_data.email,
     user_password: await hashPassword(plain_pw),
     is_leader: !!runner_data.is_leader,        
     min_pace: runner_data.min_pace ?? null,
@@ -121,6 +121,7 @@ async function signup(runner_data, plain_pw){
 }
 
 
+module.exports = { signup, signin: login, login, getPwAndIdFromEmail, hashPassword, verifyPassword };
 
 
 //test
