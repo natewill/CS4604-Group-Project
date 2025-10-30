@@ -1,8 +1,8 @@
 // client/src/App.js
 import React, { useState, useEffect } from "react";
 import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
-import Signup from "./signup";
-import Signin from "./signin";
+import Signup from "./pages/signup";
+import Signin from "./pages/signin";
 
 function Summary({ runners, summary }) {
   return (
