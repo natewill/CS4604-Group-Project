@@ -33,14 +33,6 @@ export default function Signin() {
 
         console.log(data);
         alert(`signed in as runner with id ${data}`);
-        // reset or navigate
-    }
-
-    async function handleSubmit(event) {
-        event.preventDefault();
-        setErr("");
-
-        const payload = { email, password };
     }
 
   return (
