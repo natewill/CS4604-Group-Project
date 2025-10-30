@@ -1,0 +1,52 @@
+import { useState } from "react";
+
+
+export default function Signin() {
+
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+    const [err, setErr] = useState("");
+
+    async function signin(e) {
+        e.preventDefault();
+        setErr("");
+
+        const payload = { email, password };
+        const r = await fetch("/signin", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+        });
+
+        const data = await r.json();
+        if (r.status === 401) {
+            return setErr(data.error);
+        }
+        if (!r.ok) {
+            return setErr("signin failed!");
+        }
+
+        console.log(data);
+        alert(`signed in as runner with id ${data}`);
+        // reset or navigate
+    }
+
+    async function handleSubmit(e) {
+        e.preventDefault();
+        setErr("");
+
+        const payload = { email, password };
+    }
+
+  return (
+    <div>
+      <h1>Sign in</h1>
+      <form onSubmit={signin} style={{ display: "grid", gap: 8 }}>
+        <input placeholder="email" value={email} onChange={e=>setEmail(e.target.value)} />
+        <input placeholder="password" type="password" value={password} onChange={e=>setPassword(e.target.value)} />
+        <button type="submit">Sign in</button>
+      </form>
+      {err && <div style={{ color: "crimson" }}>{err}</div>}
+    </div>
+  );
+}

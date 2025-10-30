@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
 import Signup from "./signup";
+import Signin from "./signin";
 
 function Summary({ runners, summary }) {
   return (
@@ -44,6 +45,7 @@ function App() {
     <Routes>
         <Route path="/summary" element={<Summary runners={runners} summary={summary} />} />
         <Route path="/signup" element={<Signup />} />
+        <Route path="/signin" element={<Signin />} />
     </Routes>
   );
 }

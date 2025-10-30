@@ -80,7 +80,7 @@ export default function Signup() {
 
     if (r.status === 409) {
       // race: someone registered this email in between step1 and step2
-      return setErr("email already exists");
+      return setErr("Email already exists!");
     }
     if (!r.ok) {
       return setErr(data.error || "signup failed");
