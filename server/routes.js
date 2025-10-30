@@ -40,10 +40,10 @@ router.post("/signup/check", async (req, res) => {
   if (!email) return res.status(400).json({ error: "email required" });
 
   if(await getPwAndIdFromEmail(email)){
+    return res.status(409).json({ error: "email_exists" });
+  } 
 
-  }
-
-
+  return res.json({available : true})
 });
 
 router.post("/signup", async (req, res) => {
@@ -62,18 +62,35 @@ router.post("/signup", async (req, res) => {
       password,
     } = req.body;
 
+    if (!email || !password) {
+      return res.status(400).json({ error: "email and password required" });
+    }
+
+    const normEmail = String(email).trim().toLowerCase();
+    const minPaceNum = min_pace !== undefined && min_pace !== null && min_pace !== "" ? Number(min_pace) : null;
+    const maxPaceNum = max_pace !== undefined && max_pace !== null && max_pace !== "" ? Number(max_pace) : null;
+    const minDistNum = min_dist_pref !== undefined && min_dist_pref !== null && min_dist_pref !== "" ? Number(min_dist_pref) : null;
+    const maxDistNum = max_dist_pref !== undefined && max_dist_pref !== null && max_dist_pref !== "" ? Number(max_dist_pref) : null;
+
+    if (minPaceNum !== null && maxPaceNum !== null && minPaceNum > maxPaceNum) {
+      return res.status(400).json({ error: "min_pace cannot be greater than max_pace" });
+    }
+    if (minDistNum !== null && maxDistNum !== null && minDistNum > maxDistNum) {
+      return res.status(400).json({ error: "min_dist_pref cannot be greater than max_dist_pref" });
+    }
+
     // build runner_data dict
     const runner_data = {
       first_name,
       last_name,
       middle_initial,
-      email,
+      email: normEmail,
       user_password: null,   // gets filled in signup()
       is_leader: !!is_leader,
-      min_pace,
-      max_pace,
-      min_dist_pref,
-      max_dist_pref,
+      min_pace: minPaceNum,
+      max_pace: maxPaceNum,
+      min_dist_pref: minDistNum,
+      max_dist_pref: maxDistNum,
     };
 
     const result = await signup(runner_data, password);
@@ -87,6 +104,22 @@ router.post("/signup", async (req, res) => {
     console.error("signup error:", err);
     res.status(500).json({ error: "server error" });
   }
+});
+
+
+router.post("/signin", async (req, res) => {
+  const { email, password } = req.body;
+  if (!email || !password) {
+    return res.status(400).json({ error: "email and password required" });
+  }
+  const result = await signin(email, password);
+  if (result === -1) {
+    return res.status(401).json({ error: "email not found" });
+  }
+  if (result === -2) {
+    return res.status(401).json({ error: "incorrect password" });
+  }
+  return res.json(result);
 })
 
 module.exports = router;
