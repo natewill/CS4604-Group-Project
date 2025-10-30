@@ -11,7 +11,6 @@ Cache Me If You Can Group Project:
   DB_NAME=cache_me_if_you_can_db
   PORT=5050
   ```
-
 Server
 
 - You can start the backend by running node index.js in the server directory
