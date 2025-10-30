@@ -25,12 +25,32 @@ function Summary({ runners, summary }) {
   );
 }
 function App() {
+  const [runners, setRunners] = useState([]);
+  const [summary, setSummary] = useState({});
+
+  useEffect(() => {
+    // Fetch all runners
+    fetch("/api/runners")
+      .then((res) => res.json())
+      .then((data) => setRunners(data))
+      .catch((err) => console.error(err));
+
+    // Fetch summary
+    fetch("/api/summary")
+      .then((res) => res.json())
+      .then((data) => setSummary(data))
+      .catch((err) => console.error(err));
+  }, []);
+
   return (
     <Routes>
-        <Route path="/summary" element={<Summary runners={runners} summary={summary} />} />
-        <Route path="/signup" element={<Signup />} />
-        <Route path="/signin" element={<Signin />} />
-        <Route path="/create-route" element={<CreateRoute />} />
+      <Route
+        path="/summary"
+        element={<Summary runners={runners} summary={summary} />}
+      />
+      <Route path="/signup" element={<Signup />} />
+      <Route path="/signin" element={<Signin />} />
+      <Route path="/create-route" element={<CreateRoute />} />
     </Routes>
   );
 }
