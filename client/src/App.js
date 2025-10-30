@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
 import Signup from "./pages/signup";
 import Signin from "./pages/signin";
+import CreateRoute from "./pages/CreateRoute";
 
 function Summary({ runners, summary }) {
   return (
@@ -43,9 +44,13 @@ function App() {
 
   return (
     <Routes>
-        <Route path="/summary" element={<Summary runners={runners} summary={summary} />} />
-        <Route path="/signup" element={<Signup />} />
-        <Route path="/signin" element={<Signin />} />
+      <Route
+        path="/summary"
+        element={<Summary runners={runners} summary={summary} />}
+      />
+      <Route path="/signup" element={<Signup />} />
+      <Route path="/signin" element={<Signin />} />
+      <Route path="/create-route" element={<CreateRoute />} />
     </Routes>
   );
 }
