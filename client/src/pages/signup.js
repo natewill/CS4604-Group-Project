@@ -20,8 +20,8 @@ export default function Signup() {
   const [minDist, setMinDist]     = useState("");
   const [maxDist, setMaxDist]     = useState("");
 
-  async function checkEmailAndPw(e) {
-    e.preventDefault();
+  async function checkEmailAndPw(event) {
+    event.preventDefault();
     setErr("");
 
     try {
@@ -53,8 +53,8 @@ export default function Signup() {
     }
   }
 
-  async function submitAll(e) {
-    e.preventDefault();
+  async function submitAll(event) {
+    event.preventDefault();
     setErr("");
 
     const payload = {

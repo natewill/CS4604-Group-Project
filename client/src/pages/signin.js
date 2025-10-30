@@ -7,22 +7,27 @@ export default function Signin() {
     const [password, setPassword] = useState("");
     const [err, setErr] = useState("");
 
-    async function signin(e) {
-        e.preventDefault();
+    async function signin(event) {
+        event.preventDefault();
         setErr("");
 
         const payload = { email, password };
-        const r = await fetch("/signin", {
+
+        if (!email || !password) {
+            return setErr("Email and password are required!");
+        }
+
+        const response = await fetch("/signin", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(payload),
         });
 
-        const data = await r.json();
-        if (r.status === 401) {
+        const data = await response.json();
+        if (response.status === 401) {
             return setErr(data.error);
         }
-        if (!r.ok) {
+        if (!response.ok) {
             return setErr("signin failed!");
         }
 
@@ -31,8 +36,8 @@ export default function Signin() {
         // reset or navigate
     }
 
-    async function handleSubmit(e) {
-        e.preventDefault();
+    async function handleSubmit(event) {
+        event.preventDefault();
         setErr("");
 
         const payload = { email, password };
