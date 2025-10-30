@@ -70,24 +70,23 @@ export default function Signup() {
       max_dist_pref: maxDist ? Number(maxDist) : null,
     };
 
-    const r = await fetch("/signup", {
+    const response = await fetch("/signup", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
 
-    const data = await r.json();
+    const data = await response.json();
 
-    if (r.status === 409) {
+    if (response.status === 409) {
       // race: someone registered this email in between step1 and step2
       return setErr("Email already exists!");
     }
-    if (!r.ok) {
+    if (!response.ok) {
       return setErr(data.error || "signup failed");
     }
 
     alert(`created account #${data.runner_id} for ${data.email}`);
-    // reset or navigate
   }
 
   return (
@@ -98,13 +97,13 @@ export default function Signup() {
           <input
             placeholder="email"
             value={email}
-            onChange={e => setEmail(e.target.value)}
+            onChange={event => setEmail(event.target.value)}
           />
           <input
             placeholder="password"
             type="password"
             value={password}
-            onChange={e => setPassword(e.target.value)}
+            onChange={event => setPassword(event.target.value)}
           />
           <button type="submit">Continue</button>
         </form>
