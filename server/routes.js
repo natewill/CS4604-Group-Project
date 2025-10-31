@@ -489,4 +489,22 @@ router.get("/api/leaders", (req, res) => {
   });
 });
 
+// DELETE a specific run
+router.delete("/api/runs/:id", (req, res) => {
+  const { id } = req.params;
+  db.query("DELETE FROM runs WHERE run_id = ?", [id], (err, result) => {
+    if (err) {
+      console.error("Error deleting run:", err);
+      return res.status(500).json({ error: "Failed to delete run" });
+    }
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: "Run not found" });
+    }
+
+    res.json({ message: "Run deleted successfully" });
+  });
+});
+
+
 module.exports = router;
