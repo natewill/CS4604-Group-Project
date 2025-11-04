@@ -231,20 +231,280 @@ router.post("/api/save-route", async (req, res) => {
      VALUES (?, ?, ?, ?, ?, ?)`,
     [start_lat, start_lng, end_lat, end_lng, polyline, distance],
     (err, results) => {
-      //errror
       if (err) {
         console.error("/api/save-route error", err);
         return res.status(500).json({ error: "Failed to save route." });
       }
 
-      // No Error
       console.log("Inserted route ID:", results.insertId);
       res.status(201).json({
         message: "Route saved successfully",
-        route_id: results.insertId,
+        route_id: results.insertId, // ✅ this ensures the frontend gets the route ID
       });
     }
   );
 });
+
+
+// GET all runs
+router.get("/api/runs", (req, res) => {
+  const sql = `
+    SELECT 
+      r.run_id,
+      r.leader_id,
+      r.run_route,
+      r.run_status_id,
+      s.status_description AS status,
+      r.name,
+      r.description,
+      r.pace,
+      r.date,
+      r.start_time
+    FROM runs r
+    JOIN status s ON r.run_status_id = s.status_id
+    ORDER BY r.date DESC, r.start_time DESC;
+  `;
+
+  db.query(sql, (err, results) => {
+    if (err) {
+      console.error("Database query failed:", err);
+      return res.status(500).json({ error: "Failed to fetch runs" });
+    }
+
+    res.json(results);
+  });
+});
+
+// POST create a new run
+router.post("/api/runs", (req, res) => {
+  const {
+    leader_id,
+    run_route,
+    run_status_id,
+    name,
+    description,
+    pace,
+    date,
+    start_time,
+  } = req.body;
+
+  // Validate required fields
+  if (!leader_id || !run_route || !run_status_id || !name || !pace || !date || !start_time) {
+    return res.status(400).json({ error: "Missing required fields" });
+  }
+
+  const sql = `
+    INSERT INTO runs (leader_id, run_route, run_status_id, name, description, pace, date, start_time)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+  `;
+
+  db.query(
+    sql,
+    [leader_id, run_route, run_status_id, name, description || null, pace, date, start_time],
+    (err, result) => {
+      if (err) {
+        console.error("Database insert failed:", err);
+        return res.status(500).json({ error: "Failed to create new run" });
+      }
+
+      // Respond with the newly created run ID
+      res.status(201).json({
+        message: "Run created successfully",
+        run_id: result.insertId,
+      });
+    }
+  );
+});
+
+// GET all routes (start/end coordinates included directly in table)
+router.get("/api/routes", (req, res) => {
+  const sql = `
+    SELECT 
+      route_id,
+      start_lat,
+      start_lng,
+      end_lat,
+      end_lng,
+      polyline,
+      distance
+    FROM routes
+    ORDER BY route_id;
+  `;
+
+  db.query(sql, (err, results) => {
+    if (err) {
+      console.error("Database query failed:", err);
+      return res.status(500).json({ error: "Failed to fetch routes" });
+    }
+
+    res.json(results);
+  });
+});
+
+
+// GET a specific route by ID
+router.get("/api/routes/:id", (req, res) => {
+  const { id } = req.params;
+
+  const sql = `
+    SELECT 
+      route_id,
+      start_lat,
+      start_lng,
+      end_lat,
+      end_lng,
+      polyline,
+      distance
+    FROM routes
+    WHERE route_id = ?;
+  `;
+
+  db.query(sql, [id], (err, results) => {
+    if (err) {
+      console.error("Database query failed:", err);
+      return res.status(500).json({ error: "Failed to fetch route" });
+    }
+
+    if (results.length === 0) {
+      return res.status(404).json({ error: "Route not found" });
+    }
+
+    res.json(results[0]);
+  });
+});
+
+
+// PUT update an existing run
+// Can be used like PUT or PATCH where we replace the whole record or 
+// only update one or more fields that are included in the request params
+router.put("/api/runs/:id", (req, res) => {
+  const { id } = req.params;
+  const {
+    leader_id,
+    run_route,
+    run_status_id,
+    name,
+    description,
+    pace,
+    date,
+    start_time,
+  } = req.body;
+
+  // Check if at least one field is provided
+  if (
+    !leader_id &&
+    !run_route &&
+    !run_status_id &&
+    !name &&
+    !description &&
+    !pace &&
+    !date &&
+    !start_time
+  ) {
+    return res.status(400).json({ error: "No fields provided to update" });
+  }
+
+  // Build dynamic query based on provided fields
+  const updates = [];
+  const values = [];
+
+  if (leader_id) {
+    updates.push("leader_id = ?");
+    values.push(leader_id);
+  }
+  if (run_route) {
+    updates.push("run_route = ?");
+    values.push(run_route);
+  }
+  if (run_status_id) {
+    updates.push("run_status_id = ?");
+    values.push(run_status_id);
+  }
+  if (name) {
+    updates.push("name = ?");
+    values.push(name);
+  }
+  if (description !== undefined) {
+    updates.push("description = ?");
+    values.push(description);
+  }
+  if (pace) {
+    updates.push("pace = ?");
+    values.push(pace);
+  }
+  if (date) {
+    updates.push("date = ?");
+    values.push(date);
+  }
+  if (start_time) {
+    updates.push("start_time = ?");
+    values.push(start_time);
+  }
+
+  values.push(id);
+
+  const sql = `
+    UPDATE runs
+    SET ${updates.join(", ")}
+    WHERE run_id = ?
+  `;
+
+  db.query(sql, values, (err, result) => {
+    if (err) {
+      console.error("Database update failed:", err);
+      return res.status(500).json({ error: "Failed to update run" });
+    }
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: "Run not found" });
+    }
+
+    res.json({
+      message: "Run updated successfully",
+      run_id: id,
+      updated_fields: updates.map(u => u.split(" = ")[0]),
+    });
+  });
+});
+
+// GET all leaders
+router.get("/api/leaders", (req, res) => {
+  const sql = `
+    SELECT 
+      runner_id, 
+      CONCAT(first_name, ' ', COALESCE(middle_initial, ''), ' ', last_name) AS full_name,
+      email
+    FROM runners
+    WHERE is_leader = TRUE
+    ORDER BY last_name, first_name;
+  `;
+
+  db.query(sql, (err, results) => {
+    if (err) {
+      console.error("Database query failed:", err);
+      return res.status(500).json({ error: "Failed to fetch leaders" });
+    }
+
+    res.json(results);
+  });
+});
+
+// DELETE a specific run
+router.delete("/api/runs/:id", (req, res) => {
+  const { id } = req.params;
+  db.query("DELETE FROM runs WHERE run_id = ?", [id], (err, result) => {
+    if (err) {
+      console.error("Error deleting run:", err);
+      return res.status(500).json({ error: "Failed to delete run" });
+    }
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: "Run not found" });
+    }
+
+    res.json({ message: "Run deleted successfully" });
+  });
+});
+
 
 module.exports = router;
