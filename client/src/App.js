@@ -58,6 +58,7 @@ function App() {
         <Link to="/runs">Runs</Link>
         <Link to="/signup">Signup</Link>
         <Link to="/signin">Signin</Link>
+        <Link to="/create-route">Create Route</Link>
       </nav>
 
       <Routes>
