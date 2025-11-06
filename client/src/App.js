@@ -1,8 +1,11 @@
 // client/src/App.js
 import React, { useState, useEffect } from "react";
-import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
+import { Routes, Route, Link } from "react-router-dom";
 import Signup from "./pages/signup";
 import Signin from "./pages/signin";
+import CreateRoute from "./pages/CreateRoute";
+import Runs from "./pages/Runs";
+import NewRun from "./pages/NewRun";
 
 function Summary({ runners, summary }) {
   return (
@@ -15,7 +18,7 @@ function Summary({ runners, summary }) {
       <h2>Runners List</h2>
       <ul>
         {runners.map((runner) => (
-          <li key={runner.Runner_ID}>
+          <li key={runner.runner_id}>
             {runner.first_name} {runner.last_name}
           </li>
         ))}
@@ -23,18 +26,17 @@ function Summary({ runners, summary }) {
     </div>
   );
 }
+
 function App() {
   const [runners, setRunners] = useState([]);
   const [summary, setSummary] = useState({});
 
   useEffect(() => {
-    // Fetch all runners
     fetch("/api/runners")
       .then((res) => res.json())
       .then((data) => setRunners(data))
       .catch((err) => console.error(err));
 
-    // Fetch summary
     fetch("/api/summary")
       .then((res) => res.json())
       .then((data) => setSummary(data))
@@ -42,11 +44,35 @@ function App() {
   }, []);
 
   return (
-    <Routes>
-        <Route path="/summary" element={<Summary runners={runners} summary={summary} />} />
+    <div>
+      {/*  Navbar stays here, no nested Router */}
+      <nav
+        style={{
+          display: "flex",
+          gap: "1rem",
+          padding: "1rem",
+          backgroundColor: "#eee",
+        }}
+      >
+        <Link to="/summary">Summary</Link>
+        <Link to="/runs">Runs</Link>
+        <Link to="/signup">Signup</Link>
+        <Link to="/signin">Signin</Link>
+        <Link to="/create-route">Create Route</Link>
+      </nav>
+
+      <Routes>
+        <Route
+          path="/summary"
+          element={<Summary runners={runners} summary={summary} />}
+        />
+        <Route path="/runs" element={<Runs />} />
+        <Route path="/runs/new" element={<NewRun />} />
+        <Route path="/create-route" element={<CreateRoute />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/signin" element={<Signin />} />
-    </Routes>
+      </Routes>
+    </div>
   );
 }
 

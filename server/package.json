@@ -18,6 +18,8 @@
   },
   "homepage": "https://github.com/natewill/CS4604-Group-Project#readme",
   "dependencies": {
+    "argon2": "^0.44.0",
+    "axios": "^1.13.1",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^5.1.0",

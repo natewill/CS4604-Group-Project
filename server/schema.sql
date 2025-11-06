@@ -29,17 +29,12 @@ CREATE TABLE status (
 
 CREATE TABLE routes (
     route_id            INT AUTO_INCREMENT PRIMARY KEY,
+    start_lat           DECIMAL(9,6),
+    start_lng           DECIMAL(9,6),
+    end_lat             DECIMAL(9,6),
+    end_lng             DECIMAL(9,6),
+    polyline            TEXT,
     distance            DECIMAL(6,2)
-);
-
--- Here is where dependencies start, so we have to create Routes before Route_Points
-CREATE TABLE route_points (
-    route_point_id  INT AUTO_INCREMENT PRIMARY KEY,
-    route_id        INT NOT NULL,
-    latitude        DECIMAL(9,6),
-    longitude       DECIMAL(9,6),
-    route_index     INT,
-    FOREIGN KEY (route_id) REFERENCES routes(route_id)
 );
 
 -- Now we can create Runs and Run_Participation since all their foreign keys exist
@@ -103,105 +98,21 @@ VALUES
 (4, 'In Progress');
 
 -- Routes
-INSERT INTO routes (route_id, distance)
+INSERT INTO routes (route_id, start_lat, start_lng, end_lat, end_lng, polyline, distance)
 VALUES
-(1, 5.0),
-(2, 2.6),
-(3, 4.6),
-(4, 0.3),
-(5, 2.1),
-(6, 3.4),
-(7, 1.3);
-
--- Route Points
-INSERT INTO route_points (route_point_id, route_id, latitude, longitude, route_index)
-VALUES
-(1, 1, 37.235524, -80.422459, 0),
-(2, 1, 37.229329, -80.413987, 1),
-(3, 1, 37.217361, -80.419206, 2),
-(4, 1, 37.231532, -80.428855, 3),
-(5, 1, 37.233363, -80.425063, 4),
-(6, 1, 37.235524, -80.422459, 5),
-
-(7, 2, 37.224943, -80.413677, 0),
-(8, 2, 37.217354, -80.419161, 1),
-(9, 2, 37.209545, -80.423656, 2),
-(10, 2, 37.207156, -80.418926, 3),
-
-(11, 3, 37.224943, -80.413677, 0),
-(12, 3, 37.217354, -80.419161, 1),
-(13, 3, 37.209545, -80.423656, 2),
-(14, 3, 37.214996, -80.428814, 3),
-(15, 3, 37.213620, -80.442088, 4),
-(16, 3, 37.214316, -80.442643, 5),
-(17, 3, 37.214154, -80.443026, 6),
-(18, 3, 37.214177, -80.444300, 7),
-(19, 3, 37.216314, -80.449690, 8),
-(20, 3, 37.217063, -80.450893, 9),
-(21, 3, 37.216975, -80.451591, 10),
-(22, 3, 37.216202, -80.451976, 11),
-
-(23, 4, 37.223110, -80.412971, 0),
-(24, 4, 37.222780, -80.412852, 1),
-(25, 4, 37.222610, -80.412793, 2),
-(26, 4, 37.222570, -80.412784, 3),
-(27, 4, 37.222430, -80.412725, 4),
-(28, 4, 37.222220, -80.412646, 5),
-(29, 4, 37.221920, -80.412545, 6),
-(30, 4, 37.221870, -80.412524, 7),
-(31, 4, 37.221840, -80.412513, 8),
-(32, 4, 37.221360, -80.412344, 9),
-(33, 4, 37.221020, -80.412235, 10),
-(34, 4, 37.220850, -80.412174, 11),
-(35, 4, 37.220550, -80.412083, 12),
-(36, 4, 37.220580, -80.412004, 13),
-
-(37, 5, 37.238050, -80.430320, 0),
-(38, 5, 37.238060, -80.430290, 1),
-(39, 5, 37.238110, -80.430140, 2),
-(40, 5, 37.238130, -80.430080, 3),
-(41, 5, 37.238260, -80.429680, 4),
-(42, 5, 37.238600, -80.429680, 5),
-(43, 5, 37.238780, -80.429690, 6),
-(44, 5, 37.239230, -80.429690, 7),
-(45, 5, 37.239320, -80.429680, 8),
-(46, 5, 37.239370, -80.429680, 9),
-
-(47, 6, 37.222010, -80.423100, 0),
-(48, 6, 37.221990, -80.423110, 1),
-(49, 6, 37.221940, -80.423130, 2),
-(50, 6, 37.221890, -80.423170, 3),
-(51, 6, 37.221840, -80.423210, 4),
-(52, 6, 37.222160, -80.423360, 5),
-(53, 6, 37.222370, -80.423450, 6),
-(54, 6, 37.222450, -80.423490, 7),
-(55, 6, 37.222610, -80.423560, 8),
-(56, 6, 37.222730, -80.423620, 9),
-(57, 6, 37.222800, -80.423660, 10),
-(58, 6, 37.222930, -80.423680, 11),
-(59, 6, 37.223120, -80.423770, 12),
-
-(60, 7, 37.226220, -80.416500, 0), 
-(61, 7, 37.225930, -80.417320, 1),
-(62, 7, 37.225830, -80.418310, 2),
-(63, 7, 37.225970, -80.418490, 3),
-(64, 7, 37.226200, -80.419090, 4),
-(65, 7, 37.227030, -80.420300, 5),
-(66, 7, 37.227270, -80.420760, 6),
-(67, 7, 37.227850, -80.421500, 7),
-(68, 7, 37.228400, -80.422180, 8),
-(69, 7, 37.228640, -80.422180, 9);
-
+(1, 37.2571436, -80.45672929999999, 37.2413297, -80.4123084, "okhbFftajNJ@XJHAHETu@LKPD`@TRRFKLGXDbAn@\\VLh@P`BJVBBFQNi@BUGk@?k@T}@HyBP}ALo@d@wAp@_ELy@P]DEJ?HFBHFt@@JFDB?@KJqALqANaAJa@T_AHk@DgHBmG?_C@i@L_BT{AViBJk@XiAPm@Jc@F[AYD}@@}@AcAMgAKe@Y_AQkAG_AAaD?{ICaJBmBNmAZeARk@v@aDx@mDHu@FuBFmC@k@E_AEQBALEzCoApB{@vAi@lAe@bBq@G]z@]DAFG?KEu@LA?iBEACm@D?Du@HaBBa@H[HuAHgAC]D}@Fq@?aACaASiBOy@o@kB_B_Eg@sAPMNKM[Mg@m@aBo@{AU]Wy@Sq@WiCSgBAEHCLGHO`@_C`AqFfAcGNy@`@qA@KLSXm@B]ESq@cAo@cAq@oACEHOMQKL]a@_@e@oA_BcBiBsBeC{EaGbAyABKIeCc@kLCoAe@e@{@o@SQUc@Uy@AU?WDQtBsBb@m@DI][s@o@eCqBcAiAm@eAu@iBy@sB_A}BiDuIcHiQs@_Bo@y@yAcAu@o@o@o@U[e@y@c@sAOi@Ee@GaAIoE?yA@mDIkDOq@GMeAgAgAeAaAgAYYs@a@m@Qa@GYAM@]B?TFx@CRIPs@^a@Pm@HeBK{@Iq@Q[USc@_AyBk@kAq@m@m@]c@EqBD", 4.165672472759087),
+(2, 37.2397738, -80.4309147, 37.220263, -80.4065775, "qkhbFdd|iNQ?c@K[UQa@M{@KmAg@{Es@eHLCEUpBQz@MxEcAc@sBi@}BQk@U[Y]][OMJYJYPWj@g@pC_ChIyGzCcCLM?MAWFc@ZCJCn@UbAc@DIFMHKLEXWR_@R]NI^o@Ze@TWpAkBNRLSn@}@bAwArEwGPQ^k@^a@\SlAy@JIREtAeATm@n@q@pB{BxEaF~BiC`@_@R\l@dAFBRMPZv@}@h@a@b@URIn@Ud@WTUv@{@jBwBxDiEbH{HhCwCpD}Dv@{@VY\a@p@`AHJ", 2.2816750178954903),
+(3, 37.1980533, -80.3877827, 37.2235723, -80.43721060000001, "yf`bFrvsiNKp@Ed@HdCCp@Mx@Sj@MPQNm@XoA`@o@f@Yd@Sn@ObA_@hF_B~Hm@jDUfAWr@g@z@e@b@g@b@e@XSNkB|@o@TgCb@sCf@kABoA@qAA_AOq@SwAk@e@Ge@Bc@JqAl@iAd@kBv@o@h@OXWZSLUVa@`@kAfAg@h@ITAT@^FAAn@?ZBv@Ah@Mn@M\QX[Zg@^UX]~@Ej@ARDf@X`Bt@nDb@bBx@hC`@zA?ZMTQFu@Gq@C}ADcAPsBl@eB|@uB~AoEzCkDhCc@\g@Xm@Xk@LeAJy@Dw@ByADoDJ?TM??ZA`@AHQpAKx@e@|F]dFInAEp@AbADjADt@PbA`@pAt@pBb@tAFXFn@@j@Cl@StAa@dB]|AKbA?~@Al@Hr@XpBp@dF^rCJRl@tEBx@Cj@Gx@O|@Up@Yj@Yb@W^]VaAr@_C~AsErCwCjBQJGTCJOVWTUZ]l@Wf@?JgAn@k@ZIBSAYNmCxBI^IFQIICM@k@Pa@Ne@FYJ]RMPCR@NJJLJw@bBiAfC`BvAfA~@T^F\?^G`@O\uD|Fk@fAYt@SlAEfBA~@AjAA`D?t@^A`AARJh@f@VBTJLTBHTKD?@?", 4.199226517139903);
 -- Runs
 INSERT INTO runs (run_id, leader_id, run_route, run_status_id, name, description, pace, date, start_time)
 VALUES
 (1, 1, 1, 1, 'Morning Easy Run Loop', 'A relaxed run to start the day', '09:00', '2026-01-01', '06:30:00'),
 (2, 1, 2, 1, 'Interval Training', 'High-intensity intervals for speed', '07:00', '2025-12-02', '18:00:00'),
 (3, 1, 3, 2, 'Long Distance Run', 'Endurance building long run', '08:15', '2024-07-03', '07:00:00'),
-(4, 21, 4, 1, 'First Run in Weeks', 'Slow tempo run on Huckle Berry', '11:00', '2025-10-25', '07:15:00'),
-(5, 8, 5, 2, 'Endurance Run', 'Climbing hills on a trail', '08:30', '2025-09-07', '08:00:00'),
-(6, 12, 6, 4, 'Rain Run', 'Short run, so wet, wow such a wet run', '09:15', '2025-10-20', '18:30:00'),
-(7, 21, 7, 3, 'Sprint Run', 'Sprinted to class.', '07:45', '2025-10-20', '13:00:00');
+(4, 21, 1, 1, 'First Run in Weeks', 'Slow tempo run on Huckle Berry', '11:00', '2025-10-25', '07:15:00'),
+(5, 8, 2, 2, 'Endurance Run', 'Climbing hills on a trail', '08:30', '2025-09-07', '08:00:00'),
+(6, 12, 3, 4, 'Rain Run', 'Short run, so wet, wow such a wet run', '09:15', '2025-10-20', '18:30:00'),
+(7, 21, 1, 3, 'Sprint Run', 'Sprinted to class.', '07:45', '2025-10-20', '13:00:00');
 
 -- Run Participation
 INSERT INTO run_participation (participation_runner_id, participation_run_id)

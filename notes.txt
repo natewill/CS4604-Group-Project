@@ -1,0 +1,18 @@
+Okay, so lets focus on how we request to get a Route
+
+Firstly We have google.maps.DirectionsService
+- This has DirectionsRequest and a callback
+
+DirectionsRequest
+- Requires {Destination, Origin, & Travel Mode}
+- We pass latlng of start and end, then WALKING
+- Returns DirectionsResult
+
+DirectionsResult
+
+
+When I Generate a Route I need to store the distance and other data needed in 
+ order to reconstruct the route
+
+I might be able to store starting and ending location along with polyline
+from here I can place start and end marker with the polyline
