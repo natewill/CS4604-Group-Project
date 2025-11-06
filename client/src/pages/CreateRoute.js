@@ -15,6 +15,8 @@ import {
  extractLegEndpoints,
  polylineOptions,
 } from "./map/directions";
+import validator from 'validator';
+
 
 
 const mapContainerStyle = {
@@ -111,6 +113,8 @@ const CreateRoute = ({ onRouteCreated }) => {
      start_lng: startCoords.lng,
      end_lat: endCoords.lat,
      end_lng: endCoords.lng,
+     start_address: validator.isLatLong(startAddress || '') ? null : startAddress,
+     end_address: validator.isLatLong(endAddress || '') ? null : endAddress,
      polyline: directions.routes[0].overview_polyline,
      distance: directions.routes[0].legs[0].distance.value / 1609.344,
    };

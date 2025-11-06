@@ -223,13 +223,13 @@ router.post("/api/validate-address", async (req, res) => {
 
 // Post to insert a new Route into database
 router.post("/api/save-route", async (req, res) => {
-  const { start_lat, start_lng, end_lat, end_lng, polyline, distance } =
+  const { start_lat, start_lng, end_lat, end_lng, start_address, end_address, polyline, distance } =
     req.body;
 
   db.query(
-    `INSERT INTO routes (start_lat, start_lng, end_lat, end_lng, polyline, distance)
-     VALUES (?, ?, ?, ?, ?, ?)`,
-    [start_lat, start_lng, end_lat, end_lng, polyline, distance],
+    `INSERT INTO routes (start_lat, start_lng, end_lat, end_lng, start_address, end_address, polyline, distance)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+    [start_lat, start_lng, end_lat, end_lng, start_address, end_address, polyline, distance],
     (err, results) => {
       if (err) {
         console.error("/api/save-route error", err);
