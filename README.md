@@ -11,6 +11,7 @@ Cache Me If You Can Group Project:
   DB_PASS={REPLACE_ME}
   DB_NAME=cache_me_if_you_can_db
   PORT=5050
+  GOOGLE_MAPS_API_KEY={REPLACE ME}
   ```
 
 - In the client directory create .env file with these fields and google maps api key
