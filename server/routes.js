@@ -259,10 +259,19 @@ router.get("/api/runs", (req, res) => {
       r.name,
       r.description,
       r.pace,
-      r.date,
-      r.start_time
+      DATE_FORMAT(r.date, '%M %d, %Y') AS date,
+      TIME_FORMAT(r.start_time, '%l:%i %p') AS start_time,
+      rt.start_lat,
+      rt.start_lng,
+      rt.end_lat,
+      rt.end_lng,
+      rt.start_address,
+      rt.end_address,
+      rt.polyline,
+      rt.distance
     FROM runs r
     JOIN status s ON r.run_status_id = s.status_id
+    JOIN routes rt ON r.run_route = rt.route_id
     ORDER BY r.date DESC, r.start_time DESC;
   `;
 
@@ -492,6 +501,25 @@ router.get("/api/leaders", (req, res) => {
 
     res.json(results);
   });
+});
+
+// GET a static map url of a route
+router.get("/api/static-map", (req, res) => {
+  const { polyline, start_lat, start_lng, end_lat, end_lng } = req.query;
+
+  //if any of the required parameters are missing, return an error
+  if (!polyline || !start_lat || !start_lng || !end_lat || !end_lng) {
+    return res.status(400).json({ error: "Missing required parameters" });
+  }
+  
+  try {
+    //returns a url that can be used to display a static map of the route
+    const url = `https://maps.googleapis.com/maps/api/staticmap?size=600x400&path=enc:${polyline}&markers=color:green|label:S|${start_lat},${start_lng}&markers=color:red|label:E|${end_lat},${end_lng}&visible=${start_lat},${start_lng}&visible=${end_lat},${end_lng}&key=${process.env.GOOGLE_MAPS_API_KEY}`;
+    res.json({ url });
+  } catch (err) {
+    console.error("Error generating static map:", err);
+    return res.status(500).json({ error: "Failed to generate static map" });
+  }
 });
 
 // DELETE a specific run

@@ -6,6 +6,7 @@ import Signin from "./pages/signin";
 import CreateRoute from "./pages/CreateRoute";
 import Runs from "./pages/Runs";
 import NewRun from "./pages/NewRun";
+import RunFinder from "./pages/RunFinder";
 
 function Summary({ runners, summary }) {
   return (
@@ -56,6 +57,7 @@ function App() {
       >
         <Link to="/summary">Summary</Link>
         <Link to="/runs">Runs</Link>
+        <Link to="/runs/finder">Find Runs</Link>
         <Link to="/signup">Signup</Link>
         <Link to="/signin">Signin</Link>
         <Link to="/create-route">Create Route</Link>
@@ -68,6 +70,7 @@ function App() {
         />
         <Route path="/runs" element={<Runs />} />
         <Route path="/runs/new" element={<NewRun />} />
+        <Route path="/runs/finder" element={<RunFinder />} />
         <Route path="/create-route" element={<CreateRoute />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/signin" element={<Signin />} />
