@@ -24,3 +24,6 @@ JWT tokens
 4. Client includes token in API requests
 5. Server validates token on each request
 6. Token expires → User must sign in again
+
+
+Next Steps work on logout and removing cookie
