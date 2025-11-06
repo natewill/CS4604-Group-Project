@@ -1,130 +1,247 @@
-// Signup.js
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+
+// Validation constants
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const EMAIL_MAX_LENGTH = 100;
+const PASSWORD_MIN_LENGTH = 6;
+const LETTER_REGEX = /^[a-zA-Z]$/;
 
 export default function Signup() {
-  const [step, setStep] = useState(1); //two steps, first check if email and password are valid,
-  //then submit all information
+  const [step, setStep] = useState(1);
   const [err, setErr] = useState("");
+  const { signup } = useAuth();
+  const navigate = useNavigate();
 
-  // step1 state
+  // Step 1 state
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  // step2 state
+  // Step 2 state
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
-  const [middleInitial, setMI] = useState("");
+  const [middleInitial, setMiddleInitial] = useState("");
   const [isLeader, setIsLeader] = useState(false);
   const [minPace, setMinPace] = useState("");
   const [maxPace, setMaxPace] = useState("");
   const [minDist, setMinDist] = useState("");
   const [maxDist, setMaxDist] = useState("");
 
-  async function checkEmailAndPw(event) {
+  // Helper function to validate and convert numeric input
+  const parseInteger = (value) => {
+    if (value === "") return null;
+    const num = Number(value);
+    return !isNaN(num) && Number.isInteger(num) ? num : null;
+  };
+
+  // Validate step 1 (email and password)
+  const validateStep1 = () => {
+    const errors = [];
+    const normEmail = email.trim().toLowerCase();
+
+    // validate email
+    if (!normEmail) {
+      errors.push("Email is required");
+    } else if (!EMAIL_REGEX.test(normEmail)) {
+      errors.push("Please enter a valid email address");
+    } else if (normEmail.length > EMAIL_MAX_LENGTH) {
+      errors.push(`Email must be ${EMAIL_MAX_LENGTH} characters or less`);
+    }
+
+    // validate password
+    if (!password) {
+      errors.push("Password is required");
+    } else if (password.length < PASSWORD_MIN_LENGTH) {
+      errors.push(
+        `Password must be at least ${PASSWORD_MIN_LENGTH} characters long`
+      );
+    }
+
+    return errors;
+  };
+
+  // Validate step 2 (additional fields)
+  const validateStep2 = () => {
+    const errors = [];
+
+    // First and Last name validation
+    if (!firstName || firstName.trim() === "") {
+      errors.push("First name is required");
+    }
+    if (!lastName || lastName.trim() === "") {
+      errors.push("Last name is required");
+    }
+
+    // Middle initial validation
+    if (!middleInitial || middleInitial.trim() === "") {
+      errors.push("Middle initial is required");
+    } else if (!LETTER_REGEX.test(middleInitial)) {
+      errors.push("Middle initial must be a single letter");
+    }
+
+    // Parse numeric fields
+    const minPaceNum = parseInteger(minPace);
+    const maxPaceNum = parseInteger(maxPace);
+    const minDistNum = parseInteger(minDist);
+    const maxDistNum = parseInteger(maxDist);
+
+    // Required numeric field validations
+    if (!minPace || minPace === "") {
+      errors.push("Min pace is required");
+    } else if (minPaceNum === null || minPaceNum < 0) {
+      errors.push("Min pace must be a non-negative integer");
+    }
+
+    if (!maxPace || maxPace === "") {
+      errors.push("Max pace is required");
+    } else if (maxPaceNum === null || maxPaceNum < 0) {
+      errors.push("Max pace must be a non-negative integer");
+    }
+
+    if (!minDist || minDist === "") {
+      errors.push("Min distance is required");
+    } else if (minDistNum === null || minDistNum < 0) {
+      errors.push("Min distance must be a non-negative integer");
+    }
+
+    if (!maxDist || maxDist === "") {
+      errors.push("Max distance is required");
+    } else if (maxDistNum === null || maxDistNum < 0) {
+      errors.push("Max distance must be a non-negative integer");
+    }
+
+    // Cross-field validation (only if both values are valid)
+    if (minPaceNum !== null && maxPaceNum !== null && minPaceNum > maxPaceNum) {
+      errors.push("Min pace cannot be greater than max pace");
+    }
+    if (minDistNum !== null && maxDistNum !== null && minDistNum > maxDistNum) {
+      errors.push("Min distance cannot be greater than max distance");
+    }
+
+    return errors;
+  };
+
+  const handleStep1Submit = async (event) => {
     event.preventDefault();
     setErr("");
 
-    try {
-      // local validation
-      const normEmail = email.trim().toLowerCase();
-      if (!normEmail || !password) {
-        return setErr("Email and Password are required!");
-      }
+    const validationErrors = validateStep1();
+    if (validationErrors.length > 0) {
+      return setErr(validationErrors.join(". "));
+    }
 
-      // server availability check
-      const r = await fetch("/signup/check", {
+    const normEmail = email.trim().toLowerCase();
+
+    try {
+      const response = await fetch("/signup/check", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: normEmail }),
       });
 
-      if (r.status === 409) {
-        return setErr("Email lready exists!");
+      if (response.status === 409) {
+        return setErr("Email already exists!");
       }
-      if (!r.ok) {
-        return setErr("Server Error");
+      if (!response.ok) {
+        return setErr("Server error. Please try again.");
       }
 
-      //email and password are valid, move to step 2
+      // Valid email and password continue to step 2
       setStep(2);
     } catch (error) {
       console.error("Signup check error:", error);
       setErr("Network error. Please try again.");
     }
-  }
+  };
 
-  async function submitAll(event) {
+  const handleStep2Submit = async (event) => {
     event.preventDefault();
     setErr("");
 
+    const validationErrors = validateStep2();
+    if (validationErrors.length > 0) {
+      return setErr(validationErrors.join(". "));
+    }
+
+    // Prepare payload with required fields (validation ensures they're not empty)
     const payload = {
       email: email.trim().toLowerCase(),
       password,
-      first_name: firstName || null,
-      last_name: lastName || null,
-      middle_initial: middleInitial || null,
+      first_name: firstName.trim(),
+      last_name: lastName.trim(),
+      middle_initial: middleInitial.trim(),
       is_leader: isLeader,
-      min_pace: minPace ? Number(minPace) : null,
-      max_pace: maxPace ? Number(maxPace) : null,
-      min_dist_pref: minDist ? Number(minDist) : null,
-      max_dist_pref: maxDist ? Number(maxDist) : null,
+      min_pace: parseInteger(minPace),
+      max_pace: parseInteger(maxPace),
+      min_dist_pref: parseInteger(minDist),
+      max_dist_pref: parseInteger(maxDist),
     };
 
-    const response = await fetch("/signup", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
+    try {
+      // signup() handles the API call and stores user in context
+      // HTTP-only cookie is automatically set by server
+      await signup(payload);
 
-    const data = await response.json();
-
-    if (response.status === 409) {
-      // race: someone registered this email in between step1 and step2
-      return setErr("Email already exists!");
+      // Redirect to summary page after successful signup
+      navigate("/summary");
+    } catch (error) {
+      setErr(error.message || "Signup failed!");
     }
-    if (!response.ok) {
-      return setErr(data.error || "signup failed");
-    }
+  };
 
-    alert(`created account #${data.runner_id} for ${data.email}`);
-  }
+  const handleMiddleInitialChange = (e) => {
+    const value = e.target.value;
+    if (value === "" || LETTER_REGEX.test(value)) {
+      setMiddleInitial(value.toUpperCase());
+    }
+  };
 
   return (
     <div style={{ display: "grid", gap: 12, maxWidth: 360 }}>
       <h2>Sign up</h2>
+
       {step === 1 && (
-        <form onSubmit={checkEmailAndPw} style={{ display: "grid", gap: 8 }}>
+        <form onSubmit={handleStep1Submit} style={{ display: "grid", gap: 8 }}>
           <input
-            placeholder="email"
+            type="email"
+            placeholder="Email"
             value={email}
-            onChange={(event) => setEmail(event.target.value)}
+            onChange={(e) => setEmail(e.target.value)}
           />
           <input
-            placeholder="password"
             type="password"
+            placeholder="Password"
             value={password}
-            onChange={(event) => setPassword(event.target.value)}
+            onChange={(e) => setPassword(e.target.value)}
           />
           <button type="submit">Continue</button>
         </form>
       )}
 
       {step === 2 && (
-        <form onSubmit={submitAll} style={{ display: "grid", gap: 8 }}>
+        <form onSubmit={handleStep2Submit} style={{ display: "grid", gap: 8 }}>
           <input
-            placeholder="first name"
+            type="text"
+            placeholder="First name"
+            required
             value={firstName}
             onChange={(e) => setFirstName(e.target.value)}
           />
           <input
-            placeholder="last name"
+            type="text"
+            placeholder="Last name"
+            required
             value={lastName}
             onChange={(e) => setLastName(e.target.value)}
           />
           <input
-            placeholder="middle initial"
+            type="text"
+            placeholder="Middle initial"
+            required
+            maxLength={1}
             value={middleInitial}
-            onChange={(e) => setMI(e.target.value)}
+            onChange={handleMiddleInitialChange}
           />
           <label>
             <input
@@ -138,22 +255,38 @@ export default function Signup() {
             style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}
           >
             <input
-              placeholder="min pace"
+              type="number"
+              placeholder="Min pace"
+              required
+              min="0"
+              step="1"
               value={minPace}
               onChange={(e) => setMinPace(e.target.value)}
             />
             <input
-              placeholder="max pace"
+              type="number"
+              placeholder="Max pace"
+              required
+              min="0"
+              step="1"
               value={maxPace}
               onChange={(e) => setMaxPace(e.target.value)}
             />
             <input
-              placeholder="min dist"
+              type="number"
+              placeholder="Min distance"
+              required
+              min="0"
+              step="1"
               value={minDist}
               onChange={(e) => setMinDist(e.target.value)}
             />
             <input
-              placeholder="max dist"
+              type="number"
+              placeholder="Max distance"
+              required
+              min="0"
+              step="1"
               value={maxDist}
               onChange={(e) => setMaxDist(e.target.value)}
             />

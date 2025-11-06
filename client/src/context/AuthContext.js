@@ -61,6 +61,37 @@ export function AuthProvider({ children }) {
     }
   };
 
+  // Signup function - calls signup endpoint, cookie is set automatically by server
+  const signup = async (signupData) => {
+    try {
+      const response = await fetch("/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(signupData),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        // Format error message with details if available
+        let errorMessage = data.error || "Signup failed";
+        if (data.details && Array.isArray(data.details)) {
+          errorMessage = `${errorMessage}: ${data.details.join(". ")}`;
+        }
+        throw new Error(errorMessage);
+      }
+
+      // Server sets HTTP-only cookie automatically
+      // User data is in response
+      setUser(data.user);
+      return data.user;
+    } catch (error) {
+      console.error("Signup error:", error);
+      throw error;
+    }
+  };
+
   // Logout function - clears cookie and user state
   const logout = async () => {
     try {
@@ -97,6 +128,7 @@ export function AuthProvider({ children }) {
     user,
     loading,
     login,
+    signup,
     logout,
     authFetch,
     isAuthenticated: !!user,

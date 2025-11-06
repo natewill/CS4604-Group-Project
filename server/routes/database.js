@@ -3,6 +3,11 @@ const router = express.Router();
 const db = require("../connection");
 const { signup, signin, getPwAndIdFromEmail } = require("../accounts");
 const { generateJWT, verifyToken } = require("../auth");
+const {
+  normalizeString,
+  normalizeInteger,
+  validateSignupData,
+} = require("../utils/validation");
 
 // GET all runners
 router.get("/api/runners", (req, res) => {
@@ -36,6 +41,7 @@ router.get("/api/summary", (req, res) => {
   });
 });
 
+// Post to check whether the email and password are available for signup
 router.post("/signup/check", async (req, res) => {
   const email = String(req.body.email || "")
     .trim()
@@ -49,83 +55,101 @@ router.post("/signup/check", async (req, res) => {
   return res.json({ available: true });
 });
 
+// Post to insert new user into the database
 router.post("/signup", async (req, res) => {
   try {
-    // req.body comes from your React signup form
     const {
-      first_name,
-      last_name,
-      middle_initial,
-      email,
-      is_leader,
-      min_pace,
-      max_pace,
-      min_dist_pref,
-      max_dist_pref,
+      first_name: raw_first_name,
+      last_name: raw_last_name,
+      middle_initial: raw_middle_initial,
+      email: raw_email,
+      is_leader: raw_is_leader,
+      min_pace: raw_min_pace,
+      max_pace: raw_max_pace,
+      min_dist_pref: raw_min_dist_pref,
+      max_dist_pref: raw_max_dist_pref,
       password,
     } = req.body;
 
-    if (!email || !password) {
-      return res.status(400).json({ error: "email and password required" });
+    // Validate all input data
+    const validationErrors = validateSignupData({
+      email: raw_email,
+      password,
+      first_name: raw_first_name,
+      last_name: raw_last_name,
+      middle_initial: raw_middle_initial,
+      is_leader: raw_is_leader,
+      min_pace: raw_min_pace,
+      max_pace: raw_max_pace,
+      min_dist_pref: raw_min_dist_pref,
+      max_dist_pref: raw_max_dist_pref,
+    });
+
+    if (validationErrors.length > 0) {
+      return res.status(400).json({
+        error: "Validation failed",
+        details: validationErrors,
+      });
     }
 
-    const normEmail = String(email).trim().toLowerCase();
-    const minPaceNum =
-      min_pace !== undefined && min_pace !== null && min_pace !== ""
-        ? Number(min_pace)
-        : null;
-    const maxPaceNum =
-      max_pace !== undefined && max_pace !== null && max_pace !== ""
-        ? Number(max_pace)
-        : null;
-    const minDistNum =
-      min_dist_pref !== undefined &&
-      min_dist_pref !== null &&
-      min_dist_pref !== ""
-        ? Number(min_dist_pref)
-        : null;
-    const maxDistNum =
-      max_dist_pref !== undefined &&
-      max_dist_pref !== null &&
-      max_dist_pref !== ""
-        ? Number(max_dist_pref)
-        : null;
-
-    if (minPaceNum !== null && maxPaceNum !== null && minPaceNum > maxPaceNum) {
-      return res
-        .status(400)
-        .json({ error: "min_pace cannot be greater than max_pace" });
-    }
-    if (minDistNum !== null && maxDistNum !== null && minDistNum > maxDistNum) {
-      return res
-        .status(400)
-        .json({ error: "min_dist_pref cannot be greater than max_dist_pref" });
-    }
-
-    // build runner_data dict
+    // Normalize and convert types after validation passes
+    // Required fields are guaranteed to be present by validation
     const runner_data = {
-      first_name,
-      last_name,
-      middle_initial,
-      email: normEmail,
+      first_name: String(raw_first_name).trim(),
+      last_name: String(raw_last_name).trim(),
+      middle_initial: String(raw_middle_initial).trim().charAt(0).toUpperCase(),
+      email: String(raw_email).trim().toLowerCase(),
       user_password: null, // gets filled in signup()
-      is_leader: !!is_leader,
-      min_pace: minPaceNum,
-      max_pace: maxPaceNum,
-      min_dist_pref: minDistNum,
-      max_dist_pref: maxDistNum,
+      is_leader: !!raw_is_leader,
+      min_pace: normalizeInteger(raw_min_pace),
+      max_pace: normalizeInteger(raw_max_pace),
+      min_dist_pref: normalizeInteger(raw_min_dist_pref),
+      max_dist_pref: normalizeInteger(raw_max_dist_pref),
     };
 
-    const result = await signup(runner_data, password);
+    // Create user account
+    const runner_id = await signup(runner_data, password);
 
-    if (result === -1) {
+    if (runner_id === -1) {
       return res.status(409).json({ error: "email already exists" });
     }
 
-    return res.status(201).json({ runner_id: result, email });
+    // Fetch full user details and set authentication cookie
+    db.query(
+      "SELECT runner_id, first_name, last_name, middle_initial, email, is_leader, min_pace, max_pace, min_dist_pref, max_dist_pref FROM runners WHERE runner_id = ?",
+      [runner_id],
+      (err, results) => {
+        if (err) {
+          console.error("Database error fetching user:", err);
+          return res.status(500).json({ error: "Server error" });
+        }
+
+        if (results.length === 0) {
+          return res.status(404).json({ error: "User not found" });
+        }
+
+        // grab runner object and generate JWT token
+        const runner = results[0];
+        const token = generateJWT(runner);
+
+        // Set HTTP-only cookie with JWT token
+        // Set HTTP-only cookie with the token
+        // secure = false for local dev (cookies are send over http connection)
+        // sameSite = strict for CSRF protection
+        // CMIYC = Cache Me If You Can
+        res.cookie("CMIYC", token, {
+          httpOnly: true,
+          secure: false, // Set to true in production with HTTPS
+          sameSite: "lax",
+          maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+        });
+
+        return res.status(201).json({ user: runner });
+      }
+    );
   } catch (err) {
-    console.error("signup error:", err);
-    res.status(500).json({ error: "server error" });
+    console.error("Signup error:", err);
+    res.status(500).json({ error: "Server error" });
   }
 });
 

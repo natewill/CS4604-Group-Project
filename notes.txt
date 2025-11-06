@@ -26,4 +26,12 @@ JWT tokens
 6. Token expires → User must sign in again
 
 
+Lets make Signup/Login page
+Signup and Login should give Token and go to homepage
+Logout should remove token and return to Signup/Login page
+
 Next Steps work on logout and removing cookie
+Home page once logged in
+Creating a run
+
+We should make bunch of changes to database about optional fields
