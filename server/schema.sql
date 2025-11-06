@@ -33,6 +33,8 @@ CREATE TABLE routes (
     start_lng           DECIMAL(9,6),
     end_lat             DECIMAL(9,6),
     end_lng             DECIMAL(9,6),
+    start_address       TEXT,
+    end_address         TEXT,
     polyline            TEXT,
     distance            DECIMAL(6,2)
 );
@@ -98,11 +100,11 @@ VALUES
 (4, 'In Progress');
 
 -- Routes
-INSERT INTO routes (route_id, start_lat, start_lng, end_lat, end_lng, polyline, distance)
+INSERT INTO routes (route_id, start_lat, start_lng, end_lat, end_lng, start_address, end_address, polyline, distance)
 VALUES
-(1, 37.2571436, -80.45672929999999, 37.2413297, -80.4123084, "okhbFftajNJ@XJHAHETu@LKPD`@TRRFKLGXDbAn@\\VLh@P`BJVBBFQNi@BUGk@?k@T}@HyBP}ALo@d@wAp@_ELy@P]DEJ?HFBHFt@@JFDB?@KJqALqANaAJa@T_AHk@DgHBmG?_C@i@L_BT{AViBJk@XiAPm@Jc@F[AYD}@@}@AcAMgAKe@Y_AQkAG_AAaD?{ICaJBmBNmAZeARk@v@aDx@mDHu@FuBFmC@k@E_AEQBALEzCoApB{@vAi@lAe@bBq@G]z@]DAFG?KEu@LA?iBEACm@D?Du@HaBBa@H[HuAHgAC]D}@Fq@?aACaASiBOy@o@kB_B_Eg@sAPMNKM[Mg@m@aBo@{AU]Wy@Sq@WiCSgBAEHCLGHO`@_C`AqFfAcGNy@`@qA@KLSXm@B]ESq@cAo@cAq@oACEHOMQKL]a@_@e@oA_BcBiBsBeC{EaGbAyABKIeCc@kLCoAe@e@{@o@SQUc@Uy@AU?WDQtBsBb@m@DI][s@o@eCqBcAiAm@eAu@iBy@sB_A}BiDuIcHiQs@_Bo@y@yAcAu@o@o@o@U[e@y@c@sAOi@Ee@GaAIoE?yA@mDIkDOq@GMeAgAgAeAaAgAYYs@a@m@Qa@GYAM@]B?TFx@CRIPs@^a@Pm@HeBK{@Iq@Q[USc@_AyBk@kAq@m@m@]c@EqBD", 4.165672472759087),
-(2, 37.2397738, -80.4309147, 37.220263, -80.4065775, "qkhbFdd|iNQ?c@K[UQa@M{@KmAg@{Es@eHLCEUpBQz@MxEcAc@sBi@}BQk@U[Y]][OMJYJYPWj@g@pC_ChIyGzCcCLM?MAWFc@ZCJCn@UbAc@DIFMHKLEXWR_@R]NI^o@Ze@TWpAkBNRLSn@}@bAwArEwGPQ^k@^a@\SlAy@JIREtAeATm@n@q@pB{BxEaF~BiC`@_@R\l@dAFBRMPZv@}@h@a@b@URIn@Ud@WTUv@{@jBwBxDiEbH{HhCwCpD}Dv@{@VY\a@p@`AHJ", 2.2816750178954903),
-(3, 37.1980533, -80.3877827, 37.2235723, -80.43721060000001, "yf`bFrvsiNKp@Ed@HdCCp@Mx@Sj@MPQNm@XoA`@o@f@Yd@Sn@ObA_@hF_B~Hm@jDUfAWr@g@z@e@b@g@b@e@XSNkB|@o@TgCb@sCf@kABoA@qAA_AOq@SwAk@e@Ge@Bc@JqAl@iAd@kBv@o@h@OXWZSLUVa@`@kAfAg@h@ITAT@^FAAn@?ZBv@Ah@Mn@M\QX[Zg@^UX]~@Ej@ARDf@X`Bt@nDb@bBx@hC`@zA?ZMTQFu@Gq@C}ADcAPsBl@eB|@uB~AoEzCkDhCc@\g@Xm@Xk@LeAJy@Dw@ByADoDJ?TM??ZA`@AHQpAKx@e@|F]dFInAEp@AbADjADt@PbA`@pAt@pBb@tAFXFn@@j@Cl@StAa@dB]|AKbA?~@Al@Hr@XpBp@dF^rCJRl@tEBx@Cj@Gx@O|@Up@Yj@Yb@W^]VaAr@_C~AsErCwCjBQJGTCJOVWTUZ]l@Wf@?JgAn@k@ZIBSAYNmCxBI^IFQIICM@k@Pa@Ne@FYJ]RMPCR@NJJLJw@bBiAfC`BvAfA~@T^F\?^G`@O\uD|Fk@fAYt@SlAEfBA~@AjAA`D?t@^A`AARJh@f@VBTJLTBHTKD?@?", 4.199226517139903);
+(1, 37.2571436, -80.45672929999999, 37.2413297, -80.4123084, "3022 Edison Ln, Blacksburg, VA 24060", "920 Turner St, Blacksburg, VA 24060" ,"okhbFftajNJ@XJHAHETu@LKPD`@TRRFKLGXDbAn@\\VLh@P`BJVBBFQNi@BUGk@?k@T}@HyBP}ALo@d@wAp@_ELy@P]DEJ?HFBHFt@@JFDB?@KJqALqANaAJa@T_AHk@DgHBmG?_C@i@L_BT{AViBJk@XiAPm@Jc@F[AYD}@@}@AcAMgAKe@Y_AQkAG_AAaD?{ICaJBmBNmAZeARk@v@aDx@mDHu@FuBFmC@k@E_AEQBALEzCoApB{@vAi@lAe@bBq@G]z@]DAFG?KEu@LA?iBEACm@D?Du@HaBBa@H[HuAHgAC]D}@Fq@?aACaASiBOy@o@kB_B_Eg@sAPMNKM[Mg@m@aBo@{AU]Wy@Sq@WiCSgBAEHCLGHO`@_C`AqFfAcGNy@`@qA@KLSXm@B]ESq@cAo@cAq@oACEHOMQKL]a@_@e@oA_BcBiBsBeC{EaGbAyABKIeCc@kLCoAe@e@{@o@SQUc@Uy@AU?WDQtBsBb@m@DI][s@o@eCqBcAiAm@eAu@iBy@sB_A}BiDuIcHiQs@_Bo@y@yAcAu@o@o@o@U[e@y@c@sAOi@Ee@GaAIoE?yA@mDIkDOq@GMeAgAgAeAaAgAYYs@a@m@Qa@GYAM@]B?TFx@CRIPs@^a@Pm@HeBK{@Iq@Q[USc@_AyBk@kAq@m@m@]c@EqBD", 4.165672472759087),
+(2, 37.2397738, -80.4309147, 37.220263, -80.4065775, "Broce Drive at Elizabeth Drive", "1002 Draper Road, Blacksburg, VA 24060" ,"qkhbFdd|iNQ?c@K[UQa@M{@KmAg@{Es@eHLCEUpBQz@MxEcAc@sBi@}BQk@U[Y]][OMJYJYPWj@g@pC_ChIyGzCcCLM?MAWFc@ZCJCn@UbAc@DIFMHKLEXWR_@R]NI^o@Ze@TWpAkBNRLSn@}@bAwArEwGPQ^k@^a@\SlAy@JIREtAeATm@n@q@pB{BxEaF~BiC`@_@R\l@dAFBRMPZv@}@h@a@b@URIn@Ud@WTUv@{@jBwBxDiEbH{HhCwCpD}Dv@{@VY\a@p@`AHJ", 2.2816750178954903),
+(3, 37.1980533, -80.3877827, 37.2235723, -80.43721060000001, "1401 Cedar Run Road, Blacksburg, VA 24060", "3190 Oak Lane, Blacksburg, VA 24060" ,"yf`bFrvsiNKp@Ed@HdCCp@Mx@Sj@MPQNm@XoA`@o@f@Yd@Sn@ObA_@hF_B~Hm@jDUfAWr@g@z@e@b@g@b@e@XSNkB|@o@TgCb@sCf@kABoA@qAA_AOq@SwAk@e@Ge@Bc@JqAl@iAd@kBv@o@h@OXWZSLUVa@`@kAfAg@h@ITAT@^FAAn@?ZBv@Ah@Mn@M\QX[Zg@^UX]~@Ej@ARDf@X`Bt@nDb@bBx@hC`@zA?ZMTQFu@Gq@C}ADcAPsBl@eB|@uB~AoEzCkDhCc@\g@Xm@Xk@LeAJy@Dw@ByADoDJ?TM??ZA`@AHQpAKx@e@|F]dFInAEp@AbADjADt@PbA`@pAt@pBb@tAFXFn@@j@Cl@StAa@dB]|AKbA?~@Al@Hr@XpBp@dF^rCJRl@tEBx@Cj@Gx@O|@Up@Yj@Yb@W^]VaAr@_C~AsErCwCjBQJGTCJOVWTUZ]l@Wf@?JgAn@k@ZIBSAYNmCxBI^IFQIICM@k@Pa@Ne@FYJ]RMPCR@NJJLJw@bBiAfC`BvAfA~@T^F\?^G`@O\uD|Fk@fAYt@SlAEfBA~@AjAA`D?t@^A`AARJh@f@VBTJLTBHTKD?@?", 4.199226517139903);
 -- Runs
 INSERT INTO runs (run_id, leader_id, run_route, run_status_id, name, description, pace, date, start_time)
 VALUES
