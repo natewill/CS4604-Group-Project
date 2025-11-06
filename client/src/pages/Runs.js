@@ -109,6 +109,8 @@ function Runs() {
             <p><strong>Status:</strong> {run.status}</p>
             <p><strong>Leader ID:</strong> {run.leader_id}</p>
             <p><strong>Route:</strong> {run.run_route}</p>
+            <p><strong>Start Address:</strong> {run.start_address}</p>
+            <p><strong>End Address:</strong> {run.end_address}</p>
             <p><strong>Pace:</strong> {run.pace}</p>
             <p><strong>Date:</strong> {run.date}</p>
             <p><strong>Start Time:</strong> {run.start_time}</p>

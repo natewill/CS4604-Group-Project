@@ -195,6 +195,7 @@ router.get("/api/reverse-geocode", async (req, res) => {
 });
 
 // Validate Address
+// TODO: why is this here?
 router.post("/api/validate-address", async (req, res) => {
   try {
     const { address, addressLines, regionCode = "US" } = req.body || {};
@@ -323,8 +324,10 @@ router.get("/api/routes", (req, res) => {
       route_id,
       start_lat,
       start_lng,
+      start_address,
       end_lat,
       end_lng,
+      end_address,
       polyline,
       distance
     FROM routes
@@ -351,8 +354,10 @@ router.get("/api/routes/:id", (req, res) => {
       route_id,
       start_lat,
       start_lng,
+      start_address,
       end_lat,
       end_lng,
+      end_address,
       polyline,
       distance
     FROM routes
