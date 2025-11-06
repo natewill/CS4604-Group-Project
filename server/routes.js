@@ -3,6 +3,7 @@ const router = express.Router();
 const db = require("./connection");
 const { signup, signin, getPwAndIdFromEmail } = require("./accounts");
 const axios = require("axios");
+const { generateJWT, verifyToken } = require("./auth");
 
 // GET all runners
 router.get("/api/runners", (req, res) => {
@@ -129,11 +130,14 @@ router.post("/signup", async (req, res) => {
   }
 });
 
+// We send request with body {email:{email}, password:{password}}
+// we return cookie with JWT token and req.user={runner db object}
 router.post("/signin", async (req, res) => {
   const { email, password } = req.body;
   if (!email || !password) {
     return res.status(400).json({ error: "email and password required" });
   }
+
   const result = await signin(email, password);
   if (result === -1) {
     return res.status(401).json({ error: "email not found" });
@@ -141,7 +145,65 @@ router.post("/signin", async (req, res) => {
   if (result === -2) {
     return res.status(401).json({ error: "incorrect password" });
   }
-  return res.json(result);
+
+  // result is the runner_id, now fetch full user details
+  try {
+    db.query(
+      "SELECT runner_id, first_name, last_name, middle_initial, email, is_leader, min_pace, max_pace, min_dist_pref, max_dist_pref FROM runners WHERE runner_id = ?",
+      [result],
+      (err, results) => {
+        if (err) {
+          console.error("Database error fetching user:", err);
+          return res.status(500).json({ error: "Server error" });
+        }
+
+        if (results.length === 0) {
+          return res.status(404).json({ error: "User not found" });
+        }
+
+        const runner = results[0];
+
+        // Generate JWT token with full runner object (excluding password)
+        const token = generateJWT(runner);
+
+        // Set HTTP-only cookie with the token
+        // secure = false for local dev (cookies are send over http connection)
+        // sameSite = lax for local dev (allows for backend and frontend)
+        // CMIYC = Cache Me If You Can
+        res.cookie("CMIYC", token, {
+          httpOnly: true, // Cookie not accessible via JavaScript (more secure)
+          secure: false, // HTTPS only in production
+          sameSite: "strict", // CSRF protection
+          maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days in milliseconds
+        });
+
+        // Return user object (token is in cookie, not in response)
+        // But isnt runner object already in the token?
+        return res.json({
+          user: runner,
+        });
+      }
+    );
+  } catch (err) {
+    console.error("Signin error:", err);
+    return res.status(500).json({ error: "Server error" });
+  }
+});
+
+// GET current user info (requires authentication)
+router.get("/api/me", verifyToken, (req, res) => {
+  // returns user runner object from the db using the JWT token
+  res.json(req.user);
+});
+
+// POST logout - clears the HTTP-only cookie
+router.post("/api/logout", (req, res) => {
+  res.clearCookie("token", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "strict",
+  });
+  res.json({ message: "Logged out successfully" });
 });
 
 // Google Maps API server routes
@@ -245,7 +307,6 @@ router.post("/api/save-route", async (req, res) => {
   );
 });
 
-
 // GET all runs
 router.get("/api/runs", (req, res) => {
   const sql = `
@@ -289,7 +350,15 @@ router.post("/api/runs", (req, res) => {
   } = req.body;
 
   // Validate required fields
-  if (!leader_id || !run_route || !run_status_id || !name || !pace || !date || !start_time) {
+  if (
+    !leader_id ||
+    !run_route ||
+    !run_status_id ||
+    !name ||
+    !pace ||
+    !date ||
+    !start_time
+  ) {
     return res.status(400).json({ error: "Missing required fields" });
   }
 
@@ -300,7 +369,16 @@ router.post("/api/runs", (req, res) => {
 
   db.query(
     sql,
-    [leader_id, run_route, run_status_id, name, description || null, pace, date, start_time],
+    [
+      leader_id,
+      run_route,
+      run_status_id,
+      name,
+      description || null,
+      pace,
+      date,
+      start_time,
+    ],
     (err, result) => {
       if (err) {
         console.error("Database insert failed:", err);
@@ -341,7 +419,6 @@ router.get("/api/routes", (req, res) => {
   });
 });
 
-
 // GET a specific route by ID
 router.get("/api/routes/:id", (req, res) => {
   const { id } = req.params;
@@ -373,9 +450,8 @@ router.get("/api/routes/:id", (req, res) => {
   });
 });
 
-
 // PUT update an existing run
-// Can be used like PUT or PATCH where we replace the whole record or 
+// Can be used like PUT or PATCH where we replace the whole record or
 // only update one or more fields that are included in the request params
 router.put("/api/runs/:id", (req, res) => {
   const { id } = req.params;
@@ -462,7 +538,7 @@ router.put("/api/runs/:id", (req, res) => {
     res.json({
       message: "Run updated successfully",
       run_id: id,
-      updated_fields: updates.map(u => u.split(" = ")[0]),
+      updated_fields: updates.map((u) => u.split(" = ")[0]),
     });
   });
 });
@@ -505,6 +581,5 @@ router.delete("/api/runs/:id", (req, res) => {
     res.json({ message: "Run deleted successfully" });
   });
 });
-
 
 module.exports = router;

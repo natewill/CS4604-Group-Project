@@ -16,3 +16,11 @@ When I Generate a Route I need to store the distance and other data needed in
 
 I might be able to store starting and ending location along with polyline
 from here I can place start and end marker with the polyline
+
+JWT tokens
+1. User signs in → Server validates credentials
+2. Server creates JWT token with user data (runner_id, is_leader, etc.)
+3. Token sent to client (cookie or response body)
+4. Client includes token in API requests
+5. Server validates token on each request
+6. Token expires → User must sign in again

@@ -2,9 +2,9 @@
 import { useState } from "react";
 
 export default function Signup() {
-  const [step, setStep] = useState(1); //two steps, first check if email and password are valid, 
+  const [step, setStep] = useState(1); //two steps, first check if email and password are valid,
   //then submit all information
-  const [err, setErr] = useState(""); 
+  const [err, setErr] = useState("");
 
   // step1 state
   const [email, setEmail] = useState("");
@@ -12,13 +12,13 @@ export default function Signup() {
 
   // step2 state
   const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName]   = useState("");
-  const [middleInitial, setMI]    = useState("");
-  const [isLeader, setIsLeader]   = useState(false);
-  const [minPace, setMinPace]     = useState("");
-  const [maxPace, setMaxPace]     = useState("");
-  const [minDist, setMinDist]     = useState("");
-  const [maxDist, setMaxDist]     = useState("");
+  const [lastName, setLastName] = useState("");
+  const [middleInitial, setMI] = useState("");
+  const [isLeader, setIsLeader] = useState(false);
+  const [minPace, setMinPace] = useState("");
+  const [maxPace, setMaxPace] = useState("");
+  const [minDist, setMinDist] = useState("");
+  const [maxDist, setMaxDist] = useState("");
 
   async function checkEmailAndPw(event) {
     event.preventDefault();
@@ -97,13 +97,13 @@ export default function Signup() {
           <input
             placeholder="email"
             value={email}
-            onChange={event => setEmail(event.target.value)}
+            onChange={(event) => setEmail(event.target.value)}
           />
           <input
             placeholder="password"
             type="password"
             value={password}
-            onChange={event => setPassword(event.target.value)}
+            onChange={(event) => setPassword(event.target.value)}
           />
           <button type="submit">Continue</button>
         </form>
@@ -111,21 +111,57 @@ export default function Signup() {
 
       {step === 2 && (
         <form onSubmit={submitAll} style={{ display: "grid", gap: 8 }}>
-          <input placeholder="first name" value={firstName} onChange={e=>setFirstName(e.target.value)} />
-          <input placeholder="last name" value={lastName} onChange={e=>setLastName(e.target.value)} />
-          <input placeholder="middle initial" value={middleInitial} onChange={e=>setMI(e.target.value)} />
+          <input
+            placeholder="first name"
+            value={firstName}
+            onChange={(e) => setFirstName(e.target.value)}
+          />
+          <input
+            placeholder="last name"
+            value={lastName}
+            onChange={(e) => setLastName(e.target.value)}
+          />
+          <input
+            placeholder="middle initial"
+            value={middleInitial}
+            onChange={(e) => setMI(e.target.value)}
+          />
           <label>
-            <input type="checkbox" checked={isLeader} onChange={e=>setIsLeader(e.target.checked)} />
+            <input
+              type="checkbox"
+              checked={isLeader}
+              onChange={(e) => setIsLeader(e.target.checked)}
+            />
             Leader?
           </label>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
-            <input placeholder="min pace" value={minPace} onChange={e=>setMinPace(e.target.value)} />
-            <input placeholder="max pace" value={maxPace} onChange={e=>setMaxPace(e.target.value)} />
-            <input placeholder="min dist" value={minDist} onChange={e=>setMinDist(e.target.value)} />
-            <input placeholder="max dist" value={maxDist} onChange={e=>setMaxDist(e.target.value)} />
+          <div
+            style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}
+          >
+            <input
+              placeholder="min pace"
+              value={minPace}
+              onChange={(e) => setMinPace(e.target.value)}
+            />
+            <input
+              placeholder="max pace"
+              value={maxPace}
+              onChange={(e) => setMaxPace(e.target.value)}
+            />
+            <input
+              placeholder="min dist"
+              value={minDist}
+              onChange={(e) => setMinDist(e.target.value)}
+            />
+            <input
+              placeholder="max dist"
+              value={maxDist}
+              onChange={(e) => setMaxDist(e.target.value)}
+            />
           </div>
           <button type="submit">Create account</button>
-          <button type="button" onClick={() => setStep(1)}>Back</button>
+          <button type="button" onClick={() => setStep(1)}>
+            Back
+          </button>
         </form>
       )}
 
