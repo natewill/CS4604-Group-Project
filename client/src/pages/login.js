@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
 export default function Signin() {
@@ -9,7 +9,7 @@ export default function Signin() {
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  async function handleSignin(event) {
+  async function handleLogin(event) {
     event.preventDefault();
     setErr("");
 
@@ -23,7 +23,7 @@ export default function Signin() {
       await login(email, password);
 
       // Redirect to summary page for testing
-      navigate("/summary");
+      navigate("/home");
     } catch (error) {
       setErr(error.message || "Sign in failed!");
     }
@@ -31,8 +31,8 @@ export default function Signin() {
 
   return (
     <div>
-      <h1>Sign in</h1>
-      <form onSubmit={handleSignin} style={{ display: "grid", gap: 8 }}>
+      <h1>Login</h1>
+      <form onSubmit={handleLogin} style={{ display: "grid", gap: 8 }}>
         <input
           placeholder="email"
           value={email}
@@ -44,9 +44,12 @@ export default function Signin() {
           value={password}
           onChange={(event) => setPassword(event.target.value)}
         />
-        <button type="submit">Sign in</button>
+        <button type="submit">Login</button>
       </form>
       {err && <div style={{ color: "crimson" }}>{err}</div>}
+      <div style={{ marginTop: "1rem", textAlign: "center" }}>
+        If you don't have an account, <Link to="/signup">Sign up</Link>
+      </div>
     </div>
   );
 }

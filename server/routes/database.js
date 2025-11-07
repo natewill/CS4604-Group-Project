@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const db = require("../connection");
-const { signup, signin, getPwAndIdFromEmail } = require("../accounts");
+const { signup, login, getPwAndIdFromEmail } = require("../accounts");
 const { generateJWT, verifyToken } = require("../auth");
 const {
   normalizeString,
@@ -17,27 +17,6 @@ router.get("/api/runners", (req, res) => {
       return res.status(500).json({ error: "Database query failed" });
     }
     res.json(results);
-  });
-});
-
-// get summary
-router.get("/api/summary", (req, res) => {
-  db.query("SELECT DATABASE() AS name", (err, dbResult) => {
-    if (err) return res.status(500).json({ error: "Failed (name)" });
-
-    const dbName = dbResult[0].name;
-    db.query("SELECT COUNT(*) AS count FROM runners", (err, r1) => {
-      if (err) return res.status(500).json({ error: "Failed (runners)" });
-      db.query("SELECT COUNT(*) AS count FROM runs", (err, r2) => {
-        if (err) return res.status(500).json({ error: "Failed (runs)" });
-
-        res.json({
-          dbName,
-          runnersCount: r1[0].count,
-          runsCount: r2[0].count,
-        });
-      });
-    });
   });
 });
 
@@ -155,13 +134,13 @@ router.post("/signup", async (req, res) => {
 
 // We send request with body {email:{email}, password:{password}}
 // we return cookie with JWT token and req.user={runner db object}
-router.post("/signin", async (req, res) => {
+router.post("/login", async (req, res) => {
   const { email, password } = req.body;
   if (!email || !password) {
     return res.status(400).json({ error: "email and password required" });
   }
 
-  const result = await signin(email, password);
+  const result = await login(email, password);
   if (result === -1) {
     return res.status(401).json({ error: "email not found" });
   }
@@ -195,8 +174,8 @@ router.post("/signin", async (req, res) => {
         // CMIYC = Cache Me If You Can
         res.cookie("CMIYC", token, {
           httpOnly: true, // Cookie not accessible via JavaScript (more secure)
-          secure: false, // HTTPS only in production
-          sameSite: "strict", // CSRF protection
+          secure: false,
+          sameSite: "lax",
           maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days in milliseconds
         });
 
@@ -208,7 +187,7 @@ router.post("/signin", async (req, res) => {
       }
     );
   } catch (err) {
-    console.error("Signin error:", err);
+    console.error("login error:", err);
     return res.status(500).json({ error: "Server error" });
   }
 });
@@ -221,10 +200,11 @@ router.get("/api/me", verifyToken, (req, res) => {
 
 // POST logout - clears the HTTP-only cookie
 router.post("/api/logout", (req, res) => {
-  res.clearCookie("token", {
+  res.clearCookie("CMIYC", {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "strict",
+    secure: false,
+    sameSite: "lax",
+    path: "/",
   });
   res.json({ message: "Logged out successfully" });
 });

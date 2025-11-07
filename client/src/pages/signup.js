@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
 // Validation constants
@@ -184,7 +184,7 @@ export default function Signup() {
       await signup(payload);
 
       // Redirect to summary page after successful signup
-      navigate("/summary");
+      navigate("/home");
     } catch (error) {
       setErr(error.message || "Signup failed!");
     }
@@ -299,6 +299,9 @@ export default function Signup() {
       )}
 
       {err && <div style={{ color: "crimson" }}>{err}</div>}
+      <div style={{ marginTop: "1rem", textAlign: "center" }}>
+        If you already have an account, <Link to="/login">Sign in</Link>
+      </div>
     </div>
   );
 }

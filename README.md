@@ -41,7 +41,7 @@ This application uses **JWT (JSON Web Token) authentication with HTTP-only cooki
 
 ### Authentication Flow
 
-1. **User Signs In** (`POST /signin`)
+1. **User Signs In** (`POST /login`)
 
    - Client sends email and password
    - Server validates credentials

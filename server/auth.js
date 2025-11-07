@@ -43,7 +43,7 @@ function verifyToken(req, res, next) {
   }
 
   // Get token from HTTP-only cookie
-  const token = req.cookies?.token;
+  const token = req.cookies?.CMIYC;
 
   // no token in request
   if (!token) {

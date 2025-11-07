@@ -34,10 +34,10 @@ export function AuthProvider({ children }) {
     loadUser();
   }, []);
 
-  // Login function - calls signin endpoint, cookie is set automatically by server
+  // Login function - calls login endpoint, cookie is set automatically by server
   const login = async (email, password) => {
     try {
-      const response = await fetch("/signin", {
+      const response = await fetch("/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
