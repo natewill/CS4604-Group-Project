@@ -19,6 +19,7 @@ Cache Me If You Can Group Project:
 
 ```
 REACT_APP_GOOGLE_MAPS_API_KEY={REPLACE ME}
+JWT_SECRET={REPLACE ME}
 ```
 
 Server
