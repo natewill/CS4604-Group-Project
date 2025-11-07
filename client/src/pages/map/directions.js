@@ -1,3 +1,5 @@
+import { addEndpoints } from "../api/addEndpoints";
+
 // Line in the directions
 export const polylineOptions = {
   strokeColor: "#2563eb",
@@ -37,7 +39,11 @@ export function requestDirections({ origin, destination }) {
         destination,
         travelMode: "WALKING",
       },
-      (result, status) => {
+      async (result, status) => {
+
+        //rewrite polyline to include start and end points
+        result.routes[0].overview_polyline = await addEndpoints(result.routes[0].overview_polyline, origin.lat, origin.lng, destination.lat, destination.lng);
+
         if (status === "OK") resolve(result);
         else reject(new Error(`Directions request failed: ${status}`));
       }

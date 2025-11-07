@@ -16,6 +16,7 @@ import {
  polylineOptions,
 } from "./map/directions";
 import validator from 'validator';
+import polyline from "@mapbox/polyline";
 
 
 
@@ -76,6 +77,7 @@ const CreateRoute = ({ onRouteCreated }) => {
        origin: startCoords,
        destination: endCoords,
      });
+
      setDirections(result);
 
 
@@ -294,24 +296,24 @@ const CreateRoute = ({ onRouteCreated }) => {
          <Marker position={endCoords} icon={customIcons?.endIcon} />
        )}
        {directions && (
-         <DirectionsRenderer
-           directions={directions}
-           options={{
-             suppressMarkers: true,
-             draggable: true,
-             polylineOptions,
-           }}
-         />
-       )}
-       {startCoords && routeStart && (
-         <Polyline
-           path={[startCoords, routeStart]}
-           options={polylineOptions}
-         />
-       )}
-       {endCoords && routeEnd && (
-         <Polyline path={[endCoords, routeEnd]} options={polylineOptions} />
-       )}
+          <DirectionsRenderer
+            directions={directions}
+            options={{
+              suppressMarkers: true,
+              draggable: true,
+              polylineOptions,
+            }}
+          />
+        )}
+        {startCoords && routeStart && (
+          <Polyline
+            path={[startCoords, routeStart]}
+            options={polylineOptions}
+          />
+        )}
+        {endCoords && routeEnd && (
+          <Polyline path={[endCoords, routeEnd]} options={polylineOptions} />
+        )}
      </GoogleMap>
    </div>
  );

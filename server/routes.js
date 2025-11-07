@@ -194,33 +194,6 @@ router.get("/api/reverse-geocode", async (req, res) => {
   }
 });
 
-// Validate Address
-// TODO: why is this here?
-router.post("/api/validate-address", async (req, res) => {
-  try {
-    const { address, addressLines, regionCode = "US" } = req.body || {};
-    const lines = Array.isArray(addressLines)
-      ? addressLines
-      : typeof address === "string"
-      ? [address]
-      : [];
-
-    if (!lines.length) {
-      return res.status(400).json({ error: "Missing address" });
-    }
-
-    const url = `https://addressvalidation.googleapis.com/v1:validateAddress?key=${process.env.GOOGLE_MAPS_API_KEY}`;
-    const body = { address: { regionCode, addressLines: lines } };
-    const { data } = await axios.post(url, body);
-    res.json(data);
-  } catch (err) {
-    console.error(
-      "/api/validate-address error",
-      err.response?.data || err.message
-    );
-    res.status(500).json({ error: "Address validation failed" });
-  }
-});
 
 // Post to insert a new Route into database
 router.post("/api/save-route", async (req, res) => {
@@ -268,10 +241,14 @@ router.get("/api/runs", (req, res) => {
       rt.start_address,
       rt.end_address,
       rt.polyline,
-      rt.distance
+      rt.distance,
+      CONCAT(COALESCE(leader.first_name, ''), ' ', COALESCE(leader.last_name, '')) AS leader_name,
+      leader.first_name AS leader_first_name,
+      leader.last_name AS leader_last_name
     FROM runs r
     JOIN status s ON r.run_status_id = s.status_id
     JOIN routes rt ON r.run_route = rt.route_id
+    JOIN runners leader ON r.leader_id = leader.runner_id
     ORDER BY r.date DESC, r.start_time DESC;
   `;
 
@@ -514,7 +491,7 @@ router.get("/api/static-map", (req, res) => {
   
   try {
     //returns a url that can be used to display a static map of the route
-    const url = `https://maps.googleapis.com/maps/api/staticmap?size=600x400&path=enc:${polyline}&markers=color:green|label:S|${start_lat},${start_lng}&markers=color:red|label:E|${end_lat},${end_lng}&visible=${start_lat},${start_lng}&visible=${end_lat},${end_lng}&key=${process.env.GOOGLE_MAPS_API_KEY}`;
+    const url = `https://maps.googleapis.com/maps/api/staticmap?size=600x400&path=color:0x0000ff|weight:10|enc:${polyline}&markers=color:green|label:S|${start_lat},${start_lng}&markers=color:red|label:E|${end_lat},${end_lng}&visible=${start_lat},${start_lng}&visible=${end_lat},${end_lng}&key=${process.env.GOOGLE_MAPS_API_KEY}`;
     res.json({ url });
   } catch (err) {
     console.error("Error generating static map:", err);
