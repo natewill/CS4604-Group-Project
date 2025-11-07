@@ -18,7 +18,6 @@ Cache Me If You Can Group Project:
 
 ```
 REACT_APP_GOOGLE_MAPS_API_KEY={REPLACE ME}
-DANGEROUSLY_DISABLE_HOST_CHECK=true #this is super sus but idk how to make it work without it
 ```
 
 Server
