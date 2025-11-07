@@ -11,21 +11,43 @@ import NewRun from "./pages/NewRun";
 import Home from "./pages/Home";
 
 import Layout from "./components/NavLayout";
+import ProtectedRoute from "./components/ProtectedRoute";
+import PublicRoute from "./components/PublicRoute";
 
 function App() {
   return (
     <AuthProvider>
       <div>
         <Routes>
-          {/* Default route - redirects to /login */}
-          <Route path="/" element={<Navigate to="/login" replace />} />
+          {/* Default route - redirects to /home (will validate cookie) */}
+          <Route path="/" element={<Navigate to="/home" replace />} />
 
-          {/*pages with no nav bar */}
-          <Route path="/signup" element={<Signup />} />
-          <Route path="/login" element={<Signin />} />
+          {/* Public pages - redirect to home if already authenticated */}
+          <Route
+            path="/signup"
+            element={
+              <PublicRoute>
+                <Signup />
+              </PublicRoute>
+            }
+          />
+          <Route
+            path="/login"
+            element={
+              <PublicRoute>
+                <Signin />
+              </PublicRoute>
+            }
+          />
 
-          {/*pages with nav bar */}
-          <Route element={<Layout />}>
+          {/* Protected pages with nav bar - require authentication */}
+          <Route
+            element={
+              <ProtectedRoute>
+                <Layout />
+              </ProtectedRoute>
+            }
+          >
             <Route path="/home" element={<Home />} />
             <Route path="/runs" element={<Runs />} />
             <Route path="/runs/new" element={<NewRun />} />

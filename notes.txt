@@ -35,3 +35,8 @@ Home page once logged in
 Creating a run
 
 We should make bunch of changes to database about optional fields
+
+JWT signin
+Try to go to home page (must validate cookie)
+if no valid cookie then redirect to login page
+upon successful login go to home
