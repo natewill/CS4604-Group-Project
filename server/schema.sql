@@ -67,27 +67,28 @@ CREATE TABLE run_participation (
 INSERT INTO runners (runner_id, first_name, middle_initial, last_name, email, user_password,
    is_leader, min_pace, max_pace, min_dist_pref, max_dist_pref)
 VALUES
-(1, 'Jett', 'W', 'Morrow', 'jettmorrow@vt.edu', '$argon2id$v=19$m=16,t=2,p=1$cnVubmluZzE$q+7h87Qi5iB8m1gNPBROGQ', 1, 8, 9, 3, 15), -- purpleGiraffe21!
-(2, 'Adam', 'Z', 'Schantz', 'adams03@vt.edu', '$argon2id$v=19$m=16,t=2,p=1$cnVubmluZzE$US/trwyeAJ7z+3gp+DCwXw', 1, 7, 9, 3, 26), -- coffee_and_code
-(3, 'Emily', 'R', 'Nguyen', 'emily.nguyen@vt.edu', '$argon2id$v=19$m=16,t=2,p=1$cnVubmluZzE$n/+K3wxq+LF4qhbKt/Gxyw,', 0, 9, 10, 2, 6), -- Sunny-day-1987
-(4, 'Liam', 'T', 'Chen', 'liam.chen@vt.edu', '$argon2id$v=19$m=16,t=2,p=1$cnVubmluZzE$daWsC5sHSLEuFIzgmUz4tA', 0, 6, 7, 5, 20), -- iliketacos4eva
-(5, 'Sofia', 'M', 'Patel', 'sofia.patel@vt.edu', '$argon2id$v=19$m=16,t=2,p=1$cnVubmluZzE$GS6at2s7w3YozsnCr5nsuA', 1, 7, 8, 4, 13), -- MoonlightDrive77
-(6, 'Noah', 'B', 'Johnson', 'noah.johnson@vt.edu', '$argon2id$v=19$m=16,t=2,p=1$cnVubmluZzE$ZvM7CvkdLLqGrBWrGiynWA', 0, 8, 9, 3, 10), -- blue.skies&88
-(7, 'Ava', 'K', 'Davis', 'ava.davis@vt.edu', '$argon2id$v=19$m=16,t=2,p=1$cnVubmluZzE$rc6CwixWsUoaJWLucsOgEg', 0, 9, 10, 2, 5), -- green-hat7
-(8, 'Ethan', 'J', 'Wilson', 'ethan.wilson@vt.edu', '$argon2id$v=19$m=16,t=2,p=1$cnVubmluZzE$NAf+nJiZkxxF68OxXqnnrw', 1, 6, 8, 5, 26), -- RedPineapple#5
-(9, 'Olivia', 'L', 'Martinez', 'olivia.martinez@vt.edu', '$argon2id$v=19$m=16,t=2,p=1$cnVubmluZzE$Tp1/qPncWZSNJ7G9GLJ7yA', 0, 7, 8, 3, 8), -- chocolate.monday9
-(10, 'Mason', 'C', 'Brown', 'mason.brown@vt.edu', '$argon2id$v=19$m=16,t=2,p=1$cnVubmluZzE$e5kxpX1D0hDL/fQC6vBkNA', 0, 8, 9, 4, 10), -- dogeatdogworld12
-(11, 'Isabella', 'P', 'Clark', 'isabella.clark@vt.edu', '$argon2id$v=19$m=16,t=2,p=1$cnVubmluZzE$8Bndt/gryd5p4eOTO9YC8A', 0, 9, 10, 3, 6), -- walkthedog2nite!
-(12, 'James', 'A', 'Lopez', 'james.lopez@vt.edu', '$argon2id$v=19$m=16,t=2,p=1$cnVubmluZzE$+8vZg9uAlQxN3TyZxzcclA', 1, 6, 7, 10, 26), -- slowCoffee_42
-(13, 'Charlotte', 'D', 'Gonzalez', 'charlotte.gonzalez@vt.edu', '$argon2id$v=19$m=16,t=2,p=1$cnVubmluZzE$yBT2S2O7qEJyNJX0ArBTng', 0, 8, 9, 3, 15), -- ticketToMars23
-(14, 'Lucas', 'N', 'Perez', 'lucas.perez@vt.edu', '$argon2id$v=19$m=16,t=2,p=1$cnVubmluZzE$dr92IHJxPDfQrWPNOGPUEg', 0, 7, 8, 5, 13), -- lazyRiver_1984
-(15, 'Amelia', 'S', 'Hernandez', 'amelia.hernandez@vt.edu', '$argon2id$v=19$m=16,t=2,p=1$cnVubmluZzE$CNNyOPZ+WE7wHAO7b64NMA', 1, 9, 10, 2, 8), -- bronze-rocket11
-(16, 'Benjamin', 'E', 'Lewis', 'benjamin.lewis@vt.edu', '$argon2id$v=19$m=16,t=2,p=1$cnVubmluZzE$SvgerouohOb6xd+ScEMGfA', 0, 8, 9, 3, 12), -- quiet+library7
-(17, 'Mia', 'F', 'Hall', 'mia.hall@vt.edu', '$argon2id$v=19$m=16,t=2,p=1$cnVubmluZzE$GOY0tgX0obhooyw40m6f+Q', 0, 7, 8, 4, 9), -- sk8boarder_1995
-(18, 'Henry', 'G', 'Young', 'henry.young@vt.edu', '$argon2id$v=19$m=16,t=2,p=1$cnVubmluZzE$OdhJBdhfCBjrht2zjiyvZA', 1, 6, 7, 10, 26), -- paperclips&dreams
-(19, 'Harper', 'Q', 'Allen', 'harper.allen@vt.edu', '$argon2id$v=19$m=16,t=2,p=1$cnVubmluZzE$29Ppdbdu8sLo1mi8Ya+/vw', 0, 8, 9, 3, 10), -- fuzzyBlanket#3
-(20, 'Alexander', 'V', 'King', 'alex.king@vt.edu', '$argon2id$v=19$m=16,t=2,p=1$cnVubmluZzE$3cPUrQ+yTPNG7Q6u7bJy3w', 1, 7, 8, 5, 20), -- city-lights_9pm
-(21, 'Nate', 'D', 'Williams', 'natewilliams@vt.edu', '$argon2id$v=19$m=16,t=2,p=1$cnVubmluZzE$8ifrTk+98PBcbldrTtgjhA', 1, 11, 12, 2, 3); -- trainspotter_06
+(1, 'test', 't', 'test', 'test@test.com', '$argon2id$v=19$m=65536,t=2,p=1$J0EccGqYCUH1b1Q5sJPwcg$apQph3Am1eekXrnlfXEWgYP+bJ/xfqr+eb2imBYJP78', 0, 0, 0, 0, 0), -- test
+(2, 'Jett', 'W', 'Morrow', 'jettmorrow@vt.edu', '$argon2id$v=19$m=16,t=2,p=1$cnVubmluZzE$q+7h87Qi5iB8m1gNPBROGQ', 1, 8, 9, 3, 15), -- purpleGiraffe21!
+(3, 'Adam', 'Z', 'Schantz', 'adams03@vt.edu', '$argon2id$v=19$m=16,t=2,p=1$cnVubmluZzE$US/trwyeAJ7z+3gp+DCwXw', 1, 7, 9, 3, 26), -- coffee_and_code
+(4, 'Emily', 'R', 'Nguyen', 'emily.nguyen@vt.edu', '$argon2id$v=19$m=16,t=2,p=1$cnVubmluZzE$n/+K3wxq+LF4qhbKt/Gxyw,', 0, 9, 10, 2, 6), -- Sunny-day-1987
+(5, 'Liam', 'T', 'Chen', 'liam.chen@vt.edu', '$argon2id$v=19$m=16,t=2,p=1$cnVubmluZzE$daWsC5sHSLEuFIzgmUz4tA', 0, 6, 7, 5, 20), -- iliketacos4eva
+(6, 'Sofia', 'M', 'Patel', 'sofia.patel@vt.edu', '$argon2id$v=19$m=16,t=2,p=1$cnVubmluZzE$GS6at2s7w3YozsnCr5nsuA', 1, 7, 8, 4, 13), -- MoonlightDrive77
+(7, 'Noah', 'B', 'Johnson', 'noah.johnson@vt.edu', '$argon2id$v=19$m=16,t=2,p=1$cnVubmluZzE$ZvM7CvkdLLqGrBWrGiynWA', 0, 8, 9, 3, 10), -- blue.skies&88
+(8, 'Ava', 'K', 'Davis', 'ava.davis@vt.edu', '$argon2id$v=19$m=16,t=2,p=1$cnVubmluZzE$rc6CwixWsUoaJWLucsOgEg', 0, 9, 10, 2, 5), -- green-hat7
+(9, 'Ethan', 'J', 'Wilson', 'ethan.wilson@vt.edu', '$argon2id$v=19$m=16,t=2,p=1$cnVubmluZzE$NAf+nJiZkxxF68OxXqnnrw', 1, 6, 8, 5, 26), -- RedPineapple#5
+(10, 'Olivia', 'L', 'Martinez', 'olivia.martinez@vt.edu', '$argon2id$v=19$m=16,t=2,p=1$cnVubmluZzE$Tp1/qPncWZSNJ7G9GLJ7yA', 0, 7, 8, 3, 8), -- chocolate.monday9
+(11, 'Mason', 'C', 'Brown', 'mason.brown@vt.edu', '$argon2id$v=19$m=16,t=2,p=1$cnVubmluZzE$e5kxpX1D0hDL/fQC6vBkNA', 0, 8, 9, 4, 10), -- dogeatdogworld12
+(12, 'Isabella', 'P', 'Clark', 'isabella.clark@vt.edu', '$argon2id$v=19$m=16,t=2,p=1$cnVubmluZzE$8Bndt/gryd5p4eOTO9YC8A', 0, 9, 10, 3, 6), -- walkthedog2nite!
+(13, 'James', 'A', 'Lopez', 'james.lopez@vt.edu', '$argon2id$v=19$m=16,t=2,p=1$cnVubmluZzE$+8vZg9uAlQxN3TyZxzcclA', 1, 6, 7, 10, 26), -- slowCoffee_42
+(14, 'Charlotte', 'D', 'Gonzalez', 'charlotte.gonzalez@vt.edu', '$argon2id$v=19$m=16,t=2,p=1$cnVubmluZzE$yBT2S2O7qEJyNJX0ArBTng', 0, 8, 9, 3, 15), -- ticketToMars23
+(15, 'Lucas', 'N', 'Perez', 'lucas.perez@vt.edu', '$argon2id$v=19$m=16,t=2,p=1$cnVubmluZzE$dr92IHJxPDfQrWPNOGPUEg', 0, 7, 8, 5, 13), -- lazyRiver_1984
+(16, 'Amelia', 'S', 'Hernandez', 'amelia.hernandez@vt.edu', '$argon2id$v=19$m=16,t=2,p=1$cnVubmluZzE$CNNyOPZ+WE7wHAO7b64NMA', 1, 9, 10, 2, 8), -- bronze-rocket11
+(17, 'Benjamin', 'E', 'Lewis', 'benjamin.lewis@vt.edu', '$argon2id$v=19$m=16,t=2,p=1$cnVubmluZzE$SvgerouohOb6xd+ScEMGfA', 0, 8, 9, 3, 12), -- quiet+library7
+(18, 'Mia', 'F', 'Hall', 'mia.hall@vt.edu', '$argon2id$v=19$m=16,t=2,p=1$cnVubmluZzE$GOY0tgX0obhooyw40m6f+Q', 0, 7, 8, 4, 9), -- sk8boarder_1995
+(19, 'Henry', 'G', 'Young', 'henry.young@vt.edu', '$argon2id$v=19$m=16,t=2,p=1$cnVubmluZzE$OdhJBdhfCBjrht2zjiyvZA', 1, 6, 7, 10, 26), -- paperclips&dreams
+(20, 'Harper', 'Q', 'Allen', 'harper.allen@vt.edu', '$argon2id$v=19$m=16,t=2,p=1$cnVubmluZzE$29Ppdbdu8sLo1mi8Ya+/vw', 0, 8, 9, 3, 10), -- fuzzyBlanket#3
+(21, 'Alexander', 'V', 'King', 'alex.king@vt.edu', '$argon2id$v=19$m=16,t=2,p=1$cnVubmluZzE$3cPUrQ+yTPNG7Q6u7bJy3w', 1, 7, 8, 5, 20), -- city-lights_9pm
+(22, 'Nate', 'D', 'Williams', 'natewilliams@vt.edu', '$argon2id$v=19$m=16,t=2,p=1$cnVubmluZzE$8ifrTk+98PBcbldrTtgjhA', 1, 11, 12, 2, 3); -- trainspotter_06
 
 -- Status
 INSERT INTO status (status_id, status_description)
