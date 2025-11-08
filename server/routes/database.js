@@ -20,6 +20,27 @@ router.get("/api/runners", (req, res) => {
   });
 });
 
+// get summary
+router.get("/api/summary", (req, res) => {
+  db.query("SELECT DATABASE() AS name", (err, dbResult) => {
+    if (err) return res.status(500).json({ error: "Failed (name)" });
+
+    const dbName = dbResult[0].name;
+    db.query("SELECT COUNT(*) AS count FROM runners", (err, r1) => {
+      if (err) return res.status(500).json({ error: "Failed (runners)" });
+      db.query("SELECT COUNT(*) AS count FROM runs", (err, r2) => {
+        if (err) return res.status(500).json({ error: "Failed (runs)" });
+
+        res.json({
+          dbName,
+          runnersCount: r1[0].count,
+          runsCount: r2[0].count,
+        });
+      });
+    });
+  });
+});
+
 // Post to check whether the email and password are available for signup
 router.post("/signup/check", async (req, res) => {
   const email = String(req.body.email || "")
@@ -209,7 +230,7 @@ router.post("/api/logout", (req, res) => {
   res.json({ message: "Logged out successfully" });
 });
 
-// Post to insert a new Route into database
+// Post to insert a new Route into database - ENHANCED with address fields
 router.post("/api/save-route", async (req, res) => {
   const { start_lat, start_lng, end_lat, end_lng, start_address, end_address, polyline, distance } =
     req.body;
@@ -233,7 +254,7 @@ router.post("/api/save-route", async (req, res) => {
   );
 });
 
-// GET all runs
+// GET all runs - ENHANCED VERSION with address fields and leader info
 router.get("/api/runs", (req, res) => {
   const sql = `
     SELECT 
@@ -275,7 +296,7 @@ router.get("/api/runs", (req, res) => {
   });
 });
 
-// POST create a new run
+// POST create a new run - ENHANCED with pace validation as INT seconds
 router.post("/api/runs", (req, res) => {
   const {
     leader_id,
@@ -339,7 +360,7 @@ router.post("/api/runs", (req, res) => {
   );
 });
 
-// GET all routes (start/end coordinates included directly in table)
+// GET all routes (start/end coordinates included directly in table) - ENHANCED with address fields
 router.get("/api/routes", (req, res) => {
   const sql = `
     SELECT 
@@ -366,7 +387,7 @@ router.get("/api/routes", (req, res) => {
   });
 });
 
-// GET a specific route by ID
+// GET a specific route by ID - ENHANCED with address fields
 router.get("/api/routes/:id", (req, res) => {
   const { id } = req.params;
 
@@ -399,7 +420,7 @@ router.get("/api/routes/:id", (req, res) => {
   });
 });
 
-// PUT update an existing run
+// PUT update an existing run - ENHANCED with pace validation as INT seconds
 // Can be used like PUT or PATCH where we replace the whole record or
 // only update one or more fields that are included in the request params
 router.put("/api/runs/:id", (req, res) => {
@@ -520,6 +541,25 @@ router.get("/api/leaders", (req, res) => {
   });
 });
 
+// GET a static map url of a route
+router.get("/api/static-map", (req, res) => {
+  const { polyline, start_lat, start_lng, end_lat, end_lng } = req.query;
+
+  //if any of the required parameters are missing, return an error
+  if (!polyline || !start_lat || !start_lng || !end_lat || !end_lng) {
+    return res.status(400).json({ error: "Missing required parameters" });
+  }
+  
+  try {
+    //returns a url that can be used to display a static map of the route
+    const url = `https://maps.googleapis.com/maps/api/staticmap?size=600x400&path=color:0x0000ff|weight:10|enc:${polyline}&markers=color:green|label:S|${start_lat},${start_lng}&markers=color:red|label:E|${end_lat},${end_lng}&visible=${start_lat},${start_lng}&visible=${end_lat},${end_lng}&key=${process.env.GOOGLE_MAPS_API_KEY}`;
+    res.json({ url });
+  } catch (err) {
+    console.error("Error generating static map:", err);
+    return res.status(500).json({ error: "Failed to generate static map" });
+  }
+});
+
 // DELETE a specific run
 router.delete("/api/runs/:id", (req, res) => {
   const { id } = req.params;
@@ -538,3 +578,4 @@ router.delete("/api/runs/:id", (req, res) => {
 });
 
 module.exports = router;
+

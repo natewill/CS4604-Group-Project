@@ -24,8 +24,8 @@ function Layout() {
       >
         <div style={{ display: "flex", gap: "1rem" }}>
           <Link to="/home">Home</Link>
-          <Link to="/runs/finder">Run Finder</Link>
-          <Link to="/runs/new">Create Run</Link>
+          <Link to="/runs/finder">RunFinder</Link>
+          <Link to="/runs/new">New Run</Link>
           <Link to="/create-route">Create Route</Link>
         </div>
 

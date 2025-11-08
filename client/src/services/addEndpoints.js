@@ -13,6 +13,6 @@ export async function addEndpoints(decodedPolyline, start_lat, start_lng, end_la
     path.unshift(start); // insert at the beginning
     path.push(end); // append at the end
     
-    return path;
+    return g.maps.geometry.encoding.encodePath(path); //encode the patharray as a string
 }
 
