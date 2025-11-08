@@ -1,8 +1,13 @@
 const express = require("express");
 const router = express.Router();
-const db = require("./connection");
-const { signup, signin, getPwAndIdFromEmail } = require("./accounts");
-const axios = require("axios");
+const db = require("../connection");
+const { signup, login, getPwAndIdFromEmail } = require("../accounts");
+const { generateJWT, verifyToken } = require("../auth");
+const {
+  normalizeString,
+  normalizeInteger,
+  validateSignupData,
+} = require("../utils/validation");
 
 // GET all runners
 router.get("/api/runners", (req, res) => {
@@ -15,27 +20,7 @@ router.get("/api/runners", (req, res) => {
   });
 });
 
-// get summary
-router.get("/api/summary", (req, res) => {
-  db.query("SELECT DATABASE() AS name", (err, dbResult) => {
-    if (err) return res.status(500).json({ error: "Failed (name)" });
-
-    const dbName = dbResult[0].name;
-    db.query("SELECT COUNT(*) AS count FROM runners", (err, r1) => {
-      if (err) return res.status(500).json({ error: "Failed (runners)" });
-      db.query("SELECT COUNT(*) AS count FROM runs", (err, r2) => {
-        if (err) return res.status(500).json({ error: "Failed (runs)" });
-
-        res.json({
-          dbName,
-          runnersCount: r1[0].count,
-          runsCount: r2[0].count,
-        });
-      });
-    });
-  });
-});
-
+// Post to check whether the email and password are available for signup
 router.post("/signup/check", async (req, res) => {
   const email = String(req.body.email || "")
     .trim()
@@ -49,151 +34,180 @@ router.post("/signup/check", async (req, res) => {
   return res.json({ available: true });
 });
 
+// Post to insert new user into the database
 router.post("/signup", async (req, res) => {
   try {
-    // req.body comes from your React signup form
     const {
-      first_name,
-      last_name,
-      middle_initial,
-      email,
-      is_leader,
-      min_pace,
-      max_pace,
-      min_dist_pref,
-      max_dist_pref,
+      first_name: raw_first_name,
+      last_name: raw_last_name,
+      middle_initial: raw_middle_initial,
+      email: raw_email,
+      is_leader: raw_is_leader,
+      min_pace: raw_min_pace,
+      max_pace: raw_max_pace,
+      min_dist_pref: raw_min_dist_pref,
+      max_dist_pref: raw_max_dist_pref,
       password,
     } = req.body;
 
-    if (!email || !password) {
-      return res.status(400).json({ error: "email and password required" });
+    // Validate all input data
+    const validationErrors = validateSignupData({
+      email: raw_email,
+      password,
+      first_name: raw_first_name,
+      last_name: raw_last_name,
+      middle_initial: raw_middle_initial,
+      is_leader: raw_is_leader,
+      min_pace: raw_min_pace,
+      max_pace: raw_max_pace,
+      min_dist_pref: raw_min_dist_pref,
+      max_dist_pref: raw_max_dist_pref,
+    });
+
+    if (validationErrors.length > 0) {
+      return res.status(400).json({
+        error: "Validation failed",
+        details: validationErrors,
+      });
     }
 
-    const normEmail = String(email).trim().toLowerCase();
-    const minPaceNum =
-      min_pace !== undefined && min_pace !== null && min_pace !== ""
-        ? Number(min_pace)
-        : null;
-    const maxPaceNum =
-      max_pace !== undefined && max_pace !== null && max_pace !== ""
-        ? Number(max_pace)
-        : null;
-    const minDistNum =
-      min_dist_pref !== undefined &&
-      min_dist_pref !== null &&
-      min_dist_pref !== ""
-        ? Number(min_dist_pref)
-        : null;
-    const maxDistNum =
-      max_dist_pref !== undefined &&
-      max_dist_pref !== null &&
-      max_dist_pref !== ""
-        ? Number(max_dist_pref)
-        : null;
-
-    if (minPaceNum !== null && maxPaceNum !== null && minPaceNum > maxPaceNum) {
-      return res
-        .status(400)
-        .json({ error: "min_pace cannot be greater than max_pace" });
-    }
-    if (minDistNum !== null && maxDistNum !== null && minDistNum > maxDistNum) {
-      return res
-        .status(400)
-        .json({ error: "min_dist_pref cannot be greater than max_dist_pref" });
-    }
-
-    // build runner_data dict
+    // Normalize and convert types after validation passes
+    // Required fields are guaranteed to be present by validation
     const runner_data = {
-      first_name,
-      last_name,
-      middle_initial,
-      email: normEmail,
+      first_name: String(raw_first_name).trim(),
+      last_name: String(raw_last_name).trim(),
+      middle_initial: String(raw_middle_initial).trim().charAt(0).toUpperCase(),
+      email: String(raw_email).trim().toLowerCase(),
       user_password: null, // gets filled in signup()
-      is_leader: !!is_leader,
-      min_pace: minPaceNum,
-      max_pace: maxPaceNum,
-      min_dist_pref: minDistNum,
-      max_dist_pref: maxDistNum,
+      is_leader: !!raw_is_leader,
+      min_pace: normalizeInteger(raw_min_pace),
+      max_pace: normalizeInteger(raw_max_pace),
+      min_dist_pref: normalizeInteger(raw_min_dist_pref),
+      max_dist_pref: normalizeInteger(raw_max_dist_pref),
     };
 
-    const result = await signup(runner_data, password);
+    // Create user account
+    const runner_id = await signup(runner_data, password);
 
-    if (result === -1) {
+    if (runner_id === -1) {
       return res.status(409).json({ error: "email already exists" });
     }
 
-    return res.status(201).json({ runner_id: result, email });
+    // Fetch full user details and set authentication cookie
+    db.query(
+      "SELECT runner_id, first_name, last_name, middle_initial, email, is_leader, min_pace, max_pace, min_dist_pref, max_dist_pref FROM runners WHERE runner_id = ?",
+      [runner_id],
+      (err, results) => {
+        if (err) {
+          console.error("Database error fetching user:", err);
+          return res.status(500).json({ error: "Server error" });
+        }
+
+        if (results.length === 0) {
+          return res.status(404).json({ error: "User not found" });
+        }
+
+        // grab runner object and generate JWT token
+        const runner = results[0];
+        const token = generateJWT(runner);
+
+        // Set HTTP-only cookie with JWT token
+        // Set HTTP-only cookie with the token
+        // secure = false for local dev (cookies are send over http connection)
+        // sameSite = strict for CSRF protection
+        // CMIYC = Cache Me If You Can
+        res.cookie("CMIYC", token, {
+          httpOnly: true,
+          secure: false, // Set to true in production with HTTPS
+          sameSite: "lax",
+          maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+        });
+
+        return res.status(201).json({ user: runner });
+      }
+    );
   } catch (err) {
-    console.error("signup error:", err);
-    res.status(500).json({ error: "server error" });
+    console.error("Signup error:", err);
+    res.status(500).json({ error: "Server error" });
   }
 });
 
-router.post("/signin", async (req, res) => {
+// We send request with body {email:{email}, password:{password}}
+// we return cookie with JWT token and req.user={runner db object}
+router.post("/login", async (req, res) => {
   const { email, password } = req.body;
   if (!email || !password) {
     return res.status(400).json({ error: "email and password required" });
   }
-  const result = await signin(email, password);
+
+  const result = await login(email, password);
   if (result === -1) {
     return res.status(401).json({ error: "email not found" });
   }
   if (result === -2) {
     return res.status(401).json({ error: "incorrect password" });
   }
-  return res.json(result);
-});
 
-// Google Maps API server routes
-
-// Geocode (Convert address to coordinates)
-router.get("/api/geocode", async (req, res) => {
+  // result is the runner_id, now fetch full user details
   try {
-    const address = req.query.address;
+    db.query(
+      "SELECT runner_id, first_name, last_name, middle_initial, email, is_leader, min_pace, max_pace, min_dist_pref, max_dist_pref FROM runners WHERE runner_id = ?",
+      [result],
+      (err, results) => {
+        if (err) {
+          console.error("Database error fetching user:", err);
+          return res.status(500).json({ error: "Server error" });
+        }
 
-    if (!address) return res.status(400).json({ error: "Missing address" });
+        if (results.length === 0) {
+          return res.status(404).json({ error: "User not found" });
+        }
 
-    const url = `https://maps.googleapis.com/maps/api/geocode/json`;
-    const { data } = await axios.get(url, {
-      params: { address, key: process.env.GOOGLE_MAPS_API_KEY },
-    });
+        const runner = results[0];
 
-    res.json(data);
-  } catch (err) {
-    console.error("/api/geocode error", err.response?.data || err.message);
-    res.status(500).json({ error: "Geocode failed" });
-  }
-});
+        // Generate JWT token with full runner object (excluding password)
+        const token = generateJWT(runner);
 
-// Reverse Geocode (convert coordinates to address)
-// Google maps address validation API
-// Address Validation API expects this json
-// where addressLines is ["street address", "city, State, zip code"]
-router.get("/api/reverse-geocode", async (req, res) => {
-  try {
-    const { lat, lng } = req.query;
+        // Set HTTP-only cookie with the token
+        // secure = false for local dev (cookies are send over http connection)
+        // sameSite = lax for local dev (allows for backend and frontend)
+        // CMIYC = Cache Me If You Can
+        res.cookie("CMIYC", token, {
+          httpOnly: true, // Cookie not accessible via JavaScript (more secure)
+          secure: false,
+          sameSite: "lax",
+          maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days in milliseconds
+        });
 
-    if (!lat || !lng) {
-      return res.status(400).json({ error: "Missing lat or lng" });
-    }
-
-    const url = `https://maps.googleapis.com/maps/api/geocode/json`;
-    const { data } = await axios.get(url, {
-      params: {
-        latlng: `${lat},${lng}`,
-        key: process.env.GOOGLE_MAPS_API_KEY,
-      },
-    });
-    res.json(data);
-  } catch (err) {
-    console.error(
-      "/api/reverse-geocode error",
-      err.response?.data || err.message
+        // Return user object (token is in cookie, not in response)
+        // But isnt runner object already in the token?
+        return res.json({
+          user: runner,
+        });
+      }
     );
-    res.status(500).json({ error: "Reverse geocode failed" });
+  } catch (err) {
+    console.error("login error:", err);
+    return res.status(500).json({ error: "Server error" });
   }
 });
 
+// GET current user info (requires authentication)
+router.get("/api/me", verifyToken, (req, res) => {
+  // returns user runner object from the db using the JWT token
+  res.json(req.user);
+});
+
+// POST logout - clears the HTTP-only cookie
+router.post("/api/logout", (req, res) => {
+  res.clearCookie("CMIYC", {
+    httpOnly: true,
+    secure: false,
+    sameSite: "lax",
+    path: "/",
+  });
+  res.json({ message: "Logged out successfully" });
+});
 
 // Post to insert a new Route into database
 router.post("/api/save-route", async (req, res) => {
@@ -203,7 +217,7 @@ router.post("/api/save-route", async (req, res) => {
   db.query(
     `INSERT INTO routes (start_lat, start_lng, end_lat, end_lng, start_address, end_address, polyline, distance)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-    [start_lat, start_lng, end_lat, end_lng, start_address, end_address, polyline, distance],
+    [start_lat, start_lng, end_lat, end_lng, start_address || null, end_address || null, polyline, distance],
     (err, results) => {
       if (err) {
         console.error("/api/save-route error", err);
@@ -219,7 +233,6 @@ router.post("/api/save-route", async (req, res) => {
   );
 });
 
-
 // GET all runs
 router.get("/api/runs", (req, res) => {
   const sql = `
@@ -232,7 +245,7 @@ router.get("/api/runs", (req, res) => {
       r.name,
       r.description,
       r.pace,
-      DATE_FORMAT(r.date, '%M %d, %Y') AS date,
+      DATE_FORMAT(r.date, '%Y-%m-%d') AS date,
       TIME_FORMAT(r.start_time, '%l:%i %p') AS start_time,
       rt.start_lat,
       rt.start_lng,
@@ -276,8 +289,22 @@ router.post("/api/runs", (req, res) => {
   } = req.body;
 
   // Validate required fields
-  if (!leader_id || !run_route || !run_status_id || !name || !pace || !date || !start_time) {
+  if (
+    !leader_id ||
+    !run_route ||
+    !run_status_id ||
+    !name ||
+    !pace ||
+    !date ||
+    !start_time
+  ) {
     return res.status(400).json({ error: "Missing required fields" });
+  }
+
+  // Validate pace is a number (seconds)
+  const paceSeconds = typeof pace === 'number' ? pace : parseInt(pace, 10);
+  if (isNaN(paceSeconds) || paceSeconds < 0) {
+    return res.status(400).json({ error: "Pace must be a positive number (seconds)" });
   }
 
   const sql = `
@@ -287,7 +314,16 @@ router.post("/api/runs", (req, res) => {
 
   db.query(
     sql,
-    [leader_id, run_route, run_status_id, name, description || null, pace, date, start_time],
+    [
+      leader_id,
+      run_route,
+      run_status_id,
+      name,
+      description || null,
+      paceSeconds,
+      date,
+      start_time,
+    ],
     (err, result) => {
       if (err) {
         console.error("Database insert failed:", err);
@@ -330,7 +366,6 @@ router.get("/api/routes", (req, res) => {
   });
 });
 
-
 // GET a specific route by ID
 router.get("/api/routes/:id", (req, res) => {
   const { id } = req.params;
@@ -364,9 +399,8 @@ router.get("/api/routes/:id", (req, res) => {
   });
 });
 
-
 // PUT update an existing run
-// Can be used like PUT or PATCH where we replace the whole record or 
+// Can be used like PUT or PATCH where we replace the whole record or
 // only update one or more fields that are included in the request params
 router.put("/api/runs/:id", (req, res) => {
   const { id } = req.params;
@@ -419,7 +453,13 @@ router.put("/api/runs/:id", (req, res) => {
     updates.push("description = ?");
     values.push(description);
   }
-  if (pace) {
+  if (pace !== undefined) {
+    if (typeof pace !== 'number') {
+      return res.status(400).json({ error: "Pace must be a number (seconds)" });
+    }
+    if (isNaN(pace) || pace < 0) {
+      return res.status(400).json({ error: "Pace must be a positive number (seconds)" });
+    }
     updates.push("pace = ?");
     values.push(pace);
   }
@@ -453,7 +493,7 @@ router.put("/api/runs/:id", (req, res) => {
     res.json({
       message: "Run updated successfully",
       run_id: id,
-      updated_fields: updates.map(u => u.split(" = ")[0]),
+      updated_fields: updates.map((u) => u.split(" = ")[0]),
     });
   });
 });
@@ -480,25 +520,6 @@ router.get("/api/leaders", (req, res) => {
   });
 });
 
-// GET a static map url of a route
-router.get("/api/static-map", (req, res) => {
-  const { polyline, start_lat, start_lng, end_lat, end_lng } = req.query;
-
-  //if any of the required parameters are missing, return an error
-  if (!polyline || !start_lat || !start_lng || !end_lat || !end_lng) {
-    return res.status(400).json({ error: "Missing required parameters" });
-  }
-  
-  try {
-    //returns a url that can be used to display a static map of the route
-    const url = `https://maps.googleapis.com/maps/api/staticmap?size=600x400&path=color:0x0000ff|weight:10|enc:${polyline}&markers=color:green|label:S|${start_lat},${start_lng}&markers=color:red|label:E|${end_lat},${end_lng}&visible=${start_lat},${start_lng}&visible=${end_lat},${end_lng}&key=${process.env.GOOGLE_MAPS_API_KEY}`;
-    res.json({ url });
-  } catch (err) {
-    console.error("Error generating static map:", err);
-    return res.status(500).json({ error: "Failed to generate static map" });
-  }
-});
-
 // DELETE a specific run
 router.delete("/api/runs/:id", (req, res) => {
   const { id } = req.params;
@@ -515,6 +536,5 @@ router.delete("/api/runs/:id", (req, res) => {
     res.json({ message: "Run deleted successfully" });
   });
 });
-
 
 module.exports = router;
