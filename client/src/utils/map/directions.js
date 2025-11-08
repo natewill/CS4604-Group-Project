@@ -44,7 +44,6 @@ export function requestDirections({ origin, destination }) {
         //rewrite polyline to include start and end points
         result.routes[0].overview_polyline = await addEndpoints(result.routes[0].overview_polyline, origin.lat, origin.lng, destination.lat, destination.lng);
 
-        console.log("result", result);
         if (status === "OK") resolve(result);
         else reject(new Error(`Directions request failed: ${status}`));
       }

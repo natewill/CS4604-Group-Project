@@ -245,7 +245,6 @@ router.post("/api/save-route", async (req, res) => {
         return res.status(500).json({ error: "Failed to save route." });
       }
 
-      console.log("Inserted route ID:", results.insertId);
       res.status(201).json({
         message: "Route saved successfully",
         route_id: results.insertId, // ✅ this ensures the frontend gets the route ID

@@ -105,6 +105,8 @@ const CreateRoute = ({ onRouteCreated }) => {
       distance: directions.routes[0].legs[0].distance.value / 1609.344,
     };
 
+    console.log("routeData", routeData);
+
     try {
       const result = await routeSave(routeData);
       if (result?.route_id) {
