@@ -116,10 +116,10 @@ VALUES
 (1, 2, 1, 1, 'Morning Easy Run Loop', 'A relaxed run to start the day', 540, '2026-01-01', '06:30:00'),
 (2, 2, 2, 1, 'Interval Training', 'High-intensity intervals for speed', 420, '2025-12-02', '18:00:00'),
 (3, 2, 3, 2, 'Long Distance Run', 'Endurance building long run', 495, '2024-07-03', '07:00:00'),
-(4, 22, 1, 1, 'First Run in Weeks', 'Slow tempo run on Huckle Berry', 660, '2025-10-25', '07:15:00'),
-(5, 9, 2, 2, 'Endurance Run', 'Climbing hills on a trail', 510, '2025-09-07', '08:00:00'),
-(6, 13, 3, 4, 'Rain Run', 'Short run, so wet, wow such a wet run', 555, '2025-10-20', '18:30:00'),
-(7, 22, 1, 3, 'Sprint Run', 'Sprinted to class.', 465, '2025-10-20', '13:00:00');
+(4, 22, 4, 1, 'First Run in Weeks', 'Slow tempo run on Huckle Berry', 660, '2025-10-25', '07:15:00'),
+(5, 9, 5, 2, 'Endurance Run', 'Climbing hills on a trail', 510, '2025-09-07', '08:00:00'),
+(6, 13, 6, 4, 'Rain Run', 'Short run, so wet, wow such a wet run', 555, '2025-10-20', '18:30:00'),
+(7, 22, 7, 3, 'Sprint Run', 'Sprinted to class.', 465, '2025-10-20', '13:00:00');
 
 -- Run Participation
 INSERT INTO run_participation (participation_runner_id, participation_run_id)
