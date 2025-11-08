@@ -35,3 +35,4 @@ export async function coordinatesToAddress(lat, lng) {
     return null;
   }
 }
+

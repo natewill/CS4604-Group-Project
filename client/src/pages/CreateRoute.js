@@ -7,14 +7,14 @@ import {
   useJsApiLoader,
   Polyline,
 } from "@react-google-maps/api";
-import { coordinatesToAddress } from "./api/coordinatesToAddress";
-import { routeSave } from "./api/routeSave";
-import { buildIcons } from "./map/icons";
+import { coordinatesToAddress } from "../services/coordinatesToAddress";
+import { routeSave } from "../services/routeSave";
+import { buildIcons } from "../utils/map/icons";
 import {
   requestDirections,
   extractLegEndpoints,
   polylineOptions,
-} from "./map/directions";
+} from "../utils/map/directions";
 import validator from 'validator';
 
 const mapContainerStyle = {

@@ -33,3 +33,4 @@ export function buildIcons(google) {
 
   return { startIcon, endIcon };
 }
+

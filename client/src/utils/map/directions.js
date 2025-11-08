@@ -1,4 +1,4 @@
-import { addEndpoints } from "../api/addEndpoints";
+import { addEndpoints } from "../../services/addEndpoints";
 
 // Line in the directions
 export const polylineOptions = {
@@ -50,3 +50,4 @@ export function requestDirections({ origin, destination }) {
     );
   });
 }
+

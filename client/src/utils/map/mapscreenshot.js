@@ -74,3 +74,4 @@ export const RouteMapImage = ({ route, alt = "Route map" }) => {
   );
 };
 
+
