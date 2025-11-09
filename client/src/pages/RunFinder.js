@@ -16,6 +16,7 @@ const mapOptions = {
   streetViewControl: false,
   fullscreenControl: false,
   mapTypeControl: true,
+  colorScheme: 'DARK',
   styles: [{ featureType: 'poi', stylers: [{ visibility: 'off' }] }]
 };
 
@@ -169,7 +170,6 @@ function RunFinder() {
             zoom={13}
             options={mapOptions}
             onLoad={(map) => {
-              map.setMapTypeId("hybrid");
               const icons = buildIcons(window.google);
               if (icons) setCustomIcons(icons);
             }}
