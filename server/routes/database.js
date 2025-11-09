@@ -20,27 +20,6 @@ router.get("/api/runners", (req, res) => {
   });
 });
 
-// get summary
-router.get("/api/summary", (req, res) => {
-  db.query("SELECT DATABASE() AS name", (err, dbResult) => {
-    if (err) return res.status(500).json({ error: "Failed (name)" });
-
-    const dbName = dbResult[0].name;
-    db.query("SELECT COUNT(*) AS count FROM runners", (err, r1) => {
-      if (err) return res.status(500).json({ error: "Failed (runners)" });
-      db.query("SELECT COUNT(*) AS count FROM runs", (err, r2) => {
-        if (err) return res.status(500).json({ error: "Failed (runs)" });
-
-        res.json({
-          dbName,
-          runnersCount: r1[0].count,
-          runsCount: r2[0].count,
-        });
-      });
-    });
-  });
-});
-
 // Post to check whether the email and password are available for signup
 router.post("/signup/check", async (req, res) => {
   const email = String(req.body.email || "")
@@ -230,21 +209,22 @@ router.post("/api/logout", (req, res) => {
   res.json({ message: "Logged out successfully" });
 });
 
-// Post to insert a new Route into database - ENHANCED with address fields
+// Post to insert a new Route into database
 router.post("/api/save-route", async (req, res) => {
-  const { start_lat, start_lng, end_lat, end_lng, start_address, end_address, polyline, distance } =
+  const { start_lat, start_lng, end_lat, end_lng, polyline, distance } =
     req.body;
 
   db.query(
-    `INSERT INTO routes (start_lat, start_lng, end_lat, end_lng, start_address, end_address, polyline, distance)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-    [start_lat, start_lng, end_lat, end_lng, start_address || null, end_address || null, polyline, distance],
+    `INSERT INTO routes (start_lat, start_lng, end_lat, end_lng, polyline, distance)
+     VALUES (?, ?, ?, ?, ?, ?)`,
+    [start_lat, start_lng, end_lat, end_lng, polyline, distance],
     (err, results) => {
       if (err) {
         console.error("/api/save-route error", err);
         return res.status(500).json({ error: "Failed to save route." });
       }
 
+      console.log("Inserted route ID:", results.insertId);
       res.status(201).json({
         message: "Route saved successfully",
         route_id: results.insertId, // ✅ this ensures the frontend gets the route ID
@@ -253,7 +233,7 @@ router.post("/api/save-route", async (req, res) => {
   );
 });
 
-// GET all runs - ENHANCED VERSION with address fields and leader info
+// GET all runs
 router.get("/api/runs", (req, res) => {
   const sql = `
     SELECT 
@@ -295,7 +275,7 @@ router.get("/api/runs", (req, res) => {
   });
 });
 
-// POST create a new run - ENHANCED with pace validation as INT seconds
+// POST create a new run
 router.post("/api/runs", (req, res) => {
   const {
     leader_id,
@@ -321,12 +301,6 @@ router.post("/api/runs", (req, res) => {
     return res.status(400).json({ error: "Missing required fields" });
   }
 
-  // Validate pace is a number (seconds)
-  const paceSeconds = typeof pace === 'number' ? pace : parseInt(pace, 10);
-  if (isNaN(paceSeconds) || paceSeconds < 0) {
-    return res.status(400).json({ error: "Pace must be a positive number (seconds)" });
-  }
-
   const sql = `
     INSERT INTO runs (leader_id, run_route, run_status_id, name, description, pace, date, start_time)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
@@ -340,7 +314,7 @@ router.post("/api/runs", (req, res) => {
       run_status_id,
       name,
       description || null,
-      paceSeconds,
+      pace,
       date,
       start_time,
     ],
@@ -359,17 +333,15 @@ router.post("/api/runs", (req, res) => {
   );
 });
 
-// GET all routes (start/end coordinates included directly in table) - ENHANCED with address fields
+// GET all routes (start/end coordinates included directly in table)
 router.get("/api/routes", (req, res) => {
   const sql = `
     SELECT 
       route_id,
       start_lat,
       start_lng,
-      start_address,
       end_lat,
       end_lng,
-      end_address,
       polyline,
       distance
     FROM routes
@@ -386,7 +358,7 @@ router.get("/api/routes", (req, res) => {
   });
 });
 
-// GET a specific route by ID - ENHANCED with address fields
+// GET a specific route by ID
 router.get("/api/routes/:id", (req, res) => {
   const { id } = req.params;
 
@@ -395,10 +367,8 @@ router.get("/api/routes/:id", (req, res) => {
       route_id,
       start_lat,
       start_lng,
-      start_address,
       end_lat,
       end_lng,
-      end_address,
       polyline,
       distance
     FROM routes
@@ -419,7 +389,7 @@ router.get("/api/routes/:id", (req, res) => {
   });
 });
 
-// PUT update an existing run - ENHANCED with pace validation as INT seconds
+// PUT update an existing run
 // Can be used like PUT or PATCH where we replace the whole record or
 // only update one or more fields that are included in the request params
 router.put("/api/runs/:id", (req, res) => {
@@ -473,13 +443,7 @@ router.put("/api/runs/:id", (req, res) => {
     updates.push("description = ?");
     values.push(description);
   }
-  if (pace !== undefined) {
-    if (typeof pace !== 'number') {
-      return res.status(400).json({ error: "Pace must be a number (seconds)" });
-    }
-    if (isNaN(pace) || pace < 0) {
-      return res.status(400).json({ error: "Pace must be a positive number (seconds)" });
-    }
+  if (pace) {
     updates.push("pace = ?");
     values.push(pace);
   }
@@ -540,25 +504,6 @@ router.get("/api/leaders", (req, res) => {
   });
 });
 
-// GET a static map url of a route
-router.get("/api/static-map", (req, res) => {
-  const { polyline, start_lat, start_lng, end_lat, end_lng } = req.query;
-
-  //if any of the required parameters are missing, return an error
-  if (!polyline || !start_lat || !start_lng || !end_lat || !end_lng) {
-    return res.status(400).json({ error: "Missing required parameters" });
-  }
-  
-  try {
-    //returns a url that can be used to display a static map of the route
-    const url = `https://maps.googleapis.com/maps/api/staticmap?size=600x400&path=color:0x0000ff|weight:10|enc:${polyline}&markers=color:green|label:S|${start_lat},${start_lng}&markers=color:red|label:E|${end_lat},${end_lng}&visible=${start_lat},${start_lng}&visible=${end_lat},${end_lng}&key=${process.env.GOOGLE_MAPS_API_KEY}`;
-    res.json({ url });
-  } catch (err) {
-    console.error("Error generating static map:", err);
-    return res.status(500).json({ error: "Failed to generate static map" });
-  }
-});
-
 // DELETE a specific run
 router.delete("/api/runs/:id", (req, res) => {
   const { id } = req.params;
@@ -578,3 +523,48 @@ router.delete("/api/runs/:id", (req, res) => {
 
 module.exports = router;
 
+
+
+
+
+
+router.get("/api/runs", (req, res) => {
+  const sql = `
+    SELECT 
+      r.run_id,
+      r.leader_id,
+      r.run_route,
+      r.run_status_id,
+      s.status_description AS status,
+      r.name,
+      r.description,
+      r.pace,
+      DATE_FORMAT(r.date, '%Y-%m-%d') AS date,
+      TIME_FORMAT(r.start_time, '%l:%i %p') AS start_time,
+      rt.start_lat,
+      rt.start_lng,
+      rt.end_lat,
+      rt.end_lng,
+      rt.start_address,
+      rt.end_address,
+      rt.polyline,
+      rt.distance,
+      CONCAT(COALESCE(leader.first_name, ''), ' ', COALESCE(leader.last_name, '')) AS leader_name,
+      leader.first_name AS leader_first_name,
+      leader.last_name AS leader_last_name
+    FROM runs r
+    JOIN status s ON r.run_status_id = s.status_id
+    JOIN routes rt ON r.run_route = rt.route_id
+    JOIN runners leader ON r.leader_id = leader.runner_id
+    ORDER BY r.date DESC, r.start_time DESC;
+  `;
+
+  db.query(sql, (err, results) => {
+    if (err) {
+      console.error("Database query failed:", err);
+      return res.status(500).json({ error: "Failed to fetch runs" });
+    }
+
+    res.json(results);
+  });
+});
