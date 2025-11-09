@@ -1,0 +1,8 @@
+# Ignore node_modules (we have package.json for that)
+/server/node_modules/
+/client/node_modules/
+/node_modules/
+
+# Ignore .env files so we can each store our own local env variables
+/server/.env
+/client/.env
