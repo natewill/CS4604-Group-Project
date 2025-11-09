@@ -15,7 +15,6 @@ const mapOptions = {
   streetViewControl: false,
   fullscreenControl: false,
   mapTypeControl: true,
-  colorScheme: 'DARK',
   styles: [{ featureType: 'poi', stylers: [{ visibility: 'off' }] }]
 };
 
@@ -167,6 +166,9 @@ function RunFinder() {
             center={mapCenter}
             zoom={13}
             options={mapOptions}
+            onLoad={(map) => {
+              map.setMapTypeId("hybrid");
+            }}
           >
             {searchLocationCoords && window.google && (
               <Marker
@@ -197,7 +199,7 @@ function RunFinder() {
             {selectedRun?.polyline && (
               <Polyline
                 path={getPolylinePath(selectedRun)}
-                options={{ strokeColor: '#2563eb', strokeOpacity: 1, strokeWeight: 6 }}
+                options={{ strokeColor: '#2563eb', strokeOpacity: 1, strokeWeight: 10 }}
               />
             )}
             {selectedRun && (
