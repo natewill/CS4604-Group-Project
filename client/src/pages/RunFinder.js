@@ -9,6 +9,7 @@ import polyline from '@mapbox/polyline';
 import { fetchRuns as fetchRunsService } from '../services/fetchRuns';
 import RouteCard from '../components/RouteCard';
 import FilterForm from '../components/FilterForm';
+import { buildIcons } from '../utils/map/icons';
 import '../styles/RunFinder.css';
 
 const mapOptions = {
@@ -42,6 +43,7 @@ function RunFinder() {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [searchLocationCoords, setSearchLocationCoords] = useState(null);
   const locationAutocompleteRef = useRef(null);
+  const [customIcons, setCustomIcons] = useState(null);
   
   // Search filter states - consolidated
   const [filters, setFilters] = useState({
@@ -168,6 +170,8 @@ function RunFinder() {
             options={mapOptions}
             onLoad={(map) => {
               map.setMapTypeId("hybrid");
+              const icons = buildIcons(window.google);
+              if (icons) setCustomIcons(icons);
             }}
           >
             {searchLocationCoords && window.google && (
@@ -204,8 +208,8 @@ function RunFinder() {
             )}
             {selectedRun && (
               <>
-                <Marker position={getRunCoords(selectedRun)} label="Start" />
-                <Marker position={getRunEndCoords(selectedRun)} label="End" />
+                <Marker position={getRunCoords(selectedRun)} icon={customIcons?.startIcon} />
+                <Marker position={getRunEndCoords(selectedRun)} icon={customIcons?.endIcon} />
               </>
             )}
           </GoogleMap>
