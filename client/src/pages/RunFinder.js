@@ -138,6 +138,10 @@ function RunFinder() {
     return decoded.map(([lat, lng]) => ({ lat, lng }));
   };
 
+  if (!isLoaded) {
+    return <div>Loading...</div>;
+  }
+
   return (
     <div>
       <div>
@@ -149,7 +153,6 @@ function RunFinder() {
             filters={filters}
             setFilters={setFilters}
             clearFilters={clearFilters}
-            isLoaded={isLoaded}
             locationAutocompleteRef={locationAutocompleteRef}
             handleLocationSelect={handleLocationSelect}
             setSearchLocationCoords={setSearchLocationCoords}

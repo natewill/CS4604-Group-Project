@@ -141,14 +141,14 @@ const CreateRoute = ({ onRouteCreated }) => {
         if (address.within30meters) {
           setStartAddress(address.formattedAddress);
         } else {
-          setStartAddress(`${lat.toFixed(5)}, ${lng.toFixed(5)}`);
+        setStartAddress(`${lat.toFixed(5)}, ${lng.toFixed(5)}`);
         }
       } else {
         setEndCoords(coords);
         if (address.within30meters) {
           setEndAddress(address.formattedAddress);
         } else {
-          setEndAddress(`${lat.toFixed(5)}, ${lng.toFixed(5)}`);
+        setEndAddress(`${lat.toFixed(5)}, ${lng.toFixed(5)}`);
         }
       }
       setMapCenter(coords);

@@ -33,11 +33,11 @@ export const fetchRuns = async (filters, searchLocationCoords, userLocation) => 
   }
 
   // Add location filter (prioritize search location, then user location)
+  // Note: maxDistance is configured on the backend, not sent from client
   const locationForDistance = searchLocationCoords || userLocation;
   if (locationForDistance) {
     queryParams.append('lat', locationForDistance.lat.toString());
     queryParams.append('lng', locationForDistance.lng.toString());
-    queryParams.append('maxDistance', '3'); // 3 miles
   }
 
   const res = await fetch(`/api/runs?${queryParams.toString()}`);

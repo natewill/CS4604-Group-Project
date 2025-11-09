@@ -103,7 +103,7 @@ function NewRun() {
       })
       .then(() => {
         alert("Run created successfully!");
-        navigate("/runs");
+        navigate("/runfinder");
       })
       .catch((err) => {
         console.error(err);

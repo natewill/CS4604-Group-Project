@@ -3,7 +3,7 @@ import '../styles/RunFinder.css';
 
 const PACE_MIN_SECONDS = 240; // 4:00
 const PACE_MAX_SECONDS = 900; // 15:00
-const PACE_STEP = 15; // How many seconds to increment by when the user slides the slider
+const PACE_STEP = 15; // how many seconds to increment by when the user slides the slider
 
 /**
  * PaceSlider component - stores pace values in seconds

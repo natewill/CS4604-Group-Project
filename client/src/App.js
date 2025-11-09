@@ -50,7 +50,7 @@ function App() {
           >
             <Route path="/home" element={<Home />} />
             <Route path="/runs/new" element={<NewRun />} />
-            <Route path="/runs/finder" element={<RunFinder />} />
+            <Route path="/runfinder" element={<RunFinder />} />
             <Route path="/create-route" element={<CreateRoute />} />
           </Route>
         </Routes>
