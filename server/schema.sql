@@ -124,10 +124,10 @@ VALUES
 -- Run Participation
 INSERT INTO run_participation (participation_runner_id, participation_run_id)
 VALUES
-(2, 1), (3, 1), (4, 1), (5, 1), -- shifted from (1,1), (2,1), (3,1), (4,1)
-(2, 2), (6, 2), (7, 2), -- shifted from (1,2), (5,2), (6,2)
-(2, 3), (9, 3), (10, 3), -- shifted from (1,3), (8,3), (9,3)
-(22, 4), (21, 4), -- shifted from (21,4), (20,4)
-(9, 5), (12, 5), (13, 5), -- shifted from (8,5), (11,5), (12,5)
-(13, 6), -- shifted from (12,6)
-(22, 7); -- shifted from (21,7)
+(2, 1), (3, 1), (4, 1), (5, 1),
+(2, 2), (6, 2), (7, 2), 
+(2, 3), (9, 3), (10, 3), 
+(22, 4), (21, 4),
+(9, 5), (12, 5), (13, 5),
+(13, 6), 
+(22, 7); 
