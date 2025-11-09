@@ -1,0 +1,42 @@
+Okay, so lets focus on how we request to get a Route
+
+Firstly We have google.maps.DirectionsService
+- This has DirectionsRequest and a callback
+
+DirectionsRequest
+- Requires {Destination, Origin, & Travel Mode}
+- We pass latlng of start and end, then WALKING
+- Returns DirectionsResult
+
+DirectionsResult
+
+
+When I Generate a Route I need to store the distance and other data needed in 
+ order to reconstruct the route
+
+I might be able to store starting and ending location along with polyline
+from here I can place start and end marker with the polyline
+
+JWT tokens
+1. User signs in → Server validates credentials
+2. Server creates JWT token with user data (runner_id, is_leader, etc.)
+3. Token sent to client (cookie or response body)
+4. Client includes token in API requests
+5. Server validates token on each request
+6. Token expires → User must sign in again
+
+
+Lets make Signup/Login page
+Signup and Login should give Token and go to homepage
+Logout should remove token and return to Signup/Login page
+
+Next Steps work on logout and removing cookie
+Home page once logged in
+Creating a run
+
+We should make bunch of changes to database about optional fields
+
+JWT signin
+Try to go to home page (must validate cookie)
+if no valid cookie then redirect to login page
+upon successful login go to home
