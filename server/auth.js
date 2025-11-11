@@ -74,3 +74,4 @@ module.exports = {
   generateJWT,
   verifyToken,
 };
+

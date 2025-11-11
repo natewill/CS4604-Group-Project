@@ -9,6 +9,9 @@ const {
   validateSignupData,
 } = require("../utils/validation");
 
+// Backend configuration: Maximum distance for location-based filtering (in miles)
+const MAX_DISTANCE_MILES = 3;
+
 // GET all runners
 router.get("/api/runners", (req, res) => {
   db.query("SELECT * FROM runners", (err, results) => {
@@ -233,9 +236,21 @@ router.post("/api/save-route", async (req, res) => {
   );
 });
 
-// GET all runs
+// GET all runs with optional filtering
 router.get("/api/runs", (req, res) => {
-  const sql = `
+  const {
+    paceMin,
+    paceMax,
+    dateFrom,
+    dateTo,
+    searchLeader,
+    searchName,
+    lat,
+    lng,
+  } = req.query;
+
+  // Base SQL query
+  let sql = `
     SELECT 
       r.run_id,
       r.leader_id,
@@ -245,16 +260,93 @@ router.get("/api/runs", (req, res) => {
       r.name,
       r.description,
       r.pace,
-      r.date,
-      r.start_time
+      DATE_FORMAT(r.date, '%Y-%m-%d') AS date,
+      TIME_FORMAT(r.start_time, '%l:%i %p') AS start_time,
+      rt.start_lat,
+      rt.start_lng,
+      rt.end_lat,
+      rt.end_lng,
+      rt.start_address,
+      rt.end_address,
+      rt.polyline,
+      rt.distance,
+      CONCAT(leader.first_name, ' ', leader.last_name) AS leader_name
     FROM runs r
     JOIN status s ON r.run_status_id = s.status_id
-    ORDER BY r.date DESC, r.start_time DESC;
-  `;
+    JOIN routes rt ON r.run_route = rt.route_id
+    JOIN runners leader ON r.leader_id = leader.runner_id
+  `; //leader_name is just the first and last name together
+  // join the runs table with the status table on the run_status_id
+  // join the routes table on the run_route
+  // join the runners table on the leader_id
+ 
 
-  db.query(sql, (err, results) => {
+  const conditions = [];
+  const params = [];
+
+  // Pace range filtering
+  if (paceMin) {
+    conditions.push("r.pace >= ?");
+    params.push(parseInt(paceMin, 10));
+  }
+  if (paceMax) {
+    conditions.push("r.pace <= ?");
+    params.push(parseInt(paceMax, 10));
+  }
+
+  // Date range filtering
+  if (dateFrom) {
+    conditions.push("r.date >= ?");
+    params.push(dateFrom);
+  }
+  if (dateTo) {
+    conditions.push("r.date <= ?");
+    params.push(dateTo);
+  }
+
+  // leader name search (LIKE for partial matching)
+  if (searchLeader && searchLeader.trim()) {
+    const searchTerm = `%${searchLeader.trim()}%`;
+    conditions.push("(leader.first_name LIKE ? OR leader.last_name LIKE ?)");
+    params.push(searchTerm, searchTerm);
+  }
+
+  //search by run name (LIKE does partial matching)
+  if (searchName && searchName.trim()) {
+    conditions.push("r.name LIKE ?");
+    params.push(`%${searchName.trim()}%`);
+  }
+
+  // Distance filtering using Haversine formula
+  if (lat && lng) {
+    const userLat = parseFloat(lat);
+    const userLng = parseFloat(lng);
+    const maxDistanceKm = MAX_DISTANCE_MILES * 1.609344;
+
+    // Haversine formula to calculate distance between two points on a sphere, 
+    // idk if there is a better way to do this
+    conditions.push(`( 
+      6371 * acos(
+        cos(radians(?)) * 
+        cos(radians(rt.start_lat)) * 
+        cos(radians(rt.start_lng) - radians(?)) + 
+        sin(radians(?)) * 
+        sin(radians(rt.start_lat))
+      )
+    ) <= ?`);
+    params.push(userLat, userLng, userLat, maxDistanceKm);
+  }
+
+  // Add WHERE clause if conditions exist
+  if (conditions.length > 0) {
+    sql += " WHERE " + conditions.join(" AND ");
+  }
+
+  // Add ORDER BY
+  sql += " ORDER BY r.date DESC, r.start_time DESC";
+
+  db.query(sql, params, (err, results) => {
     if (err) {
-      console.error("Database query failed:", err);
       return res.status(500).json({ error: "Failed to fetch runs" });
     }
 

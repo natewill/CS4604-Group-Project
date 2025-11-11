@@ -7,14 +7,15 @@ import {
   useJsApiLoader,
   Polyline,
 } from "@react-google-maps/api";
-import { coordinatesToAddress } from "./api/coordinatesToAddress";
-import { routeSave } from "./api/routeSave";
-import { buildIcons } from "./map/icons";
+import { coordinatesToAddress } from "../services/geocoding";
+import { routeSave } from "../services/routeSave";
+import { buildIcons } from "../utils/map/icons";
 import {
   requestDirections,
   extractLegEndpoints,
   polylineOptions,
-} from "./map/directions";
+} from "../utils/map/directions";
+import validator from 'validator';
 
 const mapContainerStyle = {
   width: "100%",
@@ -76,6 +77,8 @@ const CreateRoute = ({ onRouteCreated }) => {
       if (endpoints) {
         setRouteStart(endpoints.start);
         setRouteEnd(endpoints.end);
+      } else {
+        alert("Could not extract route endpoints.");
       }
     } catch (e) {
       alert("Could not generate route.");
@@ -96,9 +99,13 @@ const CreateRoute = ({ onRouteCreated }) => {
       start_lng: startCoords.lng,
       end_lat: endCoords.lat,
       end_lng: endCoords.lng,
+      start_address: validator.isLatLong(startAddress || '') ? null : startAddress,
+      end_address: validator.isLatLong(endAddress || '') ? null : endAddress,
       polyline: directions.routes[0].overview_polyline,
       distance: directions.routes[0].legs[0].distance.value / 1609.344,
     };
+
+    console.log("routeData", routeData);
 
     try {
       const result = await routeSave(routeData);
@@ -131,10 +138,18 @@ const CreateRoute = ({ onRouteCreated }) => {
       const coords = { lat, lng };
       if (activePick === "start") {
         setStartCoords(coords);
+        if (address.within30meters) {
+          setStartAddress(address.formattedAddress);
+        } else {
         setStartAddress(`${lat.toFixed(5)}, ${lng.toFixed(5)}`);
+        }
       } else {
         setEndCoords(coords);
+        if (address.within30meters) {
+          setEndAddress(address.formattedAddress);
+        } else {
         setEndAddress(`${lat.toFixed(5)}, ${lng.toFixed(5)}`);
+        }
       }
       setMapCenter(coords);
       setActivePick(null);

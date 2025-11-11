@@ -6,9 +6,9 @@ import { AuthProvider } from "./context/AuthContext";
 import Signup from "./pages/signup";
 import Signin from "./pages/login";
 import CreateRoute from "./pages/CreateRoute";
-import Runs from "./pages/Runs";
 import NewRun from "./pages/NewRun";
 import Home from "./pages/Home";
+import RunFinder from "./pages/RunFinder";
 
 import Layout from "./components/NavLayout";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -49,8 +49,8 @@ function App() {
             }
           >
             <Route path="/home" element={<Home />} />
-            <Route path="/runs" element={<Runs />} />
             <Route path="/runs/new" element={<NewRun />} />
+            <Route path="/runfinder" element={<RunFinder />} />
             <Route path="/create-route" element={<CreateRoute />} />
           </Route>
         </Routes>

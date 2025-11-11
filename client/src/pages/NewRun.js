@@ -8,8 +8,7 @@ import {
   useJsApiLoader,
 } from "@react-google-maps/api";
 import polyline from "@mapbox/polyline";
-
-const GOOGLE_MAPS_API_KEY = process.env.REACT_APP_GOOGLE_MAPS_API_KEY;
+import { paceToSeconds } from "../utils/paceFormatters";
 
 function NewRun() {
   const [routes, setRoutes] = useState([]);
@@ -73,10 +72,30 @@ function NewRun() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    
+    // Convert pace from "MM:SS" to seconds (INT)
+    const paceSeconds = form.pace ? paceToSeconds(form.pace) : null;
+    if (form.pace && paceSeconds === null) {
+      alert('Invalid pace format. Use MM:SS (e.g., 08:30)');
+      return;
+    }
+
+    // Prepare payload with correct data types matching schema
+    const payload = {
+      leader_id: parseInt(form.leader_id, 10), // INT
+      run_route: parseInt(form.run_route, 10), // INT
+      run_status_id: parseInt(form.run_status_id, 10), // INT
+      name: form.name, // VARCHAR(50)
+      description: form.description || null, // VARCHAR(250), can be null
+      pace: paceSeconds, // INT (seconds)
+      date: form.date, // DATE (YYYY-MM-DD format)
+      start_time: form.start_time, // TIME (HH:MM:SS format)
+    };
+
     fetch("/api/runs", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(form),
+      body: JSON.stringify(payload),
     })
       .then((res) => {
         if (!res.ok) throw new Error("Failed to create run");
@@ -84,7 +103,7 @@ function NewRun() {
       })
       .then(() => {
         alert("Run created successfully!");
-        navigate("/runs");
+        navigate("/runfinder");
       })
       .catch((err) => {
         console.error(err);

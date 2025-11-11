@@ -1,0 +1,28 @@
+/* Essential layout only */
+.main-content {
+  display: flex;
+  height: calc(100vh - 150px);
+}
+
+.main-content > div:first-child {
+  flex: 1 1 65%;
+  height: 100%;
+}
+
+.cards-container {
+  flex: 1 1 35%;
+  height: 100%;
+  padding: 1rem;
+  overflow-y: auto;
+}
+
+.route-card {
+  padding: 1rem;
+  cursor: pointer;
+  border: 1px solid #ccc;
+}
+
+.route-card.selected {
+  border: 3px solid #2563eb;
+  background-color: #eff6ff;
+}
