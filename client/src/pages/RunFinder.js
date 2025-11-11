@@ -1,23 +1,24 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import {
   GoogleMap,
   Marker,
   Polyline,
   useJsApiLoader,
-} from '@react-google-maps/api';
-import polyline from '@mapbox/polyline';
-import { fetchRuns as fetchRunsService } from '../services/fetchRuns';
-import RouteCard from '../components/RouteCard';
-import FilterForm from '../components/FilterForm';
-import { buildIcons } from '../utils/map/icons';
-import '../styles/RunFinder.css';
+} from "@react-google-maps/api";
+import polyline from "@mapbox/polyline";
+import { fetchRuns as fetchRunsService } from "../services/fetchRuns";
+import RouteCard from "../components/RouteCard";
+import FilterForm from "../components/FilterForm";
+import { buildIcons } from "../utils/map/icons";
+import { useAuth } from "../context/AuthContext";
+import "../styles/RunFinder.css";
 
 const mapOptions = {
   streetViewControl: false,
   fullscreenControl: false,
   mapTypeControl: true,
-  colorScheme: 'DARK',
-  styles: [{ featureType: 'poi', stylers: [{ visibility: 'off' }] }]
+  colorScheme: "DARK",
+  styles: [{ featureType: "poi", stylers: [{ visibility: "off" }] }],
 };
 
 // Constants
@@ -34,9 +35,31 @@ const getRunEndCoords = (run) => ({
   lng: parseFloat(run.end_lng),
 });
 
+const saveRoute = async (routeId) => {
+  try {
+    const response = await fetch(`/api/routes/save/${routeId}`, {
+      method: "POST",
+      credentials: "include", // to send HTTP-only cookies
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+    if (!response.ok) {
+      const data = await response.json();
+      alert(`Failed to save route: ${data.error}`);
+      return;
+    }
+    alert("Route saved successfully!");
+  } catch (err) {
+    console.error("Error saving route:", err);
+    alert("Error saving route");
+  }
+};
+
 function RunFinder() {
   const [runs, setRuns] = useState([]);
-  
+  const { user, loading } = useAuth();
+
   // Google Maps and location state
   const [userLocation, setUserLocation] = useState(null);
   const [selectedRun, setSelectedRun] = useState(null);
@@ -45,41 +68,44 @@ function RunFinder() {
   const [searchLocationCoords, setSearchLocationCoords] = useState(null);
   const locationAutocompleteRef = useRef(null);
   const [customIcons, setCustomIcons] = useState(null);
-  
+
   // Search filter states - consolidated
   const [filters, setFilters] = useState({
-    paceMin: '',
-    paceMax: '',
-    dateFrom: '',
-    dateTo: '',
-    searchLeader: '',
-    searchName: '',
+    paceMin: "",
+    paceMax: "",
+    dateFrom: "",
+    dateTo: "",
+    searchLeader: "",
+    searchName: "",
   });
 
   // Load Google Maps API
   const { isLoaded } = useJsApiLoader({
     googleMapsApiKey: process.env.REACT_APP_GOOGLE_MAPS_API_KEY,
-    libraries: ['places', 'geometry'],
+    libraries: ["places", "geometry"],
     onError: () => {
-      alert('google maps api not working');
+      alert("google maps api not working");
     },
   });
 
   // Get user's current location
   useEffect(() => {
     if (!navigator.geolocation) {
-      alert('geolocation not supported');
+      alert("geolocation not supported");
       return;
     }
 
     navigator.geolocation.getCurrentPosition(
       (position) => {
-        const location = { lat: position.coords.latitude, lng: position.coords.longitude };
+        const location = {
+          lat: position.coords.latitude,
+          lng: position.coords.longitude,
+        };
         setUserLocation(location);
         setMapCenter(location);
       },
       (error) => {
-        console.error('Error getting location:', error);
+        console.error("Error getting location:", error);
         setUserLocation(DEFAULT_LOCATION);
         setMapCenter(DEFAULT_LOCATION);
       }
@@ -103,9 +129,13 @@ function RunFinder() {
 
   // Fetch runs from server with filters
   const fetchRuns = useCallback(async () => {
-    const data = await fetchRunsService(filters, searchLocationCoords, userLocation);
+    const data = await fetchRunsService(
+      filters,
+      searchLocationCoords,
+      userLocation
+    );
     setRuns(data);
-    
+
     // Always select the first run from results
     const newSelected = data[0] || null;
     setSelectedRun(newSelected);
@@ -117,7 +147,12 @@ function RunFinder() {
   // Clear all filters
   const clearFilters = () => {
     setFilters({
-      paceMin: '', paceMax: '', dateFrom: '', dateTo: '', searchLeader: '', searchName: '',
+      paceMin: "",
+      paceMax: "",
+      dateFrom: "",
+      dateTo: "",
+      searchLeader: "",
+      searchName: "",
     });
     setSearchLocationCoords(null);
   };
@@ -148,7 +183,7 @@ function RunFinder() {
     <div>
       <div>
         <button onClick={() => setFiltersOpen(!filtersOpen)}>
-          Search Filters! {filtersOpen ? '▼' : '▶'}
+          Search Filters! {filtersOpen ? "▼" : "▶"}
         </button>
         {filtersOpen && (
           <FilterForm
@@ -165,7 +200,7 @@ function RunFinder() {
       <div className="main-content">
         <div>
           <GoogleMap
-            mapContainerStyle={{ width: '100%', height: '100%' }}
+            mapContainerStyle={{ width: "100%", height: "100%" }}
             center={mapCenter}
             zoom={13}
             options={mapOptions}
@@ -180,9 +215,9 @@ function RunFinder() {
                 icon={{
                   path: window.google.maps.SymbolPath.CIRCLE,
                   scale: 10,
-                  fillColor: '#10b981',
+                  fillColor: "#10b981",
                   fillOpacity: 1,
-                  strokeColor: '#fff',
+                  strokeColor: "#fff",
                   strokeWeight: 3,
                 }}
               />
@@ -193,9 +228,9 @@ function RunFinder() {
                 icon={{
                   path: window.google.maps.SymbolPath.CIRCLE,
                   scale: 10,
-                  fillColor: '#4285F4',
+                  fillColor: "#4285F4",
                   fillOpacity: 1,
-                  strokeColor: '#fff',
+                  strokeColor: "#fff",
                   strokeWeight: 3,
                 }}
               />
@@ -203,13 +238,23 @@ function RunFinder() {
             {selectedRun?.polyline && (
               <Polyline
                 path={getPolylinePath(selectedRun)}
-                options={{ strokeColor: '#2563eb', strokeOpacity: 1, strokeWeight: 10 }}
+                options={{
+                  strokeColor: "#2563eb",
+                  strokeOpacity: 1,
+                  strokeWeight: 10,
+                }}
               />
             )}
             {selectedRun && (
               <>
-                <Marker position={getRunCoords(selectedRun)} icon={customIcons?.startIcon} />
-                <Marker position={getRunEndCoords(selectedRun)} icon={customIcons?.endIcon} />
+                <Marker
+                  position={getRunCoords(selectedRun)}
+                  icon={customIcons?.startIcon}
+                />
+                <Marker
+                  position={getRunEndCoords(selectedRun)}
+                  icon={customIcons?.endIcon}
+                />
               </>
             )}
           </GoogleMap>
@@ -218,24 +263,56 @@ function RunFinder() {
         <div className="cards-container">
           {runs.length === 0 ? (
             <p>
-              {(searchLocationCoords || userLocation) ? 'No runs within 3 miles match your search criteria.' : 'No runs match your search criteria.'}
+              {searchLocationCoords || userLocation
+                ? "No runs within 3 miles match your search criteria."
+                : "No runs match your search criteria."}
             </p>
-          ) : runs.length > 0 && (
-            <>
-              <p>
-                Showing {runs.length} run{runs.length !== 1 ? 's' : ''}{(searchLocationCoords || userLocation) ? ' within 3 miles' : ''}
-              </p>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              {runs.map((run) => (
-                <RouteCard
-                  key={run.run_id}
-                  run={run}
-                  isSelected={selectedRun?.run_id === run.run_id}
-                  onClick={() => handleRouteClick(run)}
-                />
-              ))}
-              </div>
-            </>
+          ) : (
+            runs.length > 0 && (
+              <>
+                <p>
+                  Showing {runs.length} run{runs.length !== 1 ? "s" : ""}
+                  {searchLocationCoords || userLocation
+                    ? " within 3 miles"
+                    : ""}
+                </p>
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "1rem",
+                  }}
+                >
+                  {runs.map((run) => (
+                    <div key={run.run_id} style={{ position: "relative" }}>
+                      <RouteCard
+                        run={run}
+                        isSelected={selectedRun?.run_id === run.run_id}
+                        onClick={() => handleRouteClick(run)}
+                      />
+                      {user?.is_leader && (
+                        <button
+                          style={{
+                            position: "absolute",
+                            top: "0.5rem",
+                            right: "0.5rem",
+                            backgroundColor: "#10b981",
+                            color: "white",
+                            border: "none",
+                            padding: "0.25rem 0.5rem",
+                            borderRadius: "0.25rem",
+                            cursor: "pointer",
+                          }}
+                          onClick={() => saveRoute(run.run_route)}
+                        >
+                          Save Route
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </>
+            )
           )}
         </div>
       </div>
@@ -244,4 +321,3 @@ function RunFinder() {
 }
 
 export default RunFinder;
-

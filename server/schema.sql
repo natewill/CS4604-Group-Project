@@ -63,6 +63,17 @@ CREATE TABLE run_participation (
     FOREIGN KEY (participation_run_id) REFERENCES runs(run_id)
 );
 
+CREATE TABLE saved_routes (
+    runner_id INT NOT NULL,
+    route_id  INT NOT NULL,
+    PRIMARY KEY (runner_id, route_id),
+    FOREIGN KEY (runner_id) REFERENCES runners(runner_id)
+        ON DELETE CASCADE,
+    FOREIGN KEY (route_id) REFERENCES routes(route_id)
+        ON DELETE CASCADE
+);
+
+
 -- Now lets populate some data into our tables
 
 -- Runners
@@ -120,6 +131,16 @@ VALUES
 (5, 9, 5, 2, 'Endurance Run', 'Climbing hills on a trail', 510, '2025-09-07', '08:00:00'),
 (6, 13, 6, 4, 'Rain Run', 'Short run, so wet, wow such a wet run', 555, '2025-10-20', '18:30:00'),
 (7, 22, 7, 3, 'Sprint Run', 'Sprinted to class.', 465, '2025-10-20', '13:00:00');
+
+INSERT INTO saved_routes (runner_id, route_id)
+VALUES
+(2, 1),
+(2, 2),
+(2, 3),
+(22, 4),
+(9, 5),
+(13, 6),
+(22, 7);
 
 -- Run Participation
 INSERT INTO run_participation (participation_runner_id, participation_run_id)
