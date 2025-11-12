@@ -21,7 +21,6 @@ function NewRun() {
   const [routes, setRoutes] = useState([]);
   const [form, setForm] = useState({
     run_route: "",
-    run_status_id: 1,
     name: "",
     description: "",
     pace: "",
@@ -77,7 +76,6 @@ function NewRun() {
     if (!form.pace) missingFields.push("Pace");
     if (!form.date) missingFields.push("Date");
     if (!form.start_time) missingFields.push("Start Time");
-    if (!form.run_status_id) missingFields.push("Status");
 
     return missingFields;
   };
@@ -87,8 +85,7 @@ function NewRun() {
     form.name.trim() &&
     form.pace &&
     form.date &&
-    form.start_time &&
-    form.run_status_id;
+    form.start_time;
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -273,22 +270,7 @@ function NewRun() {
           )}
 
           {/* Other Fields */}
-          <div style={styles.row}>
-            <div style={styles.column}>
-              <label style={styles.label}>Status</label>
-              <select
-                name="run_status_id"
-                value={form.run_status_id}
-                onChange={handleChange}
-                style={styles.select}
-              >
-                <option value={1}>Scheduled</option>
-                <option value={2}>Completed</option>
-                <option value={3}>Cancelled</option>
-                <option value={4}>In Progress</option>
-              </select>
-            </div>
-
+          <div style={{ display: "flex", justifyContent: "center" }}>
             <PaceSlider
               label="Pace (min:sec per mile)"
               value={form.pace}

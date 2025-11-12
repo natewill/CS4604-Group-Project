@@ -406,7 +406,7 @@ router.post("/api/runs", verifyToken, (req, res) => {
       return res.status(403).json({ error: "Only leaders can create runs" });
     }
 
-    // Extract all required fields from the request body
+    // Extract all fields from request
     const {
       run_route,
       run_status_id,
@@ -417,19 +417,16 @@ router.post("/api/runs", verifyToken, (req, res) => {
       start_time,
     } = req.body;
 
-    // Validate required fields
-    if (
-      !run_route ||
-      !run_status_id ||
-      !name ||
-      pace === undefined ||
-      !date ||
-      !start_time
-    ) {
+    // Validate required fields (status not required)
+    if (!run_route || !name || pace === undefined || !date || !start_time) {
       return res.status(400).json({ error: "Missing required run fields" });
     }
 
-    // Leader ID is the authenticated user — DO NOT take it from the request
+    // Default run_status_id to 1 (Scheduled) if not provided
+    const statusId = run_status_id && !isNaN(run_status_id)
+      ? run_status_id
+      : 1;
+
     const insertRunSql = `
       INSERT INTO runs
         (leader_id, run_route, run_status_id, name, description, pace, date, start_time)
@@ -437,9 +434,9 @@ router.post("/api/runs", verifyToken, (req, res) => {
     `;
 
     const values = [
-      runnerId, // Always use the authenticated user's ID
+      runnerId,
       run_route,
-      run_status_id,
+      statusId,
       name,
       description || null,
       pace,
