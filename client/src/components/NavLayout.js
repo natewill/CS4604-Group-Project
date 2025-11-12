@@ -11,7 +11,7 @@ function Layout() {
   };
   const isLeader = user && (user.is_leader === 1 || user.is_leader === true);
   return (
-    <div>
+    <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
       <nav
         style={{
           display: "flex",
@@ -36,10 +36,13 @@ function Layout() {
               Welcome, {user.first_name} {user.last_name}
             </span>
           )}
+          <Link to="/profile">Profile</Link>
           <button onClick={handleLogout}>Logout</button>
         </div>
       </nav>
-      <Outlet /> {/* This renders the child routes */}
+      <div style={{ flex: 1, overflow: "auto" }}>
+        <Outlet /> {/* This renders the child routes */}
+      </div>
     </div>
   );
 }
