@@ -15,7 +15,7 @@ import {
   extractLegEndpoints,
   polylineOptions,
 } from "../utils/map/directions";
-import validator from 'validator';
+import validator from "validator";
 
 const mapContainerStyle = {
   width: "100%",
@@ -68,10 +68,6 @@ const CreateRoute = ({ onRouteCreated }) => {
       });
       setDirections(result);
 
-      // null start and end coords for the markers we selected
-      // setStartCoords(null);
-      // setEndCoords(null);
-
       // this is the start and end locations of the route generated
       const endpoints = extractLegEndpoints(result);
       if (endpoints) {
@@ -99,13 +95,13 @@ const CreateRoute = ({ onRouteCreated }) => {
       start_lng: startCoords.lng,
       end_lat: endCoords.lat,
       end_lng: endCoords.lng,
-      start_address: validator.isLatLong(startAddress || '') ? null : startAddress,
-      end_address: validator.isLatLong(endAddress || '') ? null : endAddress,
+      start_address: validator.isLatLong(startAddress || "")
+        ? null
+        : startAddress,
+      end_address: validator.isLatLong(endAddress || "") ? null : endAddress,
       polyline: directions.routes[0].overview_polyline,
       distance: directions.routes[0].legs[0].distance.value / 1609.344,
     };
-
-    console.log("routeData", routeData);
 
     try {
       const result = await routeSave(routeData);
@@ -141,14 +137,14 @@ const CreateRoute = ({ onRouteCreated }) => {
         if (address.within30meters) {
           setStartAddress(address.formattedAddress);
         } else {
-        setStartAddress(`${lat.toFixed(5)}, ${lng.toFixed(5)}`);
+          setStartAddress(`${lat.toFixed(5)}, ${lng.toFixed(5)}`);
         }
       } else {
         setEndCoords(coords);
         if (address.within30meters) {
           setEndAddress(address.formattedAddress);
         } else {
-        setEndAddress(`${lat.toFixed(5)}, ${lng.toFixed(5)}`);
+          setEndAddress(`${lat.toFixed(5)}, ${lng.toFixed(5)}`);
         }
       }
       setMapCenter(coords);
