@@ -9,7 +9,7 @@ function Layout() {
     await logout();
     navigate("/login");
   };
-
+  const isLeader = user && (user.is_leader === 1 || user.is_leader === true);
   return (
     <div>
       <nav
@@ -25,7 +25,8 @@ function Layout() {
         <div style={{ display: "flex", gap: "1rem" }}>
           <Link to="/home">Home</Link>
           <Link to="/runfinder">RunFinder</Link>
-          <Link to="/runs/new">New Run</Link>
+          {/* Only show New Run if the user is a leader */}
+          {isLeader && <Link to="/runs/new">New Run</Link>}
           <Link to="/create-route">Create Route</Link>
         </div>
 

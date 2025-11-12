@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from "react";
+import StartTimePicker from "../components/StartTimePicker";
+import PaceSlider from "../components/PaceSlider";
 import { useNavigate } from "react-router-dom";
 import CreateRoute from "./CreateRoute";
 import {
@@ -18,7 +20,6 @@ function NewRun() {
 
   const [routes, setRoutes] = useState([]);
   const [form, setForm] = useState({
-    leader_id: "",
     run_route: "",
     run_status_id: 1,
     name: "",
@@ -27,10 +28,7 @@ function NewRun() {
     date: "",
     start_time: "",
   });
-  const [showCreateRoute, setShowCreateRoute] = useState(false);
   const [selectedRoute, setSelectedRoute] = useState(null);
-  const [leaders, setLeaders] = useState([]);
-  const [newRouteId, setNewRouteId] = useState(null);
   const [creatingRoute, setCreatingRoute] = useState(false);
 
   const { isLoaded } = useJsApiLoader({
@@ -38,35 +36,25 @@ function NewRun() {
     libraries: ["places", "geometry"],
   });
 
+  // Redirect non-leaders
   useEffect(() => {
     if (!loading) {
-      // Only redirect after user has loaded
       if (!user || (user.is_leader !== 1 && user.is_leader !== true)) {
         navigate("/runfinder");
       }
     }
   }, [user, loading, navigate]);
 
+  // Fetch available routes
   useEffect(() => {
     fetch("/api/routes")
       .then((res) => res.json())
       .then((data) => setRoutes(data))
       .catch((err) => console.error("Failed to fetch routes:", err));
-    fetch("/api/leaders")
-      .then((res) => res.json())
-      .then((data) => setLeaders(data))
-      .catch((err) => console.error("Failed to fetch leaders:", err));
   }, []);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
-  };
-
-  const handleRouteSelect = (e) => {
-    const routeId = e.target.value;
-    setForm({ ...form, run_route: routeId });
-    const route = routes.find((r) => r.route_id === Number(routeId));
-    setSelectedRoute(route || null);
   };
 
   const fetchRouteDetails = async (routeId) => {
@@ -81,8 +69,39 @@ function NewRun() {
     }
   };
 
+  const validateForm = () => {
+    const missingFields = [];
+
+    if (!form.run_route) missingFields.push("Route");
+    if (!form.name.trim()) missingFields.push("Name");
+    if (!form.pace) missingFields.push("Pace");
+    if (!form.date) missingFields.push("Date");
+    if (!form.start_time) missingFields.push("Start Time");
+    if (!form.run_status_id) missingFields.push("Status");
+
+    return missingFields;
+  };
+
+  const isFormComplete =
+    form.run_route &&
+    form.name.trim() &&
+    form.pace &&
+    form.date &&
+    form.start_time &&
+    form.run_status_id;
+
   const handleSubmit = (e) => {
     e.preventDefault();
+    const missing = validateForm();
+    if (missing.length > 0) {
+      alert(
+        `Please complete all required fields before creating the run:\n\n${missing.join(
+          ", "
+        )}`
+      );
+      return;
+    }
+
     fetch("/api/runs", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -102,22 +121,7 @@ function NewRun() {
       });
   };
 
-  const handleRouteCreated = (newRouteId) => {
-    fetch("/api/routes")
-      .then((res) => res.json())
-      .then((data) => {
-        setRoutes(data);
-        const newRoute = data.find((r) => r.route_id === newRouteId);
-        setForm({ ...form, run_route: newRouteId });
-        setSelectedRoute(newRoute || null);
-        setShowCreateRoute(false);
-      })
-      .catch((err) => console.error("Failed to refresh routes:", err));
-  };
-
-  if (loading) {
-    return <p>Loading...</p>; // or a spinner
-  }
+  if (loading) return <p>Loading...</p>;
 
   if (!user || (user.is_leader !== 1 && user.is_leader !== true)) {
     navigate("/runfinder");
@@ -163,25 +167,6 @@ function NewRun() {
             gap: "1.25rem",
           }}
         >
-          {/* Leader */}
-          <div>
-            <label style={styles.label}>Leader</label>
-            <select
-              name="leader_id"
-              value={form.leader_id}
-              onChange={handleChange}
-              required
-              style={styles.select}
-            >
-              <option value="">Select a leader</option>
-              {leaders.map((leader) => (
-                <option key={leader.runner_id} value={leader.runner_id}>
-                  {leader.full_name} ({leader.email})
-                </option>
-              ))}
-            </select>
-          </div>
-
           {/* Route Section */}
           <div
             style={{
@@ -196,7 +181,6 @@ function NewRun() {
                 <h3 style={{ color: "#3f51b5" }}>Create a New Route</h3>
                 <CreateRoute
                   onRouteCreated={(routeId) => {
-                    setNewRouteId(routeId);
                     setForm((prev) => ({ ...prev, run_route: routeId }));
                     setCreatingRoute(false);
                     fetchRouteDetails(routeId);
@@ -218,13 +202,11 @@ function NewRun() {
                 >
                   <option value="">Select an existing route</option>
                   {routes.map((route) => {
-                    // Build display text dynamically
                     let displayName = `Route #${route.route_id} (${route.distance} mi)`;
                     if (route.start_address)
                       displayName += `, Start: ${route.start_address}`;
                     if (route.end_address)
                       displayName += `, End: ${route.end_address}`;
-
                     return (
                       <option key={route.route_id} value={route.route_id}>
                         {displayName}
@@ -307,57 +289,14 @@ function NewRun() {
               </select>
             </div>
 
-            {/* Pace Selector */}
-            <div style={styles.column}>
-              <label style={styles.label}>Pace (min:sec per mile)</label>
-              <div
-                style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}
-              >
-                <select
-                  value={Math.floor(form.pace / 60) || ""}
-                  onChange={(e) => {
-                    const minutes = parseInt(e.target.value);
-                    const seconds = form.pace % 60 || 0;
-                    const total = minutes * 60 + seconds;
-                    setForm((prev) => ({ ...prev, pace: total }));
-                  }}
-                  style={{ ...styles.select, width: "100px" }}
-                >
-                  <option value="">Min</option>
-                  {[...Array(21).keys()].map((m) => (
-                    <option key={m} value={m}>
-                      {m}
-                    </option>
-                  ))}
-                </select>
-                :
-                <select
-                  value={form.pace % 60 || ""}
-                  onChange={(e) => {
-                    const seconds = parseInt(e.target.value);
-                    const minutes = Math.floor(form.pace / 60) || 0;
-                    const total = minutes * 60 + seconds;
-                    setForm((prev) => ({ ...prev, pace: total }));
-                  }}
-                  style={{ ...styles.select, width: "100px" }}
-                >
-                  <option value="">Sec</option>
-                  {[...Array(60).keys()].map((s) => (
-                    <option key={s} value={s}>
-                      {s.toString().padStart(2, "0")}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              {form.pace ? (
-                <small style={{ color: "#555" }}>
-                  Selected pace: {Math.floor(form.pace / 60)}:
-                  {(form.pace % 60).toString().padStart(2, "0")} per mile
-                </small>
-              ) : (
-                <small style={{ color: "#888" }}>Select your pace</small>
-              )}
-            </div>
+            <PaceSlider
+              label="Pace (min:sec per mile)"
+              value={form.pace}
+              defaultValue={480}
+              onChange={(newPace) =>
+                setForm((prev) => ({ ...prev, pace: newPace }))
+              }
+            />
           </div>
 
           <label style={styles.label}>Name</label>
@@ -391,134 +330,18 @@ function NewRun() {
               />
             </div>
 
-            {/* Start Time Picker */}
-            <div style={styles.column}>
-              <label style={styles.label}>Start Time</label>
-              <div
-                style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}
-              >
-                {/* Hour */}
-                <select
-                  value={form.start_time_hour || ""}
-                  onChange={(e) => {
-                    const hour = parseInt(e.target.value);
-                    const minute = form.start_time_minute || 0;
-                    const ampm = form.start_time_ampm || "AM";
-
-                    const hour24 =
-                      ampm === "PM"
-                        ? hour === 12
-                          ? 12
-                          : hour + 12
-                        : hour === 12
-                        ? 0
-                        : hour;
-                    const time24 = `${hour24
-                      .toString()
-                      .padStart(2, "0")}:${minute.toString().padStart(2, "0")}`;
-
-                    setForm((prev) => ({
-                      ...prev,
-                      start_time: time24,
-                      start_time_hour: hour,
-                      start_time_minute: minute,
-                      start_time_ampm: ampm,
-                    }));
-                  }}
-                  style={{ ...styles.select, width: "80px" }}
-                >
-                  <option value="">Hr</option>
-                  {[...Array(12).keys()].map((h) => (
-                    <option key={h + 1} value={h + 1}>
-                      {h + 1}
-                    </option>
-                  ))}
-                </select>
-
-                {/* Minute */}
-                <select
-                  value={form.start_time_minute || ""}
-                  onChange={(e) => {
-                    const minute = parseInt(e.target.value);
-                    const hour = form.start_time_hour || 12;
-                    const ampm = form.start_time_ampm || "AM";
-
-                    const hour24 =
-                      ampm === "PM"
-                        ? hour === 12
-                          ? 12
-                          : hour + 12
-                        : hour === 12
-                        ? 0
-                        : hour;
-                    const time24 = `${hour24
-                      .toString()
-                      .padStart(2, "0")}:${minute.toString().padStart(2, "0")}`;
-
-                    setForm((prev) => ({
-                      ...prev,
-                      start_time: time24,
-                      start_time_hour: hour,
-                      start_time_minute: minute,
-                      start_time_ampm: ampm,
-                    }));
-                  }}
-                  style={{ ...styles.select, width: "80px" }}
-                >
-                  <option value="">Min</option>
-                  {[...Array(60).keys()].map((m) => (
-                    <option key={m} value={m}>
-                      {m.toString().padStart(2, "0")}
-                    </option>
-                  ))}
-                </select>
-
-                {/* AM/PM */}
-                <select
-                  value={form.start_time_ampm || "AM"}
-                  onChange={(e) => {
-                    const ampm = e.target.value;
-                    const hour = form.start_time_hour || 12;
-                    const minute = form.start_time_minute || 0;
-
-                    const hour24 =
-                      ampm === "PM"
-                        ? hour === 12
-                          ? 12
-                          : hour + 12
-                        : hour === 12
-                        ? 0
-                        : hour;
-                    const time24 = `${hour24
-                      .toString()
-                      .padStart(2, "0")}:${minute.toString().padStart(2, "0")}`;
-
-                    setForm((prev) => ({
-                      ...prev,
-                      start_time: time24,
-                      start_time_hour: hour,
-                      start_time_minute: minute,
-                      start_time_ampm: ampm,
-                    }));
-                  }}
-                  style={{ ...styles.select, width: "80px" }}
-                >
-                  <option value="AM">AM</option>
-                  <option value="PM">PM</option>
-                </select>
-              </div>
-              {form.start_time && (
-                <small style={{ color: "#555" }}>
-                  Selected start time:{" "}
-                  {`${form.start_time_hour}:${(form.start_time_minute || 0)
-                    .toString()
-                    .padStart(2, "0")} ${form.start_time_ampm}`}
-                </small>
-              )}
-            </div>
+            <StartTimePicker form={form} setForm={setForm} styles={styles} />
           </div>
 
-          <button type="submit" style={styles.primaryButton}>
+          <button
+            type="submit"
+            style={{
+              ...styles.primaryButton,
+              opacity: isFormComplete ? 1 : 0.6,
+              cursor: isFormComplete ? "pointer" : "not-allowed",
+            }}
+            disabled={!isFormComplete}
+          >
             Create Run
           </button>
         </form>

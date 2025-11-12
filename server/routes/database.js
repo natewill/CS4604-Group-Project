@@ -383,7 +383,7 @@ router.get("/api/runs", (req, res) => {
 });
 
 // POST: create a new run (leaders only)
-router.post("/api/run", verifyToken, (req, res) => {
+router.post("/api/runs", verifyToken, (req, res) => {
   const runnerId = req.user?.runner_id;
 
   if (!runnerId) {
@@ -391,9 +391,7 @@ router.post("/api/run", verifyToken, (req, res) => {
   }
 
   // Check if user is a leader
-  const checkLeaderSql = `
-    SELECT is_leader FROM runners WHERE runner_id = ?
-  `;
+  const checkLeaderSql = `SELECT is_leader FROM runners WHERE runner_id = ?`;
   db.query(checkLeaderSql, [runnerId], (leaderErr, leaderResults) => {
     if (leaderErr) {
       console.error("Error checking leader status:", leaderErr);
@@ -408,7 +406,7 @@ router.post("/api/run", verifyToken, (req, res) => {
       return res.status(403).json({ error: "Only leaders can create runs" });
     }
 
-    // Extract all required fields from request body
+    // Extract all required fields from the request body
     const {
       run_route,
       run_status_id,
@@ -416,7 +414,7 @@ router.post("/api/run", verifyToken, (req, res) => {
       description,
       pace,
       date,
-      start_time
+      start_time,
     } = req.body;
 
     // Validate required fields
@@ -431,27 +429,35 @@ router.post("/api/run", verifyToken, (req, res) => {
       return res.status(400).json({ error: "Missing required run fields" });
     }
 
+    // Leader ID is the authenticated user — DO NOT take it from the request
     const insertRunSql = `
       INSERT INTO runs
         (leader_id, run_route, run_status_id, name, description, pace, date, start_time)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
-    db.query(
-      insertRunSql,
-      [runnerId, run_route, run_status_id, name, description || null, pace, date, start_time],
-      (err, result) => {
-        if (err) {
-          console.error("Error creating run:", err);
-          return res.status(500).json({ error: "Failed to create run" });
-        }
+    const values = [
+      runnerId, // Always use the authenticated user's ID
+      run_route,
+      run_status_id,
+      name,
+      description || null,
+      pace,
+      date,
+      start_time,
+    ];
 
-        res.status(201).json({
-          message: "Run created successfully",
-          run_id: result.insertId
-        });
+    db.query(insertRunSql, values, (err, result) => {
+      if (err) {
+        console.error("Error creating run:", err);
+        return res.status(500).json({ error: "Failed to create run" });
       }
-    );
+
+      res.status(201).json({
+        message: "Run created successfully",
+        run_id: result.insertId,
+      });
+    });
   });
 });
 

@@ -101,7 +101,8 @@ VALUES
 (19, 'Henry', 'G', 'Young', 'henry.young@vt.edu', '$argon2id$v=19$m=16,t=2,p=1$cnVubmluZzE$OdhJBdhfCBjrht2zjiyvZA', 1, 360, 420, 10, 26), -- paperclips&dreams (6:00, 7:00)
 (20, 'Harper', 'Q', 'Allen', 'harper.allen@vt.edu', '$argon2id$v=19$m=16,t=2,p=1$cnVubmluZzE$29Ppdbdu8sLo1mi8Ya+/vw', 0, 480, 540, 3, 10), -- fuzzyBlanket#3 (8:00, 9:00)
 (21, 'Alexander', 'V', 'King', 'alex.king@vt.edu', '$argon2id$v=19$m=16,t=2,p=1$cnVubmluZzE$3cPUrQ+yTPNG7Q6u7bJy3w', 1, 420, 480, 5, 20), -- city-lights_9pm (7:00, 8:00)
-(22, 'Nate', 'D', 'Williams', 'natewilliams@vt.edu', '$argon2id$v=19$m=16,t=2,p=1$cnVubmluZzE$8ifrTk+98PBcbldrTtgjhA', 1, 660, 720, 2, 3); -- trainspotter_06 (11:00, 12:00)
+(22, 'Nate', 'D', 'Williams', 'natewilliams@vt.edu', '$argon2id$v=19$m=16,t=2,p=1$cnVubmluZzE$8ifrTk+98PBcbldrTtgjhA', 1, 660, 720, 2, 3), -- trainspotter_06 (11:00, 12:00)
+(23, 'Alex', 'R', 'Shaw', 'ashaw4@vt.edu', '$argon2id$v=19$m=65536,t=2,p=1$zizQWPgquPuhcbaKSpyIdA$vvSvw/Y1Ac9XBXM95dUTcKsUjI5bcsOLeiM0n4yRDME', 1, 360, 540, 1, 10); -- BottomlandBucks25! (6:00, 9:00)
 
 -- Status
 INSERT INTO status (status_id, status_description)
