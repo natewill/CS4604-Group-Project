@@ -33,7 +33,6 @@ function Runs() {
       });
   };
 
-
   if (loading) return <p style={{ padding: "2rem" }}>Loading runs...</p>;
 
   return (
@@ -106,12 +105,24 @@ function Runs() {
             </button>
 
             <h2 style={{ marginBottom: "0.5rem" }}>{run.name}</h2>
-            <p><strong>Status:</strong> {run.status}</p>
-            <p><strong>Leader ID:</strong> {run.leader_id}</p>
-            <p><strong>Route:</strong> {run.run_route}</p>
-            <p><strong>Pace:</strong> {run.pace}</p>
-            <p><strong>Date:</strong> {run.date}</p>
-            <p><strong>Start Time:</strong> {run.start_time}</p>
+            <p>
+              <strong>Status:</strong> {run.status}
+            </p>
+            <p>
+              <strong>Leader ID:</strong> {run.leader_id}
+            </p>
+            <p>
+              <strong>Route:</strong> {run.run_route}
+            </p>
+            <p>
+              <strong>Pace:</strong> {run.pace}
+            </p>
+            <p>
+              <strong>Date:</strong> {run.date}
+            </p>
+            <p>
+              <strong>Start Time:</strong> {run.start_time}
+            </p>
             <p>{run.description}</p>
           </div>
         ))}
