@@ -7,6 +7,7 @@ const {
   normalizeString,
   normalizeInteger,
   validateSignupData,
+  validateRequiredString,
 } = require("../utils/validation");
 
 // Backend configuration: Maximum distance for location-based filtering (in miles)
@@ -195,6 +196,296 @@ router.post("/login", async (req, res) => {
   }
 });
 
+// PUT: update user profile (requires authentication)
+// We do same validation as signup so maybe we can combine these?
+router.put("/api/edit-profile", verifyToken, async (req, res) => {
+  const runnerId = req.user?.runner_id;
+
+  if (!runnerId) {
+    return res.status(401).json({ error: "Unauthorized: must be logged in" });
+  }
+
+  // determine which fields are sent
+  const hasFirstName = "first_name" in req.body;
+  const hasMiddleInitial = "middle_initial" in req.body;
+  const hasLastName = "last_name" in req.body;
+  const hasEmail = "email" in req.body;
+  const hasMinPace = "min_pace" in req.body;
+  const hasMaxPace = "max_pace" in req.body;
+  const hasMinDistPref = "min_dist_pref" in req.body;
+  const hasMaxDistPref = "max_dist_pref" in req.body;
+
+  // Build dynamic query based on provided fields
+  const updates = [];
+  const values = [];
+
+  // Validate the fields if they are in the request
+  // Handle email validation first if email is being updated
+  if (hasEmail) {
+    const email = normalizeString(req.body.email, 100);
+    if (email === null || email.length === 0) {
+      return res.status(400).json({ error: "email cannot be empty" });
+    }
+    const normalizedEmail = email.toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
+      return res
+        .status(400)
+        .json({ error: "email must be a valid email address" });
+    }
+
+    // Check if email is already taken by another user (must be done before building update query)
+    try {
+      const emailCheck = await new Promise((resolve, reject) => {
+        db.query(
+          "SELECT runner_id FROM runners WHERE email = ? AND runner_id != ?",
+          [normalizedEmail, runnerId],
+          (emailErr, emailResults) => {
+            if (emailErr) {
+              reject(emailErr);
+            } else {
+              resolve(emailResults);
+            }
+          }
+        );
+      });
+
+      if (emailCheck.length > 0) {
+        return res.status(409).json({ error: "email already exists" });
+      }
+
+      // Email is available, add to updates
+      updates.push("email = ?");
+      values.push(normalizedEmail);
+    } catch (emailErr) {
+      console.error("Database error checking email:", emailErr);
+      return res.status(500).json({ error: "Failed to validate email" });
+    }
+  }
+
+  if (hasFirstName) {
+    const first_name = normalizeString(req.body.first_name, 100);
+    if (first_name === null || first_name.length === 0) {
+      return res.status(400).json({ error: "first_name cannot be empty" });
+    }
+    updates.push("first_name = ?");
+    values.push(first_name);
+  }
+
+  if (hasMiddleInitial) {
+    const middle_initial = String(req.body.middle_initial)
+      .trim()
+      .charAt(0)
+      .toUpperCase();
+    if (middle_initial.length === 0) {
+      return res.status(400).json({ error: "middle_initial cannot be empty" });
+    }
+    if (middle_initial.length > 1) {
+      return res
+        .status(400)
+        .json({ error: "middle_initial must be a single character" });
+    }
+    if (!/^[a-zA-Z]$/.test(middle_initial)) {
+      return res.status(400).json({ error: "middle_initial must be a letter" });
+    }
+    updates.push("middle_initial = ?");
+    values.push(middle_initial);
+  }
+
+  if (hasLastName) {
+    const last_name = normalizeString(req.body.last_name, 100);
+    if (last_name === null || last_name.length === 0) {
+      return res.status(400).json({ error: "last_name cannot be empty" });
+    }
+    updates.push("last_name = ?");
+    values.push(last_name);
+  }
+
+  if (hasMinPace) {
+    const min_pace = normalizeInteger(req.body.min_pace);
+    if (min_pace === null) {
+      return res
+        .status(400)
+        .json({ error: "min_pace must be a valid integer" });
+    }
+    if (min_pace < 0) {
+      return res.status(400).json({ error: "min_pace must be 0 or greater" });
+    }
+    updates.push("min_pace = ?");
+    values.push(min_pace);
+  }
+
+  if (hasMaxPace) {
+    const max_pace = normalizeInteger(req.body.max_pace);
+    if (max_pace === null) {
+      return res
+        .status(400)
+        .json({ error: "max_pace must be a valid integer" });
+    }
+    if (max_pace < 0) {
+      return res.status(400).json({ error: "max_pace must be 0 or greater" });
+    }
+    updates.push("max_pace = ?");
+    values.push(max_pace);
+  }
+
+  if (hasMinDistPref) {
+    const min_dist_pref = normalizeInteger(req.body.min_dist_pref);
+    if (min_dist_pref === null) {
+      return res
+        .status(400)
+        .json({ error: "min_dist_pref must be a valid integer" });
+    }
+    if (min_dist_pref < 0) {
+      return res
+        .status(400)
+        .json({ error: "min_dist_pref must be 0 or greater" });
+    }
+    updates.push("min_dist_pref = ?");
+    values.push(min_dist_pref);
+  }
+
+  if (hasMaxDistPref) {
+    const max_dist_pref = normalizeInteger(req.body.max_dist_pref);
+    if (max_dist_pref === null) {
+      return res
+        .status(400)
+        .json({ error: "max_dist_pref must be a valid integer" });
+    }
+    if (max_dist_pref < 0) {
+      return res
+        .status(400)
+        .json({ error: "max_dist_pref must be 0 or greater" });
+    }
+    updates.push("max_dist_pref = ?");
+    values.push(max_dist_pref);
+  }
+
+  // Cross-field validation: min_pace <= max_pace
+  const minPaceValue = hasMinPace ? normalizeInteger(req.body.min_pace) : null;
+  const maxPaceValue = hasMaxPace ? normalizeInteger(req.body.max_pace) : null;
+
+  // If both are being updated, check the new values
+  if (
+    hasMinPace &&
+    hasMaxPace &&
+    minPaceValue !== null &&
+    maxPaceValue !== null
+  ) {
+    if (minPaceValue > maxPaceValue) {
+      return res
+        .status(400)
+        .json({ error: "min_pace cannot be greater than max_pace" });
+    }
+  } else if (hasMinPace && minPaceValue !== null) {
+    // If only min_pace is being updated, check against current max_pace
+    const currentMaxPace = req.user.max_pace;
+    if (minPaceValue > currentMaxPace) {
+      return res
+        .status(400)
+        .json({ error: "min_pace cannot be greater than current max_pace" });
+    }
+  } else if (hasMaxPace && maxPaceValue !== null) {
+    // If only max_pace is being updated, check against current min_pace
+    const currentMinPace = req.user.min_pace;
+    if (currentMinPace > maxPaceValue) {
+      return res
+        .status(400)
+        .json({ error: "max_pace cannot be less than current min_pace" });
+    }
+  }
+
+  // Cross-field validation: min_dist_pref <= max_dist_pref
+  const minDistValue = hasMinDistPref
+    ? normalizeInteger(req.body.min_dist_pref)
+    : null;
+  const maxDistValue = hasMaxDistPref
+    ? normalizeInteger(req.body.max_dist_pref)
+    : null;
+
+  if (
+    hasMinDistPref &&
+    hasMaxDistPref &&
+    minDistValue !== null &&
+    maxDistValue !== null
+  ) {
+    if (minDistValue > maxDistValue) {
+      return res
+        .status(400)
+        .json({ error: "min_dist_pref cannot be greater than max_dist_pref" });
+    }
+  } else if (hasMinDistPref && minDistValue !== null) {
+    const currentMaxDist = req.user.max_dist_pref;
+    if (minDistValue > currentMaxDist) {
+      return res.status(400).json({
+        error: "min_dist_pref cannot be greater than current max_dist_pref",
+      });
+    }
+  } else if (hasMaxDistPref && maxDistValue !== null) {
+    const currentMinDist = req.user.min_dist_pref;
+    if (currentMinDist > maxDistValue) {
+      return res.status(400).json({
+        error: "max_dist_pref cannot be less than current min_dist_pref",
+      });
+    }
+  }
+
+  // Add runner_id to values for WHERE clause
+  values.push(runnerId);
+
+  // Build and execute UPDATE query
+  const sql = `
+    UPDATE runners
+    SET ${updates.join(", ")}
+    WHERE runner_id = ?
+  `;
+
+  db.query(sql, values, (err, result) => {
+    if (err) {
+      console.error("Database update failed:", err);
+      return res.status(500).json({ error: "Failed to update profile" });
+    }
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    // I have to subquery in order to get the updated runner
+    db.query(
+      "SELECT runner_id, first_name, last_name, middle_initial, email, is_leader, min_pace, max_pace, min_dist_pref, max_dist_pref FROM runners WHERE runner_id = ?",
+      [runnerId],
+      (fetchErr, fetchResults) => {
+        if (fetchErr) {
+          console.error("Database error fetching updated user:", fetchErr);
+          return res.status(500).json({
+            error: "Profile updated but failed to fetch updated data",
+          });
+        }
+
+        if (fetchResults.length === 0) {
+          return res.status(404).json({ error: "User not found after update" });
+        }
+
+        // Generate new JWT token with updated user data
+        const updatedUser = fetchResults[0];
+        const token = generateJWT(updatedUser);
+
+        // Update the HTTP-only cookie with new token
+        res.cookie("CMIYC", token, {
+          httpOnly: true,
+          secure: false,
+          sameSite: "lax",
+          maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+        });
+
+        res.json({
+          message: "Profile updated successfully",
+          user: updatedUser,
+        });
+      }
+    );
+  });
+});
+
 // GET current user info (requires authentication)
 router.get("/api/me", verifyToken, (req, res) => {
   // returns user runner object from the db using the JWT token
@@ -215,14 +506,30 @@ router.post("/api/logout", (req, res) => {
 // POST to insert a new route into database and link it to the logged-in user
 router.post("/api/save-route", verifyToken, async (req, res) => {
   const runnerId = req.user?.runner_id;
-  const { start_lat, start_lng, end_lat, end_lng, start_address, end_address, polyline, distance } = req.body;
+  const {
+    start_lat,
+    start_lng,
+    end_lat,
+    end_lng,
+    start_address,
+    end_address,
+    polyline,
+    distance,
+  } = req.body;
 
   if (!runnerId) {
     return res.status(401).json({ error: "Unauthorized: must be logged in" });
   }
 
   // Validate required fields
-  if (!start_lat || !start_lng || !end_lat || !end_lng || !polyline || !distance) {
+  if (
+    !start_lat ||
+    !start_lng ||
+    !end_lat ||
+    !end_lng ||
+    !polyline ||
+    !distance
+  ) {
     return res.status(400).json({ error: "Missing required route fields" });
   }
 
@@ -234,7 +541,16 @@ router.post("/api/save-route", verifyToken, async (req, res) => {
 
   db.query(
     insertRouteSql,
-    [start_lat, start_lng, end_lat, end_lng, start_address || null, end_address || null, polyline, distance],
+    [
+      start_lat,
+      start_lng,
+      end_lat,
+      end_lng,
+      start_address || null,
+      end_address || null,
+      polyline,
+      distance,
+    ],
     (err, result) => {
       if (err) {
         console.error("/api/save-route error:", err);
@@ -252,7 +568,9 @@ router.post("/api/save-route", verifyToken, async (req, res) => {
       db.query(linkSql, [runnerId, newRouteId], (linkErr) => {
         if (linkErr) {
           console.error("Failed to link route to user:", linkErr);
-          return res.status(500).json({ error: "Route saved, but failed to link to user" });
+          return res
+            .status(500)
+            .json({ error: "Route saved, but failed to link to user" });
         }
 
         res.status(201).json({
@@ -307,7 +625,6 @@ router.get("/api/runs", (req, res) => {
   // join the runs table with the status table on the run_status_id
   // join the routes table on the run_route
   // join the runners table on the leader_id
- 
 
   const conditions = [];
   const params = [];
@@ -351,7 +668,7 @@ router.get("/api/runs", (req, res) => {
     const userLng = parseFloat(lng);
     const maxDistanceKm = MAX_DISTANCE_MILES * 1.609344;
 
-    // Haversine formula to calculate distance between two points on a sphere, 
+    // Haversine formula to calculate distance between two points on a sphere,
     // idk if there is a better way to do this
     conditions.push(`( 
       6371 * acos(
@@ -423,9 +740,7 @@ router.post("/api/runs", verifyToken, (req, res) => {
     }
 
     // Default run_status_id to 1 (Scheduled) if not provided
-    const statusId = run_status_id && !isNaN(run_status_id)
-      ? run_status_id
-      : 1;
+    const statusId = run_status_id && !isNaN(run_status_id) ? run_status_id : 1;
 
     const insertRunSql = `
       INSERT INTO runs
@@ -646,7 +961,6 @@ router.post("/api/routes/save/:routeId", verifyToken, (req, res) => {
     res.status(201).json({ message: "Route saved successfully" });
   });
 });
-
 
 // GET all leaders
 router.get("/api/leaders", (req, res) => {

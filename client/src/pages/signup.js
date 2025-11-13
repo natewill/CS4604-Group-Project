@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import PaceSlider from "../components/PaceSlider";
 
 // Validation constants
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -23,10 +24,10 @@ export default function Signup() {
   const [lastName, setLastName] = useState("");
   const [middleInitial, setMiddleInitial] = useState("");
   const [isLeader, setIsLeader] = useState(false);
-  const [minPace, setMinPace] = useState("");
-  const [maxPace, setMaxPace] = useState("");
-  const [minDist, setMinDist] = useState("");
-  const [maxDist, setMaxDist] = useState("");
+  const [minPace, setMinPace] = useState(240);
+  const [maxPace, setMaxPace] = useState(900);
+  const [minDist, setMinDist] = useState();
+  const [maxDist, setMaxDist] = useState();
 
   // Helper function to validate and convert numeric input
   const parseInteger = (value) => {
@@ -85,31 +86,6 @@ export default function Signup() {
     const maxPaceNum = parseInteger(maxPace);
     const minDistNum = parseInteger(minDist);
     const maxDistNum = parseInteger(maxDist);
-
-    // Required numeric field validations
-    if (!minPace || minPace === "") {
-      errors.push("Min pace is required");
-    } else if (minPaceNum === null || minPaceNum < 0) {
-      errors.push("Min pace must be a non-negative integer");
-    }
-
-    if (!maxPace || maxPace === "") {
-      errors.push("Max pace is required");
-    } else if (maxPaceNum === null || maxPaceNum < 0) {
-      errors.push("Max pace must be a non-negative integer");
-    }
-
-    if (!minDist || minDist === "") {
-      errors.push("Min distance is required");
-    } else if (minDistNum === null || minDistNum < 0) {
-      errors.push("Min distance must be a non-negative integer");
-    }
-
-    if (!maxDist || maxDist === "") {
-      errors.push("Max distance is required");
-    } else if (maxDistNum === null || maxDistNum < 0) {
-      errors.push("Max distance must be a non-negative integer");
-    }
 
     // Cross-field validation (only if both values are valid)
     if (minPaceNum !== null && maxPaceNum !== null && minPaceNum > maxPaceNum) {
@@ -172,8 +148,8 @@ export default function Signup() {
       last_name: lastName.trim(),
       middle_initial: middleInitial.trim(),
       is_leader: isLeader,
-      min_pace: parseInteger(minPace),
-      max_pace: parseInteger(maxPace),
+      min_pace: minPace,
+      max_pace: maxPace,
       min_dist_pref: parseInteger(minDist),
       max_dist_pref: parseInteger(maxDist),
     };
@@ -254,23 +230,17 @@ export default function Signup() {
           <div
             style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}
           >
-            <input
-              type="number"
-              placeholder="Min pace"
-              required
-              min="0"
-              step="1"
-              value={minPace}
-              onChange={(e) => setMinPace(e.target.value)}
+            <PaceSlider
+              label="Min Pace (min:sec per mile)"
+              value={minPace || ""}
+              onChange={setMinPace}
+              defaultValue={240}
             />
-            <input
-              type="number"
-              placeholder="Max pace"
-              required
-              min="0"
-              step="1"
-              value={maxPace}
-              onChange={(e) => setMaxPace(e.target.value)}
+            <PaceSlider
+              label="Max Pace (min:sec per mile)"
+              value={maxPace || ""}
+              onChange={setMaxPace}
+              defaultValue={900}
             />
             <input
               type="number"

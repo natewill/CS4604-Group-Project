@@ -75,17 +75,6 @@ function validateSignupData(data) {
     }
   };
 
-  // Helper to validate optional string field
-  const validateOptionalString = (fieldName, value, maxLength) => {
-    if (value !== undefined && value !== null && value !== "") {
-      if (typeof value !== "string") {
-        errors.push(`${fieldName} must be a string`);
-      } else if (maxLength && value.length > maxLength) {
-        errors.push(`${fieldName} must be ${maxLength} characters or less`);
-      }
-    }
-  };
-
   // Required name field validations
   validateRequiredString("first_name", data.first_name, MAX_NAME_LENGTH);
   validateRequiredString("last_name", data.last_name, MAX_NAME_LENGTH);

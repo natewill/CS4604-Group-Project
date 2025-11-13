@@ -22,9 +22,8 @@ const styles = {
   sidebar_elem_active: {
     borderBottom: "2px solid black",
     cursor: "pointer",
-
     backgroundColor: "#bbb", // Highlight active item
-    fontWeight: "bold",
+    transition: "background-color 0.2s",
   },
   main: {
     width: "80%",
