@@ -348,7 +348,7 @@ function ProfileDetails({ onNavigateToPassword }) {
                 style={styles.input}
               />
             ) : (
-              <div style={styles.valueDisplay}>{minDistance || "-"}</div>
+              <div style={styles.valueDisplay}>{minDistance}</div>
             )}
           </div>
           <div style={styles.field}>
@@ -363,7 +363,7 @@ function ProfileDetails({ onNavigateToPassword }) {
                 style={styles.input}
               />
             ) : (
-              <div style={styles.valueDisplay}>{maxDistance || "-"}</div>
+              <div style={styles.valueDisplay}>{maxDistance}</div>
             )}
           </div>
         </div>
