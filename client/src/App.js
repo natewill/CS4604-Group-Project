@@ -9,6 +9,7 @@ import CreateRoute from "./pages/CreateRoute";
 import NewRun from "./pages/NewRun";
 import Home from "./pages/Home";
 import RunFinder from "./pages/RunFinder";
+import MyRuns from "./pages/MyRuns";
 
 import Layout from "./components/NavLayout";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -50,7 +51,8 @@ function App() {
           >
             <Route path="/home" element={<Home />} />
             <Route path="/runs/new" element={<NewRun />} />
-            <Route path="/runs/finder" element={<RunFinder />} />
+            <Route path="/runfinder" element={<RunFinder />} />
+            <Route path="/my-runs" element={<MyRuns />} />
             <Route path="/create-route" element={<CreateRoute />} />
           </Route>
         </Routes>

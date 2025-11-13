@@ -63,6 +63,17 @@ CREATE TABLE run_participation (
     FOREIGN KEY (participation_run_id) REFERENCES runs(run_id)
 );
 
+CREATE TABLE saved_routes (
+    runner_id INT NOT NULL,
+    route_id  INT NOT NULL,
+    PRIMARY KEY (runner_id, route_id),
+    FOREIGN KEY (runner_id) REFERENCES runners(runner_id)
+        ON DELETE CASCADE,
+    FOREIGN KEY (route_id) REFERENCES routes(route_id)
+        ON DELETE CASCADE
+);
+
+
 -- Now lets populate some data into our tables
 
 -- Runners
@@ -90,7 +101,8 @@ VALUES
 (19, 'Henry', 'G', 'Young', 'henry.young@vt.edu', '$argon2id$v=19$m=16,t=2,p=1$cnVubmluZzE$OdhJBdhfCBjrht2zjiyvZA', 1, 360, 420, 10, 26), -- paperclips&dreams (6:00, 7:00)
 (20, 'Harper', 'Q', 'Allen', 'harper.allen@vt.edu', '$argon2id$v=19$m=16,t=2,p=1$cnVubmluZzE$29Ppdbdu8sLo1mi8Ya+/vw', 0, 480, 540, 3, 10), -- fuzzyBlanket#3 (8:00, 9:00)
 (21, 'Alexander', 'V', 'King', 'alex.king@vt.edu', '$argon2id$v=19$m=16,t=2,p=1$cnVubmluZzE$3cPUrQ+yTPNG7Q6u7bJy3w', 1, 420, 480, 5, 20), -- city-lights_9pm (7:00, 8:00)
-(22, 'Nate', 'D', 'Williams', 'natewilliams@vt.edu', '$argon2id$v=19$m=16,t=2,p=1$cnVubmluZzE$8ifrTk+98PBcbldrTtgjhA', 1, 660, 720, 2, 3); -- trainspotter_06 (11:00, 12:00)
+(22, 'Nate', 'D', 'Williams', 'natewilliams@vt.edu', '$argon2id$v=19$m=16,t=2,p=1$cnVubmluZzE$8ifrTk+98PBcbldrTtgjhA', 1, 660, 720, 2, 3), -- trainspotter_06 (11:00, 12:00)
+(23, 'Alex', 'R', 'Shaw', 'ashaw4@vt.edu', '$argon2id$v=19$m=65536,t=2,p=1$zizQWPgquPuhcbaKSpyIdA$vvSvw/Y1Ac9XBXM95dUTcKsUjI5bcsOLeiM0n4yRDME', 1, 360, 540, 1, 10); -- BottomlandBucks25! (6:00, 9:00)
 
 -- Status
 INSERT INTO status (status_id, status_description)
@@ -113,21 +125,38 @@ VALUES
 -- Runs
 INSERT INTO runs (run_id, leader_id, run_route, run_status_id, name, description, pace, date, start_time)
 VALUES
-(1, 2, 1, 1, 'Morning Easy Run Loop', 'A relaxed run to start the day', 540, '2026-01-01', '06:30:00'),
-(2, 2, 2, 1, 'Interval Training', 'High-intensity intervals for speed', 420, '2025-12-02', '18:00:00'),
-(3, 2, 3, 2, 'Long Distance Run', 'Endurance building long run', 495, '2024-07-03', '07:00:00'),
-(4, 22, 4, 1, 'First Run in Weeks', 'Slow tempo run on Huckle Berry', 660, '2025-10-25', '07:15:00'),
-(5, 9, 5, 2, 'Endurance Run', 'Climbing hills on a trail', 510, '2025-09-07', '08:00:00'),
-(6, 13, 6, 4, 'Rain Run', 'Short run, so wet, wow such a wet run', 555, '2025-10-20', '18:30:00'),
-(7, 22, 7, 3, 'Sprint Run', 'Sprinted to class.', 465, '2025-10-20', '13:00:00');
+(1, 2, 1, 1, 'Morning Easy Run Loop', 'A relaxed run to start the day', 540, '2025-12-15', '06:30:00'),
+(2, 2, 2, 1, 'Interval Training', 'High-intensity intervals for speed', 420, '2025-12-20', '18:00:00'),
+(3, 2, 3, 2, 'Long Distance Run', 'Endurance building long run', 495, '2025-12-01', '07:00:00'),
+(4, 22, 4, 1, 'First Run in Weeks', 'Slow tempo run on Huckle Berry', 660, '2025-12-18', '07:15:00'),
+(5, 9, 5, 2, 'Endurance Run', 'Climbing hills on a trail', 510, '2025-12-05', '08:00:00'),
+(6, 13, 6, 4, 'Rain Run', 'Short run, so wet, wow such a wet run', 555, '2025-12-03', '18:30:00'),
+(7, 22, 7, 3, 'Sprint Run', 'Sprinted to class.', 465, '2025-12-02', '13:00:00');
+
+INSERT INTO saved_routes (runner_id, route_id)
+VALUES
+(2, 1),
+(2, 2),
+(2, 3),
+(22, 4),
+(9, 5),
+(13, 6),
+(22, 7);
 
 -- Run Participation
 INSERT INTO run_participation (participation_runner_id, participation_run_id)
 VALUES
-(2, 1), (3, 1), (4, 1), (5, 1), -- shifted from (1,1), (2,1), (3,1), (4,1)
-(2, 2), (6, 2), (7, 2), -- shifted from (1,2), (5,2), (6,2)
-(2, 3), (9, 3), (10, 3), -- shifted from (1,3), (8,3), (9,3)
-(22, 4), (21, 4), -- shifted from (21,4), (20,4)
-(9, 5), (12, 5), (13, 5), -- shifted from (8,5), (11,5), (12,5)
-(13, 6), -- shifted from (12,6)
-(22, 7); -- shifted from (21,7)
+-- Run 1: Morning Easy Run Loop (leader: 2)
+(2, 1), (3, 1), (4, 1), (5, 1), (6, 1), (7, 1), (8, 1), (10, 1), (11, 1), (14, 1), (17, 1), (20, 1),
+-- Run 2: Interval Training (leader: 2)
+(2, 2), (3, 2), (6, 2), (7, 2), (9, 2), (13, 2), (19, 2), (21, 2), (23, 2),
+-- Run 3: Long Distance Run (leader: 2)
+(2, 3), (3, 3), (9, 3), (10, 3), (13, 3), (19, 3), (21, 3),
+-- Run 4: First Run in Weeks (leader: 22)
+(22, 4), (21, 4), (23, 4), (2, 4), (3, 4),
+-- Run 5: Endurance Run (leader: 9)
+(9, 5), (12, 5), (13, 5), (15, 5), (18, 5), (19, 5), (21, 5),
+-- Run 6: Rain Run (leader: 13)
+(13, 6), (14, 6), (15, 6), (16, 6), (17, 6), (18, 6),
+-- Run 7: Sprint Run (leader: 22)
+(22, 7), (23, 7), (2, 7), (3, 7), (5, 7), (7, 7), (9, 7), (11, 7); 

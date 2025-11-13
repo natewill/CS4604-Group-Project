@@ -9,6 +9,9 @@ const {
   validateSignupData,
 } = require("../utils/validation");
 
+// Backend configuration: Maximum distance for location-based filtering (in miles)
+const MAX_DISTANCE_MILES = 3;
+
 // GET all runners
 router.get("/api/runners", (req, res) => {
   db.query("SELECT * FROM runners", (err, results) => {
@@ -209,33 +212,73 @@ router.post("/api/logout", (req, res) => {
   res.json({ message: "Logged out successfully" });
 });
 
-// Post to insert a new Route into database
-router.post("/api/save-route", async (req, res) => {
-  const { start_lat, start_lng, end_lat, end_lng, polyline, distance } =
-    req.body;
+// POST to insert a new route into database and link it to the logged-in user
+router.post("/api/save-route", verifyToken, async (req, res) => {
+  const runnerId = req.user?.runner_id;
+  const { start_lat, start_lng, end_lat, end_lng, start_address, end_address, polyline, distance } = req.body;
+
+  if (!runnerId) {
+    return res.status(401).json({ error: "Unauthorized: must be logged in" });
+  }
+
+  // Validate required fields
+  if (!start_lat || !start_lng || !end_lat || !end_lng || !polyline || !distance) {
+    return res.status(400).json({ error: "Missing required route fields" });
+  }
+
+  // Insert route into routes table
+  const insertRouteSql = `
+    INSERT INTO routes (start_lat, start_lng, end_lat, end_lng, start_address, end_address, polyline, distance)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+  `;
 
   db.query(
-    `INSERT INTO routes (start_lat, start_lng, end_lat, end_lng, polyline, distance)
-     VALUES (?, ?, ?, ?, ?, ?)`,
-    [start_lat, start_lng, end_lat, end_lng, polyline, distance],
-    (err, results) => {
+    insertRouteSql,
+    [start_lat, start_lng, end_lat, end_lng, start_address || null, end_address || null, polyline, distance],
+    (err, result) => {
       if (err) {
-        console.error("/api/save-route error", err);
-        return res.status(500).json({ error: "Failed to save route." });
+        console.error("/api/save-route error:", err);
+        return res.status(500).json({ error: "Failed to save route" });
       }
 
-      console.log("Inserted route ID:", results.insertId);
-      res.status(201).json({
-        message: "Route saved successfully",
-        route_id: results.insertId, // ✅ this ensures the frontend gets the route ID
+      const newRouteId = result.insertId;
+
+      // Now link this route to the logged-in user in saved_routes
+      const linkSql = `
+        INSERT INTO saved_routes (runner_id, route_id)
+        VALUES (?, ?)
+      `;
+
+      db.query(linkSql, [runnerId, newRouteId], (linkErr) => {
+        if (linkErr) {
+          console.error("Failed to link route to user:", linkErr);
+          return res.status(500).json({ error: "Route saved, but failed to link to user" });
+        }
+
+        res.status(201).json({
+          message: "Route saved and linked successfully",
+          route_id: newRouteId,
+        });
       });
     }
   );
 });
 
-// GET all runs
+// GET all runs with optional filtering
 router.get("/api/runs", (req, res) => {
-  const sql = `
+  const {
+    paceMin,
+    paceMax,
+    dateFrom,
+    dateTo,
+    searchLeader,
+    searchName,
+    lat,
+    lng,
+  } = req.query;
+
+  // Base SQL query
+  let sql = `
     SELECT 
       r.run_id,
       r.leader_id,
@@ -255,19 +298,83 @@ router.get("/api/runs", (req, res) => {
       rt.end_address,
       rt.polyline,
       rt.distance,
-      CONCAT(COALESCE(leader.first_name, ''), ' ', COALESCE(leader.last_name, '')) AS leader_name,
-      leader.first_name AS leader_first_name,
-      leader.last_name AS leader_last_name
+      CONCAT(leader.first_name, ' ', leader.last_name) AS leader_name
     FROM runs r
     JOIN status s ON r.run_status_id = s.status_id
     JOIN routes rt ON r.run_route = rt.route_id
     JOIN runners leader ON r.leader_id = leader.runner_id
-    ORDER BY r.date DESC, r.start_time DESC;
-  `;
+  `; //leader_name is just the first and last name together
+  // join the runs table with the status table on the run_status_id
+  // join the routes table on the run_route
+  // join the runners table on the leader_id
+ 
 
-  db.query(sql, (err, results) => {
+  const conditions = [];
+  const params = [];
+
+  // Pace range filtering
+  if (paceMin) {
+    conditions.push("r.pace >= ?");
+    params.push(parseInt(paceMin, 10));
+  }
+  if (paceMax) {
+    conditions.push("r.pace <= ?");
+    params.push(parseInt(paceMax, 10));
+  }
+
+  // Date range filtering
+  if (dateFrom) {
+    conditions.push("r.date >= ?");
+    params.push(dateFrom);
+  }
+  if (dateTo) {
+    conditions.push("r.date <= ?");
+    params.push(dateTo);
+  }
+
+  // leader name search (LIKE for partial matching)
+  if (searchLeader && searchLeader.trim()) {
+    const searchTerm = `%${searchLeader.trim()}%`;
+    conditions.push("(leader.first_name LIKE ? OR leader.last_name LIKE ?)");
+    params.push(searchTerm, searchTerm);
+  }
+
+  //search by run name (LIKE does partial matching)
+  if (searchName && searchName.trim()) {
+    conditions.push("r.name LIKE ?");
+    params.push(`%${searchName.trim()}%`);
+  }
+
+  // Distance filtering using Haversine formula
+  if (lat && lng) {
+    const userLat = parseFloat(lat);
+    const userLng = parseFloat(lng);
+    const maxDistanceKm = MAX_DISTANCE_MILES * 1.609344;
+
+    // Haversine formula to calculate distance between two points on a sphere, 
+    // idk if there is a better way to do this
+    conditions.push(`( 
+      6371 * acos(
+        cos(radians(?)) * 
+        cos(radians(rt.start_lat)) * 
+        cos(radians(rt.start_lng) - radians(?)) + 
+        sin(radians(?)) * 
+        sin(radians(rt.start_lat))
+      )
+    ) <= ?`);
+    params.push(userLat, userLng, userLat, maxDistanceKm);
+  }
+
+  // Add WHERE clause if conditions exist
+  if (conditions.length > 0) {
+    sql += " WHERE " + conditions.join(" AND ");
+  }
+
+  // Add ORDER BY
+  sql += " ORDER BY r.date DESC, r.start_time DESC";
+
+  db.query(sql, params, (err, results) => {
     if (err) {
-      console.error("Database query failed:", err);
       return res.status(500).json({ error: "Failed to fetch runs" });
     }
 
@@ -275,83 +382,172 @@ router.get("/api/runs", (req, res) => {
   });
 });
 
-// POST create a new run
-router.post("/api/runs", (req, res) => {
-  const {
-    leader_id,
-    run_route,
-    run_status_id,
-    name,
-    description,
-    pace,
-    date,
-    start_time,
-  } = req.body;
+// GET: get runs for the authenticated user (filtered by scheduled/past)
+router.get("/api/my-runs", verifyToken, (req, res) => {
+  const runnerId = req.user?.runner_id;
+  const { filter } = req.query; // 'scheduled' or 'past'
 
-  // Validate required fields
-  if (
-    !leader_id ||
-    !run_route ||
-    !run_status_id ||
-    !name ||
-    !pace ||
-    !date ||
-    !start_time
-  ) {
-    return res.status(400).json({ error: "Missing required fields" });
+  if (!runnerId) {
+    return res.status(401).json({ error: "Unauthorized: must be logged in" });
   }
 
-  const sql = `
-    INSERT INTO runs (leader_id, run_route, run_status_id, name, description, pace, date, start_time)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+  // Base SQL query - join run_participation to get user's runs
+  let sql = `
+    SELECT 
+      r.run_id,
+      r.leader_id,
+      r.run_route,
+      r.run_status_id,
+      s.status_description AS status,
+      r.name,
+      r.description,
+      r.pace,
+      DATE_FORMAT(r.date, '%Y-%m-%d') AS date,
+      TIME_FORMAT(r.start_time, '%l:%i %p') AS start_time,
+      rt.start_lat,
+      rt.start_lng,
+      rt.end_lat,
+      rt.end_lng,
+      rt.start_address,
+      rt.end_address,
+      rt.polyline,
+      rt.distance,
+      CONCAT(leader.first_name, ' ', leader.last_name) AS leader_name
+    FROM run_participation rp
+    JOIN runs r ON rp.participation_run_id = r.run_id
+    JOIN status s ON r.run_status_id = s.status_id
+    JOIN routes rt ON r.run_route = rt.route_id
+    JOIN runners leader ON r.leader_id = leader.runner_id
+    WHERE rp.participation_runner_id = ?
   `;
 
-  db.query(
-    sql,
-    [
-      leader_id,
+  const params = [runnerId];
+
+  // Add filter conditions
+  if (filter === "scheduled") {
+    sql += ` AND r.date >= CURDATE() AND r.run_status_id = 1`;
+  } else if (filter === "past") {
+    sql += ` AND (r.date < CURDATE() OR r.run_status_id IN (2, 3))`;
+  }
+
+  // Order by date ascending, then time ascending
+  sql += ` ORDER BY r.date ASC, r.start_time ASC`;
+
+  db.query(sql, params, (err, results) => {
+    if (err) {
+      console.error("Failed to fetch user runs:", err);
+      return res.status(500).json({ error: "Failed to fetch runs" });
+    }
+
+    res.json(results);
+  });
+});
+
+// POST: create a new run (leaders only)
+router.post("/api/runs", verifyToken, (req, res) => {
+  const runnerId = req.user?.runner_id;
+
+  if (!runnerId) {
+    return res.status(401).json({ error: "Unauthorized: must be logged in" });
+  }
+
+  // Check if user is a leader
+  const checkLeaderSql = `SELECT is_leader FROM runners WHERE runner_id = ?`;
+  db.query(checkLeaderSql, [runnerId], (leaderErr, leaderResults) => {
+    if (leaderErr) {
+      console.error("Error checking leader status:", leaderErr);
+      return res.status(500).json({ error: "Failed to verify leader status" });
+    }
+
+    if (leaderResults.length === 0) {
+      return res.status(404).json({ error: "Runner not found" });
+    }
+
+    if (!leaderResults[0].is_leader) {
+      return res.status(403).json({ error: "Only leaders can create runs" });
+    }
+
+    // Extract all fields from request
+    const {
       run_route,
       run_status_id,
+      name,
+      description,
+      pace,
+      date,
+      start_time,
+    } = req.body;
+
+    // Validate required fields (status not required)
+    if (!run_route || !name || pace === undefined || !date || !start_time) {
+      return res.status(400).json({ error: "Missing required run fields" });
+    }
+
+    // Default run_status_id to 1 (Scheduled) if not provided
+    const statusId = run_status_id && !isNaN(run_status_id)
+      ? run_status_id
+      : 1;
+
+    const insertRunSql = `
+      INSERT INTO runs
+        (leader_id, run_route, run_status_id, name, description, pace, date, start_time)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `;
+
+    const values = [
+      runnerId,
+      run_route,
+      statusId,
       name,
       description || null,
       pace,
       date,
       start_time,
-    ],
-    (err, result) => {
+    ];
+
+    db.query(insertRunSql, values, (err, result) => {
       if (err) {
-        console.error("Database insert failed:", err);
-        return res.status(500).json({ error: "Failed to create new run" });
+        console.error("Error creating run:", err);
+        return res.status(500).json({ error: "Failed to create run" });
       }
 
-      // Respond with the newly created run ID
       res.status(201).json({
         message: "Run created successfully",
         run_id: result.insertId,
       });
-    }
-  );
+    });
+  });
 });
 
-// GET all routes (start/end coordinates included directly in table)
-router.get("/api/routes", (req, res) => {
+// GET saved routes for the logged-in user
+router.get("/api/routes", verifyToken, (req, res) => {
+  const runnerId = req.user?.runner_id;
+
+  if (!runnerId) {
+    return res.status(401).json({ error: "Unauthorized: no valid user found" });
+  }
+
   const sql = `
     SELECT 
-      route_id,
-      start_lat,
-      start_lng,
-      end_lat,
-      end_lng,
-      polyline,
-      distance
-    FROM routes
-    ORDER BY route_id;
+      r.route_id,
+      r.start_lat,
+      r.start_lng,
+      r.end_lat,
+      r.end_lng,
+      r.start_address,
+      r.end_address,
+      r.polyline,
+      r.distance
+    FROM saved_routes sr
+    JOIN routes r ON sr.route_id = r.route_id
+    WHERE sr.runner_id = ?
+    ORDER BY r.route_id DESC;
   `;
 
-  db.query(sql, (err, results) => {
+  db.query(sql, [runnerId], (err, results) => {
     if (err) {
       console.error("Database query failed:", err);
-      return res.status(500).json({ error: "Failed to fetch routes" });
+      return res.status(500).json({ error: "Failed to fetch saved routes" });
     }
 
     res.json(results);
@@ -369,6 +565,8 @@ router.get("/api/routes/:id", (req, res) => {
       start_lng,
       end_lat,
       end_lng,
+      start_address,
+      end_address,
       polyline,
       distance
     FROM routes
@@ -482,6 +680,100 @@ router.put("/api/runs/:id", (req, res) => {
   });
 });
 
+// POST: save a route for the authenticated user
+router.post("/api/routes/save/:routeId", verifyToken, (req, res) => {
+  const runnerId = req.user?.runner_id;
+  const { routeId } = req.params;
+
+  if (!runnerId) {
+    return res.status(401).json({ error: "Unauthorized: must be logged in" });
+  }
+
+  if (!routeId) {
+    return res.status(400).json({ error: "Route ID is required" });
+  }
+
+  const sql = `
+    INSERT IGNORE INTO saved_routes (runner_id, route_id)
+    VALUES (?, ?)
+  `;
+
+  db.query(sql, [runnerId, routeId], (err, result) => {
+    if (err) {
+      console.error("Failed to save route:", err);
+      return res.status(500).json({ error: "Failed to save route" });
+    }
+
+    res.status(201).json({ message: "Route saved successfully" });
+  });
+});
+
+// POST: join a run (add user to run participation)
+router.post("/api/runs/:runId/join", verifyToken, (req, res) => {
+  const runnerId = req.user?.runner_id;
+  const { runId } = req.params;
+
+  if (!runnerId) {
+    return res.status(401).json({ error: "Unauthorized: must be logged in" });
+  }
+
+  if (!runId) {
+    return res.status(400).json({ error: "Run ID is required" });
+  }
+
+  const sql = `
+    INSERT IGNORE INTO run_participation (participation_runner_id, participation_run_id)
+    VALUES (?, ?)
+  `;
+
+  db.query(sql, [runnerId, runId], (err, result) => {
+    if (err) {
+      console.error("Failed to join run:", err);
+      return res.status(500).json({ error: "Failed to join run" });
+    }
+
+    if (result.affectedRows === 0) {
+      return res.status(409).json({ error: "Already participating in this run" });
+    }
+
+    res.json({ message: "Joined run successfully" });
+  });
+});
+
+// DELETE: leave a run (remove user from run participation)
+router.delete("/api/runs/:runId/leave", verifyToken, (req, res) => {
+  const runnerId = req.user?.runner_id;
+  const { runId } = req.params;
+
+  if (!runnerId) {
+    return res.status(401).json({ error: "Unauthorized: must be logged in" });
+  }
+
+  if (!runId) {
+    return res.status(400).json({ error: "Run ID is required" });
+  }
+
+  const sql = `
+    DELETE FROM run_participation 
+    WHERE participation_runner_id = ? 
+    AND participation_run_id = ?
+  `;
+
+  db.query(sql, [runnerId, runId], (err, result) => {
+    if (err) {
+      console.error("Failed to leave run:", err);
+      return res.status(500).json({ error: "Failed to leave run" });
+    }
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: "Not participating in this run" });
+    }
+
+    res.json({ message: "Left run successfully" });
+  });
+});
+
+
 // GET all leaders
 router.get("/api/leaders", (req, res) => {
   const sql = `
@@ -504,67 +796,55 @@ router.get("/api/leaders", (req, res) => {
   });
 });
 
-// DELETE a specific run
-router.delete("/api/runs/:id", (req, res) => {
+// DELETE a specific run (leaders only, deletes run and all participations)
+router.delete("/api/runs/:id", verifyToken, (req, res) => {
+  const runnerId = req.user?.runner_id;
   const { id } = req.params;
-  db.query("DELETE FROM runs WHERE run_id = ?", [id], (err, result) => {
-    if (err) {
-      console.error("Error deleting run:", err);
-      return res.status(500).json({ error: "Failed to delete run" });
+
+  if (!runnerId) {
+    return res.status(401).json({ error: "Unauthorized: must be logged in" });
+  }
+
+  // First, verify the user is the leader of this run
+  const checkLeaderSql = `SELECT leader_id FROM runs WHERE run_id = ?`;
+  db.query(checkLeaderSql, [id], (checkErr, checkResults) => {
+    if (checkErr) {
+      console.error("Error checking run leader:", checkErr);
+      return res.status(500).json({ error: "Failed to verify run ownership" });
     }
 
-    if (result.affectedRows === 0) {
+    if (checkResults.length === 0) {
       return res.status(404).json({ error: "Run not found" });
     }
 
-    res.json({ message: "Run deleted successfully" });
+    if (checkResults[0].leader_id !== runnerId) {
+      return res.status(403).json({ error: "Only the run leader can delete this run" });
+    }
+
+    // Delete all run participations first (due to foreign key constraints)
+    const deleteParticipationsSql = `DELETE FROM run_participation WHERE participation_run_id = ?`;
+    db.query(deleteParticipationsSql, [id], (partErr, partResult) => {
+      if (partErr) {
+        console.error("Error deleting run participations:", partErr);
+        return res.status(500).json({ error: "Failed to delete run participations" });
+      }
+
+      // Now delete the run itself
+      const deleteRunSql = `DELETE FROM runs WHERE run_id = ?`;
+      db.query(deleteRunSql, [id], (runErr, runResult) => {
+        if (runErr) {
+          console.error("Error deleting run:", runErr);
+          return res.status(500).json({ error: "Failed to delete run" });
+        }
+
+        if (runResult.affectedRows === 0) {
+          return res.status(404).json({ error: "Run not found" });
+        }
+
+        res.json({ message: "Run deleted successfully" });
+      });
+    });
   });
 });
 
 module.exports = router;
-
-
-
-
-
-
-router.get("/api/runs", (req, res) => {
-  const sql = `
-    SELECT 
-      r.run_id,
-      r.leader_id,
-      r.run_route,
-      r.run_status_id,
-      s.status_description AS status,
-      r.name,
-      r.description,
-      r.pace,
-      DATE_FORMAT(r.date, '%Y-%m-%d') AS date,
-      TIME_FORMAT(r.start_time, '%l:%i %p') AS start_time,
-      rt.start_lat,
-      rt.start_lng,
-      rt.end_lat,
-      rt.end_lng,
-      rt.start_address,
-      rt.end_address,
-      rt.polyline,
-      rt.distance,
-      CONCAT(COALESCE(leader.first_name, ''), ' ', COALESCE(leader.last_name, '')) AS leader_name,
-      leader.first_name AS leader_first_name,
-      leader.last_name AS leader_last_name
-    FROM runs r
-    JOIN status s ON r.run_status_id = s.status_id
-    JOIN routes rt ON r.run_route = rt.route_id
-    JOIN runners leader ON r.leader_id = leader.runner_id
-    ORDER BY r.date DESC, r.start_time DESC;
-  `;
-
-  db.query(sql, (err, results) => {
-    if (err) {
-      console.error("Database query failed:", err);
-      return res.status(500).json({ error: "Failed to fetch runs" });
-    }
-
-    res.json(results);
-  });
-});

@@ -1,44 +1,27 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import {
   GoogleMap,
   Marker,
   Polyline,
   useJsApiLoader,
-} from '@react-google-maps/api';
-import { getDistance } from 'geolib';
-import polyline from '@mapbox/polyline';
-import {
-  filterByPaceRange,
-  filterByDateRange,
-  filterByLeaderName,
-  filterByRunName,
-  filterByLocation,
-} from '../utils/runFilters';
-import PaceSlider from '../components/PaceSlider';
-import RouteCard from '../components/RouteCard';
+} from "@react-google-maps/api";
+import polyline from "@mapbox/polyline";
+import { fetchRuns as fetchRunsService } from "../services/fetchRuns";
+import RouteCard from "../components/RouteCard";
+import FilterForm from "../components/FilterForm";
+import { buildIcons } from "../utils/map/icons";
+import { useAuth } from "../context/AuthContext";
+import "../styles/RunFinder.css";
 
-// Shared styles
-const inputStyle = { width: '100%', padding: '0.5rem', border: '1px solid #ccc', borderRadius: '4px' };
-const labelStyle = { display: 'block', marginBottom: '0.25rem' };
-const filterButtonStyle = { width: '100%', padding: '0.75rem', border: '1px solid #ddd', borderRadius: '4px', cursor: 'pointer' };
-const filterPanelStyle = { marginTop: '1rem', padding: '1.5rem', backgroundColor: '#fff', border: '1px solid #ddd', borderRadius: '8px' };
-const filterGridStyle = { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '1rem' };
-const clearButtonStyle = { padding: '0.5rem 1rem', backgroundColor: '#6c757d', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' };
-const filterHeaderStyle = { padding: '1rem 2rem', backgroundColor: '#f9f9f9', borderBottom: '1px solid #ddd' };
-const mainContentStyle = { display: 'flex', height: 'calc(100vh - 150px)' };
-const mapContainerStyle = { flex: '1 1 65%', height: '100%' };
-const cardsContainerStyle = { flex: '1 1 35%', height: '100%', padding: '1rem', backgroundColor: '#f9f9f9', overflowY: 'auto' };
-const cardsListStyle = { display: 'flex', flexDirection: 'column', gap: '1rem' };
 const mapOptions = {
   streetViewControl: false,
   fullscreenControl: false,
   mapTypeControl: true,
-  colorScheme: 'DARK',
-  styles: [{ featureType: 'poi', stylers: [{ visibility: 'off' }] }]
+  colorScheme: "DARK",
+  styles: [{ featureType: "poi", stylers: [{ visibility: "off" }] }],
 };
 
 // Constants
-const MAP_ZOOM = 13;
 const DEFAULT_LOCATION = { lat: 37.2296, lng: -80.4139 }; // Blacksburg
 
 // Helper functions
@@ -52,38 +35,89 @@ const getRunEndCoords = (run) => ({
   lng: parseFloat(run.end_lng),
 });
 
+const saveRoute = async (routeId) => {
+  try {
+    const response = await fetch(`/api/routes/save/${routeId}`, {
+      method: "POST",
+      credentials: "include", // to send HTTP-only cookies
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+    if (!response.ok) {
+      const data = await response.json();
+      alert(`Failed to save route: ${data.error}`);
+      return;
+    }
+    alert("Route saved successfully!");
+  } catch (err) {
+    console.error("Error saving route:", err);
+    alert("Error saving route");
+  }
+};
+
+const joinRun = async (runId) => {
+  try {
+    const response = await fetch(`/api/runs/${runId}/join`, {
+      method: "POST",
+      credentials: "include",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+    if (!response.ok) {
+      const data = await response.json();
+      alert(data.error || "Failed to join run");
+      return;
+    }
+    alert("Joined run successfully!");
+  } catch (err) {
+    console.error("Error joining run:", err);
+    alert("Error joining run");
+  }
+};
+
 function RunFinder() {
-  const [allRuns, setAllRuns] = useState([]);
   const [runs, setRuns] = useState([]);
-  const [error, setError] = useState(null);
-  
+  const { user } = useAuth();
+
+  console.log("RunFinder - user:", user);
+  useEffect(() => {
+    console.log("RunFinder - user:", user);
+  }, [user]);
+
   // Google Maps and location state
   const [userLocation, setUserLocation] = useState(null);
   const [selectedRun, setSelectedRun] = useState(null);
   const [mapCenter, setMapCenter] = useState(DEFAULT_LOCATION);
   const [filtersOpen, setFiltersOpen] = useState(false);
-  
+  const [searchLocationCoords, setSearchLocationCoords] = useState(null);
+  const locationAutocompleteRef = useRef(null);
+  const [customIcons, setCustomIcons] = useState(null);
+
   // Search filter states - consolidated
   const [filters, setFilters] = useState({
-    paceMin: '',
-    paceMax: '',
-    dateFrom: '',
-    dateTo: '',
-    searchLeader: '',
-    searchName: '',
-    searchLocation: '',
+    paceMin: "",
+    paceMax: "",
+    dateFrom: "",
+    dateTo: "",
+    searchLeader: "",
+    searchName: "",
   });
 
   // Load Google Maps API
   const { isLoaded } = useJsApiLoader({
     googleMapsApiKey: process.env.REACT_APP_GOOGLE_MAPS_API_KEY,
-    libraries: ['places', 'geometry'],
+    libraries: ["places", "geometry"],
+    onError: () => {
+      alert("google maps api not working");
+    },
   });
 
   // Get user's current location
   useEffect(() => {
     if (!navigator.geolocation) {
-      alert('Geolocation is not supported by this browser.');
+      alert("geolocation not supported");
       return;
     }
 
@@ -97,107 +131,62 @@ function RunFinder() {
         setMapCenter(location);
       },
       (error) => {
-        console.error('Error getting location:', error);
+        console.error("Error getting location:", error);
         setUserLocation(DEFAULT_LOCATION);
         setMapCenter(DEFAULT_LOCATION);
-      },
-      {
-        enableHighAccuracy: true,
-        timeout: 5000,
-        maximumAge: 0,
       }
     );
   }, []);
 
-  // Filter runs by distance (within specified miles)
-  const filterRunsByDistance = useCallback((runsToFilter, userLoc, miles = 3) => {
-    if (!userLoc) return runsToFilter;
+  // Handle location autocomplete selection
+  const handleLocationSelect = () => {
+    if (locationAutocompleteRef.current) {
+      const place = locationAutocompleteRef.current.getPlace();
+      if (place && place.geometry) {
+        const location = {
+          lat: place.geometry.location.lat(),
+          lng: place.geometry.location.lng(),
+        };
+        setSearchLocationCoords(location);
+        setMapCenter(location);
+      }
+    }
+  };
 
-    const distanceInMeters = miles * 1609.344; // Convert miles to meters
-    const runsWithDistance = runsToFilter
-      .map((run) => {
-        const runCoords = getRunCoords(run);
-        const distance = getDistance(
-          { latitude: userLoc.lat, longitude: userLoc.lng },
-          { latitude: runCoords.lat, longitude: runCoords.lng }
-        );
-        return { ...run, distanceFromUser: distance };
-      })
-      .filter((run) => run.distanceFromUser <= distanceInMeters)
-      .sort((a, b) => a.distanceFromUser - b.distanceFromUser);
+  // Fetch runs from server with filters
+  const fetchRuns = useCallback(async () => {
+    const data = await fetchRunsService(
+      filters,
+      searchLocationCoords,
+      userLocation
+    );
+    setRuns(data);
 
-    return runsWithDistance;
-  }, []);
-
-  // Filter runs based on search criteria
-  const filterRuns = useCallback(() => {
-    return [
-      (runs) => filterByPaceRange(runs, filters.paceMin, filters.paceMax),
-      (runs) => filterByDateRange(runs, filters.dateFrom, filters.dateTo),
-      (runs) => filterByLeaderName(runs, filters.searchLeader),
-      (runs) => filterByRunName(runs, filters.searchName),
-      (runs) => filterByLocation(runs, filters.searchLocation),
-    ].reduce((filtered, filterFn) => filterFn(filtered), [...allRuns]);
-  }, [filters, allRuns]);
+    // Always select the first run from results
+    const newSelected = data[0] || null;
+    setSelectedRun(newSelected);
+    if (newSelected) {
+      setMapCenter(getRunCoords(newSelected));
+    }
+  }, [filters, searchLocationCoords, userLocation]);
 
   // Clear all filters
   const clearFilters = () => {
     setFilters({
-      paceMin: '',
-      paceMax: '',
-      dateFrom: '',
-      dateTo: '',
-      searchLeader: '',
-      searchName: '',
-      searchLocation: '',
+      paceMin: "",
+      paceMax: "",
+      dateFrom: "",
+      dateTo: "",
+      searchLeader: "",
+      searchName: "",
     });
+    setSearchLocationCoords(null);
   };
 
-  // Fetch all runs from the database
+  // Fetch runs when filters or location changes
   useEffect(() => {
-    fetch('/api/runs')
-      .then((res) => {
-        if (!res.ok) throw new Error('Failed to fetch runs');
-        return res.json();
-      })
-      .then((data) => {
-        setAllRuns(data);
-      })
-      .catch((err) => {
-        console.error('Failed to fetch runs:', err);
-        setError(err.message);
-      });
-  }, []);
-
-  // Apply filters and distance filtering whenever filter state or location changes
-  useEffect(() => {
-    // First apply search filters
-    const searchFiltered = filterRuns();
-    
-    // Then apply distance filtering if user location is available
-    const finalFiltered = userLocation 
-      ? filterRunsByDistance(searchFiltered, userLocation)
-      : searchFiltered;
-    
-    setRuns(finalFiltered);
-    
-    // Update selected run if current selection is no longer in filtered results
-    setSelectedRun((currentSelected) => {
-      // If current selection is still valid, keep it
-      if (currentSelected && finalFiltered.some(r => r.run_id === currentSelected.run_id)) {
-        return currentSelected;
-      }
-      
-      // Otherwise, select first run if available
-      if (finalFiltered.length > 0) {
-        const newSelected = finalFiltered[0];
-        setMapCenter(getRunCoords(newSelected));
-        return newSelected;
-      }
-      
-      return null;
-    });
-  }, [filterRuns, userLocation, filterRunsByDistance]);
+    fetchRuns();
+  }, [fetchRuns]);
 
   // Handle route card click
   const handleRouteClick = (run) => {
@@ -208,87 +197,66 @@ function RunFinder() {
   // Get polyline path for selected run
   const getPolylinePath = (run) => {
     if (!run || !run.polyline) return [];
-    try {
-      const decoded = polyline.decode(run.polyline);
-      return decoded.map(([lat, lng]) => ({ lat, lng }));
-    } catch (error) {
-      console.error('Error decoding polyline:', error);
-      return [];
-    }
+    const decoded = polyline.decode(run.polyline);
+    return decoded.map(([lat, lng]) => ({ lat, lng }));
   };
 
-  if (error) {
-    return <p style={{ color: 'red' }}>Error: {error}</p>;
-  }
-
   if (!isLoaded) {
-    return <div style={{ padding: '2rem' }}>Loading Google Maps...</div>;
+    return <div>Loading...</div>;
   }
 
   return (
     <div>
-      <div style={filterHeaderStyle}>
-        <button onClick={() => setFiltersOpen(!filtersOpen)} style={filterButtonStyle}>
-          Search Filters {filtersOpen ? '▼' : '▶'}
+      <div>
+        <button onClick={() => setFiltersOpen(!filtersOpen)}>
+          Search Filters! {filtersOpen ? "▼" : "▶"}
         </button>
         {filtersOpen && (
-          <div style={filterPanelStyle}>
-            <div style={filterGridStyle}>
-              <PaceSlider
-                label="Pace Min"
-                value={filters.paceMin}
-                onChange={(value) => setFilters({ ...filters, paceMin: value })}
-                defaultValue={300}
-              />
-              <PaceSlider
-                label="Pace Max"
-                value={filters.paceMax}
-                onChange={(value) => setFilters({ ...filters, paceMax: value })}
-                defaultValue={600}
-              />
-              <div>
-                <label style={labelStyle}>Date From</label>
-                <input type="date" value={filters.dateFrom} onChange={(e) => setFilters({ ...filters, dateFrom: e.target.value })} style={inputStyle} />
-              </div>
-              <div>
-                <label style={labelStyle}>Date To</label>
-                <input type="date" value={filters.dateTo} onChange={(e) => setFilters({ ...filters, dateTo: e.target.value })} style={inputStyle} />
-              </div>
-              <div>
-                <label style={labelStyle}>Leader Name</label>
-                <input type="text" value={filters.searchLeader} onChange={(e) => setFilters({ ...filters, searchLeader: e.target.value })} placeholder="Search by leader name" style={inputStyle} />
-              </div>
-              <div>
-                <label style={labelStyle}>Run Name</label>
-                <input type="text" value={filters.searchName} onChange={(e) => setFilters({ ...filters, searchName: e.target.value })} placeholder="Search by run name" style={inputStyle} />
-              </div>
-              <div>
-                <label style={labelStyle}>Location</label>
-                <input type="text" value={filters.searchLocation} onChange={(e) => setFilters({ ...filters, searchLocation: e.target.value })} placeholder="Search by location" style={inputStyle} />
-              </div>
-            </div>
-            <button onClick={clearFilters} style={clearButtonStyle}>Clear Filters</button>
-          </div>
+          <FilterForm
+            filters={filters}
+            setFilters={setFilters}
+            clearFilters={clearFilters}
+            locationAutocompleteRef={locationAutocompleteRef}
+            handleLocationSelect={handleLocationSelect}
+            setSearchLocationCoords={setSearchLocationCoords}
+          />
         )}
       </div>
 
-      <div style={mainContentStyle}>
-        <div style={mapContainerStyle}>
+      <div className="main-content">
+        <div>
           <GoogleMap
-            mapContainerStyle={{ width: '100%', height: '100%' }}
+            mapContainerStyle={{ width: "100%", height: "100%" }}
             center={mapCenter}
-            zoom={MAP_ZOOM}
+            zoom={13}
             options={mapOptions}
+            onLoad={(map) => {
+              const icons = buildIcons(window.google);
+              if (icons) setCustomIcons(icons);
+            }}
           >
-            {userLocation && isLoaded && window.google && (
+            {searchLocationCoords && window.google && (
+              <Marker
+                position={searchLocationCoords}
+                icon={{
+                  path: window.google.maps.SymbolPath.CIRCLE,
+                  scale: 10,
+                  fillColor: "#10b981",
+                  fillOpacity: 1,
+                  strokeColor: "#fff",
+                  strokeWeight: 3,
+                }}
+              />
+            )}
+            {userLocation && !searchLocationCoords && window.google && (
               <Marker
                 position={userLocation}
                 icon={{
                   path: window.google.maps.SymbolPath.CIRCLE,
                   scale: 10,
-                  fillColor: '#4285F4',
+                  fillColor: "#4285F4",
                   fillOpacity: 1,
-                  strokeColor: '#fff',
+                  strokeColor: "#fff",
                   strokeWeight: 3,
                 }}
               />
@@ -296,39 +264,66 @@ function RunFinder() {
             {selectedRun?.polyline && (
               <Polyline
                 path={getPolylinePath(selectedRun)}
-                options={{ strokeColor: '#2563eb', strokeOpacity: 1, strokeWeight: 6 }}
+                options={{
+                  strokeColor: "#2563eb",
+                  strokeOpacity: 1,
+                  strokeWeight: 10,
+                }}
               />
             )}
             {selectedRun && (
               <>
-                <Marker position={getRunCoords(selectedRun)} label="Start" />
-                <Marker position={getRunEndCoords(selectedRun)} label="End" />
+                <Marker
+                  position={getRunCoords(selectedRun)}
+                  icon={customIcons?.startIcon}
+                />
+                <Marker
+                  position={getRunEndCoords(selectedRun)}
+                  icon={customIcons?.endIcon}
+                />
               </>
             )}
           </GoogleMap>
         </div>
 
-        <div style={cardsContainerStyle}>
-          {runs.length === 0 && allRuns.length > 0 ? (
-            <p style={{ color: '#666', fontStyle: 'italic' }}>
-              {userLocation ? 'No runs within 3 miles match your search criteria.' : 'No runs match your search criteria.'}
+        <div className="cards-container">
+          {runs.length === 0 ? (
+            <p>
+              {searchLocationCoords || userLocation
+                ? "No runs within 3 miles match your search criteria."
+                : "No runs match your search criteria."}
             </p>
-          ) : runs.length > 0 && (
-            <>
-              <p style={{ color: '#666', marginBottom: '1rem' }}>
-                Showing {runs.length} run{runs.length !== 1 ? 's' : ''}{userLocation ? ' within 3 miles' : ''}
-              </p>
-              <div style={cardsListStyle}>
-              {runs.map((run) => (
-                <RouteCard
-                  key={run.run_id}
-                  run={run}
-                  isSelected={selectedRun?.run_id === run.run_id}
-                  onClick={() => handleRouteClick(run)}
-                />
-              ))}
-              </div>
-            </>
+          ) : (
+            runs.length > 0 && (
+              <>
+                <p>
+                  Showing {runs.length} run{runs.length !== 1 ? "s" : ""}
+                  {searchLocationCoords || userLocation
+                    ? " within 3 miles"
+                    : ""}
+                </p>
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "1rem",
+                  }}
+                >
+                  {runs.map((run) => (
+                    <div key={run.run_id}>
+                      <RouteCard
+                        run={run}
+                        isSelected={selectedRun?.run_id === run.run_id}
+                        onClick={() => handleRouteClick(run)}
+                        user={user}
+                        onSaveRoute={saveRoute}
+                        onJoinRun={joinRun}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </>
+            )
           )}
         </div>
       </div>
@@ -337,4 +332,3 @@ function RunFinder() {
 }
 
 export default RunFinder;
-
