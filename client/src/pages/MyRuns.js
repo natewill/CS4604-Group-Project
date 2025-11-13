@@ -3,6 +3,7 @@ import "../styles/MyRuns.css";
 import { useAuth } from "../context/AuthContext";
 import RunItem from "../components/RunItem";
 import { getDateLabel, groupRunsByDate } from "../utils/dateUtils";
+import { fetchMyRuns, leaveRun, deleteRun } from "../services/myRuns";
 
 function MyRuns() {
   const { user, isLeader } = useAuth();
@@ -13,20 +14,12 @@ function MyRuns() {
 
   // Fetch runs from backend
   useEffect(() => {
-    const fetchRuns = async () => {
+    const loadRuns = async () => {
       setLoading(true);
       setError(null);
       
       try {
-        const response = await fetch(`/api/my-runs?filter=${view}`, {
-          credentials: "include",
-        });
-
-        if (!response.ok) {
-          throw new Error("Failed to fetch runs");
-        }
-
-        const data = await response.json();
+        const data = await fetchMyRuns(view);
         setRuns(data);
       } catch (err) {
         console.error("Error fetching runs:", err);
@@ -36,7 +29,7 @@ function MyRuns() {
       }
     };
 
-    fetchRuns();
+    loadRuns();
   }, [view]);
 
   // Group runs by date
@@ -45,15 +38,7 @@ function MyRuns() {
   // Handle leave run
   const handleLeaveRun = async (runId) => {
     try {
-      const response = await fetch(`/api/runs/${runId}/leave`, {
-        method: "DELETE",
-        credentials: "include",
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to leave run");
-      }
-
+      await leaveRun(runId);
       // Remove the run from the list
       setRuns((prevRuns) => prevRuns.filter((run) => run.run_id !== runId));
     } catch (err) {
@@ -65,16 +50,7 @@ function MyRuns() {
   // Handle delete run (leaders only)
   const handleDeleteRun = async (runId) => {
     try {
-      const response = await fetch(`/api/runs/${runId}`, {
-        method: "DELETE",
-        credentials: "include",
-      });
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || "Failed to delete run");
-      }
-
+      await deleteRun(runId);
       // Remove the run from the list
       setRuns((prevRuns) => prevRuns.filter((run) => run.run_id !== runId));
     } catch (err) {

@@ -1,4 +1,4 @@
-import { formatPace } from '../utils/paceFormatters';
+import { formatPace } from '../utils/formatPace';
 import '../styles/RunFinder.css';
 
 /**
