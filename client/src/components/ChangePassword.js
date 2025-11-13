@@ -12,24 +12,8 @@ const styles = {
 };
 
 /**
- * Component to change the password
- *
- * verify that all three fields are entered
- * make payload and send all 3 to server
- *
- * listen for response
- *
- * success -> return to details page
- * failure -> stay on this page
- *
- * Need box to enter old password
- * New Password
- * New Password again
- *
- * Verify the old password
- * Verify two new passwords are the same
- * Verify the new password does not already exist
- * @returns
+ * Component to change user password
+ * Validates password match, length, and uniqueness before sending to server
  */
 const PASSWORD_MIN_LENGTH = 6;
 
@@ -40,9 +24,7 @@ function ChangePassword({ onNavigateBack }) {
   const [seePassword, setSeePassword] = useState(false);
   const [error, setError] = useState("");
 
-  const passwordType = () => {
-    return seePassword ? "text" : "password";
-  };
+  const passwordType = seePassword ? "text" : "password";
 
   const handleSubmit = async (e) => {
     e.preventDefault(); // Prevent default form submission
@@ -59,6 +41,12 @@ function ChangePassword({ onNavigateBack }) {
       setError(
         `Password must be at least ${PASSWORD_MIN_LENGTH} characters long`
       );
+      return;
+    }
+
+    // Validate new password != the old password
+    if (oldPassword === firstNewPassword) {
+      setError("New password cannot match the old password");
       return;
     }
 
@@ -99,7 +87,7 @@ function ChangePassword({ onNavigateBack }) {
         <div style={styles.row}>
           <label>Old Password</label>
           <input
-            type={passwordType()}
+            type={passwordType}
             value={oldPassword}
             onChange={(e) => setOldPassword(e.target.value)}
             required
@@ -109,7 +97,7 @@ function ChangePassword({ onNavigateBack }) {
         <div style={styles.row}>
           <label>New Password</label>
           <input
-            type={passwordType()}
+            type={passwordType}
             value={firstNewPassword}
             onChange={(e) => setFirstNewPassword(e.target.value)}
             required
@@ -119,7 +107,7 @@ function ChangePassword({ onNavigateBack }) {
         <div style={styles.row}>
           <label>Re-Enter New Password</label>
           <input
-            type={passwordType()}
+            type={passwordType}
             value={secondNewPassword}
             onChange={(e) => setSecondNewPassword(e.target.value)}
             required

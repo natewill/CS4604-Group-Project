@@ -18,6 +18,7 @@ const {
 
 // Backend configuration: Maximum distance for location-based filtering (in miles)
 const MAX_DISTANCE_MILES = 3;
+const PASSWORD_MIN_LENGTH = 6;
 
 // GET all runners
 router.get("/api/runners", (req, res) => {
@@ -510,10 +511,17 @@ router.put("/api/edit-password", verifyToken, async (req, res) => {
   }
 
   // Validate new password length
-  if (new_password.length < 6) {
+  if (new_password.length < PASSWORD_MIN_LENGTH) {
+    return res.status(400).json({
+      error: `Password must be at least ${PASSWORD_MIN_LENGTH} characters long`,
+    });
+  }
+
+  // Validate password is not the same as the old
+  if (old_password === new_password) {
     return res
       .status(400)
-      .json({ error: "Password must be at least 6 characters long" });
+      .json({ error: "New password cannot be the same as the old Password" });
   }
 
   try {
@@ -541,6 +549,31 @@ router.put("/api/edit-password", verifyToken, async (req, res) => {
     );
     if (!isOldPasswordCorrect) {
       return res.status(401).json({ error: "Current password is incorrect" });
+    }
+
+    // Check if new password already exists for another user
+    const existingPasswordHashes = await new Promise((resolve, reject) => {
+      db.query(
+        "SELECT user_password FROM runners WHERE runner_id <> ?",
+        [runnerId],
+        (err, results) => {
+          if (err) {
+            reject(err);
+          } else {
+            resolve(results.map((row) => row.user_password));
+          }
+        }
+      );
+    });
+
+    // Verify new password against all existing password hashes
+    for (const existingHash of existingPasswordHashes) {
+      const passwordMatches = await verifyPassword(existingHash, new_password);
+      if (passwordMatches) {
+        return res.status(409).json({
+          error: "Password Unavailable",
+        });
+      }
     }
 
     // Hash the new password
