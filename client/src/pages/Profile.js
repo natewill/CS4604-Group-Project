@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 import ProfileDetails from "../components/ProfileDetails";
 import ProfileStatisitcs from "../components/ProfileStatistics";
+import ChangePassword from "../components/ChangePassword";
 
 const styles = {
   container: {
@@ -29,6 +30,9 @@ const styles = {
     width: "80%",
     flex: 1, // Takes remaining space
     padding: "1rem",
+    overflow: "hidden", // Prevent main from scrolling
+    display: "flex",
+    flexDirection: "column",
   },
 };
 
@@ -60,9 +64,19 @@ function Profile() {
   const renderMainComponent = () => {
     switch (activeMainComponent) {
       case "details":
-        return <ProfileDetails />;
+        return (
+          <ProfileDetails
+            onNavigateToPassword={() => setActiveMainComponent("password")}
+          />
+        );
       case "statistics":
         return <ProfileStatisitcs />;
+      case "password":
+        return (
+          <ChangePassword
+            onNavigateBack={() => setActiveMainComponent("details")}
+          />
+        );
       default:
         return;
     }
@@ -84,7 +98,7 @@ function Profile() {
           onMouseEnter={() => setHoveredItem("details")}
           onMouseLeave={() => setHoveredItem(null)}
         >
-          <h2>Details</h2>
+          <h2>Account Details</h2>
         </div>
 
         <div

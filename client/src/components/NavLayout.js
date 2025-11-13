@@ -2,13 +2,9 @@ import { Link, Outlet, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
 function Layout() {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
 
-  const handleLogout = async () => {
-    await logout();
-    navigate("/login");
-  };
   const isLeader = user && (user.is_leader === 1 || user.is_leader === true);
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
@@ -37,7 +33,6 @@ function Layout() {
             </span>
           )}
           <Link to="/profile">Profile</Link>
-          <button onClick={handleLogout}>Logout</button>
         </div>
       </nav>
       <div style={{ flex: 1, overflow: "auto" }}>
