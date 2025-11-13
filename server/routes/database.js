@@ -1,7 +1,13 @@
 const express = require("express");
 const router = express.Router();
 const db = require("../connection");
-const { signup, login, getPwAndIdFromEmail } = require("../accounts");
+const {
+  signup,
+  login,
+  getPwAndIdFromEmail,
+  hashPassword,
+  verifyPassword,
+} = require("../accounts");
 const { generateJWT, verifyToken } = require("../auth");
 const {
   normalizeString,
@@ -484,6 +490,88 @@ router.put("/api/edit-profile", verifyToken, async (req, res) => {
       }
     );
   });
+});
+
+// PUT: change user password (requires authentication)
+router.put("/api/edit-password", verifyToken, async (req, res) => {
+  const runnerId = req.user?.runner_id;
+
+  if (!runnerId) {
+    return res.status(401).json({ error: "Unauthorized: must be logged in" });
+  }
+
+  const { old_password, new_password } = req.body;
+
+  // Validate required fields
+  if (!old_password || !new_password) {
+    return res
+      .status(400)
+      .json({ error: "old_password and new_password are required" });
+  }
+
+  // Validate new password length
+  if (new_password.length < 6) {
+    return res
+      .status(400)
+      .json({ error: "Password must be at least 6 characters long" });
+  }
+
+  try {
+    // Get current password hash from database
+    const currentPasswordHash = await new Promise((resolve, reject) => {
+      db.query(
+        "SELECT user_password FROM runners WHERE runner_id = ?",
+        [runnerId],
+        (err, results) => {
+          if (err) {
+            reject(err);
+          } else if (results.length === 0) {
+            reject(new Error("User not found"));
+          } else {
+            resolve(results[0].user_password);
+          }
+        }
+      );
+    });
+
+    // Verify old password matches
+    const isOldPasswordCorrect = await verifyPassword(
+      currentPasswordHash,
+      old_password
+    );
+    if (!isOldPasswordCorrect) {
+      return res.status(401).json({ error: "Current password is incorrect" });
+    }
+
+    // Hash the new password
+    const hashedNewPassword = await hashPassword(new_password);
+
+    // Update password in database
+    db.query(
+      "UPDATE runners SET user_password = ? WHERE runner_id = ?",
+      [hashedNewPassword, runnerId],
+      (err, result) => {
+        if (err) {
+          console.error("Database update failed:", err);
+          return res.status(500).json({ error: "Failed to update password" });
+        }
+
+        if (result.affectedRows === 0) {
+          return res.status(404).json({ error: "User not found" });
+        }
+
+        res.json({
+          message: "Password updated successfully",
+        });
+      }
+    );
+  } catch (error) {
+    console.error("Error changing password:", error);
+    if (error.message === "User not found") {
+      return res.status(404).json({ error: "User not found" });
+    }
+    return res.status(500).json({ error: "Failed to change password" });
+  }
 });
 
 // GET current user info (requires authentication)
