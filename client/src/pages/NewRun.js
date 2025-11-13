@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
+import StartTimePicker from "../components/StartTimePicker";
+import PaceSlider from "../components/PaceSlider";
 import { useNavigate } from "react-router-dom";
-import CreateRoute from "./CreateRoute"; // ✅ import your existing route creator
+import CreateRoute from "./CreateRoute";
 import {
   GoogleMap,
   Marker,
@@ -8,56 +10,50 @@ import {
   useJsApiLoader,
 } from "@react-google-maps/api";
 import polyline from "@mapbox/polyline";
-import { paceToSeconds } from "../utils/paceToSeconds";
+import { useAuth } from "../context/AuthContext";
 
 const GOOGLE_MAPS_API_KEY = process.env.REACT_APP_GOOGLE_MAPS_API_KEY;
 
 function NewRun() {
+  const { user, loading } = useAuth();
+  const navigate = useNavigate();
+
   const [routes, setRoutes] = useState([]);
   const [form, setForm] = useState({
-    leader_id: "",
     run_route: "",
-    run_status_id: 1,
     name: "",
     description: "",
     pace: "",
     date: "",
     start_time: "",
   });
-  const [showCreateRoute, setShowCreateRoute] = useState(false);
   const [selectedRoute, setSelectedRoute] = useState(null);
-  const [leaders, setLeaders] = useState([]);
-  const [newRouteId, setNewRouteId] = useState(null);
   const [creatingRoute, setCreatingRoute] = useState(false);
 
   const { isLoaded } = useJsApiLoader({
-    googleMapsApiKey: process.env.REACT_APP_GOOGLE_MAPS_API_KEY,
-    libraries: ["places", "geometry"], // ✅ required for Autocomplete & directions
+    googleMapsApiKey: GOOGLE_MAPS_API_KEY,
+    libraries: ["places", "geometry"],
   });
 
-  const navigate = useNavigate();
+  // Redirect non-leaders
+  useEffect(() => {
+    if (!loading) {
+      if (!user || (user.is_leader !== 1 && user.is_leader !== true)) {
+        navigate("/runfinder");
+      }
+    }
+  }, [user, loading, navigate]);
 
-  // Load existing routes
+  // Fetch available routes
   useEffect(() => {
     fetch("/api/routes")
       .then((res) => res.json())
       .then((data) => setRoutes(data))
       .catch((err) => console.error("Failed to fetch routes:", err));
-    fetch("/api/leaders")
-      .then((res) => res.json())
-      .then((data) => setLeaders(data))
-      .catch((err) => console.error("Failed to fetch leaders:", err));
   }, []);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
-  };
-
-  const handleRouteSelect = (e) => {
-    const routeId = e.target.value;
-    setForm({ ...form, run_route: routeId });
-    const route = routes.find((r) => r.route_id === Number(routeId));
-    setSelectedRoute(route || null);
   };
 
   const fetchRouteDetails = async (routeId) => {
@@ -72,32 +68,41 @@ function NewRun() {
     }
   };
 
+  const validateForm = () => {
+    const missingFields = [];
+
+    if (!form.run_route) missingFields.push("Route");
+    if (!form.name.trim()) missingFields.push("Name");
+    if (!form.pace) missingFields.push("Pace");
+    if (!form.date) missingFields.push("Date");
+    if (!form.start_time) missingFields.push("Start Time");
+
+    return missingFields;
+  };
+
+  const isFormComplete =
+    form.run_route &&
+    form.name.trim() &&
+    form.pace &&
+    form.date &&
+    form.start_time;
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    
-    // Convert pace from "MM:SS" to seconds (INT)
-    const paceSeconds = form.pace ? paceToSeconds(form.pace) : null;
-    if (form.pace && paceSeconds === null) {
-      alert('Invalid pace format. Use MM:SS (e.g., 08:30)');
+    const missing = validateForm();
+    if (missing.length > 0) {
+      alert(
+        `Please complete all required fields before creating the run:\n\n${missing.join(
+          ", "
+        )}`
+      );
       return;
     }
-
-    // Prepare payload with correct data types matching schema
-    const payload = {
-      leader_id: parseInt(form.leader_id, 10), // INT
-      run_route: parseInt(form.run_route, 10), // INT
-      run_status_id: parseInt(form.run_status_id, 10), // INT
-      name: form.name, // VARCHAR(50)
-      description: form.description || null, // VARCHAR(250), can be null
-      pace: paceSeconds, // INT (seconds)
-      date: form.date, // DATE (YYYY-MM-DD format)
-      start_time: form.start_time, // TIME (HH:MM:SS format)
-    };
 
     fetch("/api/runs", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
+      body: JSON.stringify(form),
     })
       .then((res) => {
         if (!res.ok) throw new Error("Failed to create run");
@@ -105,7 +110,7 @@ function NewRun() {
       })
       .then(() => {
         alert("Run created successfully!");
-        navigate("/runs");
+        navigate("/runfinder");
       })
       .catch((err) => {
         console.error(err);
@@ -113,63 +118,75 @@ function NewRun() {
       });
   };
 
-  // When CreateRoute finishes creating a route in DB, refresh list and select it
-  const handleRouteCreated = (newRouteId) => {
-    fetch("/api/routes")
-      .then((res) => res.json())
-      .then((data) => {
-        setRoutes(data);
-        const newRoute = data.find((r) => r.route_id === newRouteId);
-        setForm({ ...form, run_route: newRouteId });
-        setSelectedRoute(newRoute || null);
-        setShowCreateRoute(false);
-      })
-      .catch((err) => console.error("Failed to refresh routes:", err));
-  };
+  if (loading) return <p>Loading...</p>;
+
+  if (!user || (user.is_leader !== 1 && user.is_leader !== true)) {
+    navigate("/runfinder");
+    return <p>Access denied. Only leaders can create new runs.</p>;
+  }
 
   return (
-    <div style={{ padding: "2rem", maxWidth: "800px", margin: "0 auto" }}>
-      <h1>Create New Run</h1>
-
-      <form
-        onSubmit={handleSubmit}
-        style={{ display: "flex", flexDirection: "column", gap: "1rem" }}
+    <div
+      style={{
+        padding: "2rem",
+        minHeight: "100vh",
+        background: "linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "flex-start",
+      }}
+    >
+      <div
+        style={{
+          background: "white",
+          padding: "2rem 2.5rem",
+          borderRadius: "16px",
+          boxShadow: "0 8px 20px rgba(0,0,0,0.1)",
+          width: "100%",
+          maxWidth: "800px",
+        }}
       >
-        <label>
-          Leader:
-          <select
-            name="leader_id"
-            value={form.leader_id}
-            onChange={handleChange}
-            required
+        <h1
+          style={{
+            textAlign: "center",
+            color: "#3f51b5",
+            marginBottom: "1.5rem",
+          }}
+        >
+          Create New Run
+        </h1>
+
+        <form
+          onSubmit={handleSubmit}
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: "1.25rem",
+          }}
+        >
+          {/* Route Section */}
+          <div
+            style={{
+              background: "#f9f9ff",
+              padding: "1rem",
+              borderRadius: "8px",
+            }}
           >
-            <option value="">Select a leader</option>
-            {leaders.map((leader) => (
-              <option key={leader.runner_id} value={leader.runner_id}>
-                {leader.full_name} ({leader.email})
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
-          Route:
-          {creatingRoute ? (
-            <div>
-              <h3>Create a New Route</h3>
-              <CreateRoute
-                onRouteCreated={(routeId) => {
-                  setNewRouteId(routeId);
-                  setForm((prev) => ({ ...prev, run_route: routeId }));
-                  setCreatingRoute(false);
-                  fetchRouteDetails(routeId); // Fetch & display preview
-                  alert(`New route created! Route #${routeId} selected.`);
-                }}
-              />
-            </div>
-          ) : (
-            <>
-              <label>
-                Select Existing Route:
+            <label style={styles.label}>Route</label>
+            {creatingRoute ? (
+              <div>
+                <h3 style={{ color: "#3f51b5" }}>Create a New Route</h3>
+                <CreateRoute
+                  onRouteCreated={(routeId) => {
+                    setForm((prev) => ({ ...prev, run_route: routeId }));
+                    setCreatingRoute(false);
+                    fetchRouteDetails(routeId);
+                    alert(`New route created! Route #${routeId} selected.`);
+                  }}
+                />
+              </div>
+            ) : (
+              <>
                 <select
                   name="run_route"
                   value={form.run_route || ""}
@@ -178,158 +195,204 @@ function NewRun() {
                     const routeId = e.target.value;
                     if (routeId) fetchRouteDetails(routeId);
                   }}
+                  style={styles.select}
                 >
-                  <option value="">Select a route</option>
-                  {routes.map((route) => (
-                    <option key={route.route_id} value={route.route_id}>
-                      Route #{route.route_id} ({route.distance} mi)
-                    </option>
-                  ))}
+                  <option value="">Select an existing route</option>
+                  {routes.map((route) => {
+                    let displayName = `Route #${route.route_id} (${route.distance} mi)`;
+                    if (route.start_address)
+                      displayName += `, Start: ${route.start_address}`;
+                    if (route.end_address)
+                      displayName += `, End: ${route.end_address}`;
+                    return (
+                      <option key={route.route_id} value={route.route_id}>
+                        {displayName}
+                      </option>
+                    );
+                  })}
                 </select>
-              </label>
 
-              <button
-                type="button"
-                onClick={() => setCreatingRoute(true)}
-                style={{ marginTop: "1rem" }}
-              >
-                + Create New Route
-              </button>
-            </>
-          )}
-        </label>
-
-        {isLoaded && selectedRoute && (
-          <div style={{ height: "400px", marginTop: "1rem" }}>
-            <GoogleMap
-              mapContainerStyle={{ width: "100%", height: "100%" }}
-              center={{
-                lat: parseFloat(selectedRoute.start_lat || 37.23),
-                lng: parseFloat(selectedRoute.start_lng || -80.42),
-              }}
-              zoom={13}
-            >
-              {/* Start Marker */}
-              <Marker
-                position={{
-                  lat: parseFloat(selectedRoute.start_lat),
-                  lng: parseFloat(selectedRoute.start_lng),
-                }}
-                label="Start"
-              />
-
-              {/* End Marker */}
-              <Marker
-                position={{
-                  lat: parseFloat(selectedRoute.end_lat),
-                  lng: parseFloat(selectedRoute.end_lng),
-                }}
-                label="End"
-              />
-
-              {/* Polyline if available */}
-              {selectedRoute.polyline && (
-                <Polyline
-                  path={polyline
-                    .decode(selectedRoute.polyline)
-                    .map(([lat, lng]) => ({
-                      lat,
-                      lng,
-                    }))}
-                  options={{
-                    strokeColor: "#FF0000",
-                    strokeWeight: 4,
-                  }}
-                />
-              )}
-            </GoogleMap>
+                <button
+                  type="button"
+                  onClick={() => setCreatingRoute(true)}
+                  style={styles.secondaryButton}
+                >
+                  + Create New Route
+                </button>
+              </>
+            )}
           </div>
-        )}
 
-        <label>
-          Status:
-          <select
-            name="run_status_id"
-            value={form.run_status_id}
-            onChange={handleChange}
-          >
-            <option value={1}>Scheduled</option>
-            <option value={2}>Completed</option>
-            <option value={3}>Cancelled</option>
-            <option value={4}>In Progress</option>
-          </select>
-        </label>
+          {/* Map Preview */}
+          {isLoaded && selectedRoute && (
+            <div
+              style={{
+                height: "400px",
+                borderRadius: "8px",
+                overflow: "hidden",
+              }}
+            >
+              <GoogleMap
+                mapContainerStyle={{ width: "100%", height: "100%" }}
+                center={{
+                  lat: parseFloat(selectedRoute.start_lat || 37.23),
+                  lng: parseFloat(selectedRoute.start_lng || -80.42),
+                }}
+                zoom={13}
+              >
+                <Marker
+                  position={{
+                    lat: parseFloat(selectedRoute.start_lat),
+                    lng: parseFloat(selectedRoute.start_lng),
+                  }}
+                  label="Start"
+                />
+                <Marker
+                  position={{
+                    lat: parseFloat(selectedRoute.end_lat),
+                    lng: parseFloat(selectedRoute.end_lng),
+                  }}
+                  label="End"
+                />
+                {selectedRoute.polyline && (
+                  <Polyline
+                    path={polyline
+                      .decode(selectedRoute.polyline)
+                      .map(([lat, lng]) => ({ lat, lng }))}
+                    options={{
+                      strokeColor: "#ff4081",
+                      strokeWeight: 4,
+                    }}
+                  />
+                )}
+              </GoogleMap>
+            </div>
+          )}
 
-        <label>
-          Name:
+          {/* Other Fields */}
+          <div style={{ display: "flex", justifyContent: "center" }}>
+            <PaceSlider
+              label="Pace (min:sec per mile)"
+              value={form.pace}
+              defaultValue={480}
+              onChange={(newPace) =>
+                setForm((prev) => ({ ...prev, pace: newPace }))
+              }
+            />
+          </div>
+
+          <label style={styles.label}>Name</label>
           <input
             type="text"
             name="name"
             value={form.name}
             onChange={handleChange}
             required
+            style={styles.input}
           />
-        </label>
 
-        <label>
-          Description:
+          <label style={styles.label}>Description</label>
           <textarea
             name="description"
             value={form.description}
             onChange={handleChange}
+            style={styles.textarea}
           />
-        </label>
 
-        <label>
-          Pace (e.g., 08:30):
-          <input
-            type="text"
-            name="pace"
-            value={form.pace}
-            onChange={handleChange}
-            required
-          />
-        </label>
+          <div style={styles.row}>
+            <div style={styles.column}>
+              <label style={styles.label}>Date</label>
+              <input
+                type="date"
+                name="date"
+                value={form.date}
+                onChange={handleChange}
+                required
+                style={styles.input}
+              />
+            </div>
 
-        <label>
-          Date:
-          <input
-            type="date"
-            name="date"
-            value={form.date}
-            onChange={handleChange}
-            required
-          />
-        </label>
+            <StartTimePicker form={form} setForm={setForm} styles={styles} />
+          </div>
 
-        <label>
-          Start Time:
-          <input
-            type="time"
-            name="start_time"
-            value={form.start_time}
-            onChange={handleChange}
-            required
-          />
-        </label>
-
-        <button
-          type="submit"
-          style={{
-            backgroundColor: "#4CAF50",
-            color: "white",
-            padding: "0.75rem",
-            borderRadius: "8px",
-            border: "none",
-            cursor: "pointer",
-            marginTop: "1rem",
-          }}
-        >
-          Create Run
-        </button>
-      </form>
+          <button
+            type="submit"
+            style={{
+              ...styles.primaryButton,
+              opacity: isFormComplete ? 1 : 0.6,
+              cursor: isFormComplete ? "pointer" : "not-allowed",
+            }}
+            disabled={!isFormComplete}
+          >
+            Create Run
+          </button>
+        </form>
+      </div>
     </div>
   );
 }
+
+const styles = {
+  label: {
+    fontWeight: "600",
+    color: "#333",
+    display: "block",
+    marginBottom: "0.25rem",
+  },
+  input: {
+    width: "100%",
+    padding: "0.6rem",
+    borderRadius: "6px",
+    border: "1px solid #ccc",
+    outline: "none",
+    transition: "0.2s",
+  },
+  select: {
+    width: "100%",
+    padding: "0.6rem",
+    borderRadius: "6px",
+    border: "1px solid #ccc",
+    outline: "none",
+    transition: "0.2s",
+  },
+  textarea: {
+    width: "100%",
+    padding: "0.6rem",
+    minHeight: "80px",
+    borderRadius: "6px",
+    border: "1px solid #ccc",
+    outline: "none",
+  },
+  primaryButton: {
+    backgroundColor: "#3f51b5",
+    color: "white",
+    padding: "0.75rem",
+    borderRadius: "8px",
+    border: "none",
+    cursor: "pointer",
+    marginTop: "1rem",
+    fontWeight: "bold",
+    fontSize: "1rem",
+    transition: "0.3s",
+  },
+  secondaryButton: {
+    backgroundColor: "#e0e0ff",
+    color: "#3f51b5",
+    padding: "0.5rem 1rem",
+    borderRadius: "6px",
+    border: "none",
+    cursor: "pointer",
+    fontWeight: "500",
+    marginTop: "0.5rem",
+    transition: "0.2s",
+  },
+  row: {
+    display: "flex",
+    gap: "1rem",
+  },
+  column: {
+    flex: 1,
+  },
+};
 
 export default NewRun;

@@ -1,89 +1,69 @@
-import React from "react";
-import { Autocomplete } from "@react-google-maps/api";
+import { Autocomplete } from '@react-google-maps/api';
+import PaceSlider from './PaceSlider';
 
-function FilterForm({
+const FilterForm = ({
   filters,
   setFilters,
   clearFilters,
   locationAutocompleteRef,
   handleLocationSelect,
   setSearchLocationCoords,
-}) {
+}) => {
+  const handleChange = (field) => (e) => setFilters({ ...filters, [field]: e.target.value });
+
   return (
-    <div style={{ padding: "1rem", border: "1px solid #ccc", marginBottom: "1rem" }}>
-      <div style={{ display: "grid", gap: "0.5rem" }}>
-        <div>
-          <label>Min Pace (MM:SS):</label>
+    <div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '1rem' }}>
+      <PaceSlider
+        label="Pace Min"
+        value={filters.paceMin}
+        onChange={(value) => setFilters({ ...filters, paceMin: value })}
+        defaultValue={300}
+      />
+      <PaceSlider
+        label="Pace Max"
+        value={filters.paceMax}
+        onChange={(value) => setFilters({ ...filters, paceMax: value })}
+        defaultValue={600}
+      />
+      <div>
+        <label>Date From</label>
+        <input type="date" value={filters.dateFrom} onChange={handleChange('dateFrom')} />
+      </div>
+      <div>
+        <label>Date To</label>
+        <input type="date" value={filters.dateTo} onChange={handleChange('dateTo')} />
+      </div>
+      <div>
+        <label>Leader Name</label>
+        <input type="text" value={filters.searchLeader} onChange={handleChange('searchLeader')} placeholder="Search by leader name" />
+      </div>
+      <div>
+        <label>Run Name</label>
+        <input type="text" value={filters.searchName} onChange={handleChange('searchName')} placeholder="Search by run name" />
+      </div>
+      <div>
+        <label>Location</label>
+        <Autocomplete
+          onLoad={(ref) => (locationAutocompleteRef.current = ref)}
+          onPlaceChanged={handleLocationSelect}
+        >
           <input
             type="text"
-            placeholder="00:00"
-            value={filters.paceMin}
-            onChange={(e) => setFilters({ ...filters, paceMin: e.target.value })}
-          />
-        </div>
-        <div>
-          <label>Max Pace (MM:SS):</label>
-          <input
-            type="text"
-            placeholder="00:00"
-            value={filters.paceMax}
-            onChange={(e) => setFilters({ ...filters, paceMax: e.target.value })}
-          />
-        </div>
-        <div>
-          <label>Date From:</label>
-          <input
-            type="date"
-            value={filters.dateFrom}
-            onChange={(e) => setFilters({ ...filters, dateFrom: e.target.value })}
-          />
-        </div>
-        <div>
-          <label>Date To:</label>
-          <input
-            type="date"
-            value={filters.dateTo}
-            onChange={(e) => setFilters({ ...filters, dateTo: e.target.value })}
-          />
-        </div>
-        <div>
-          <label>Search Leader:</label>
-          <input
-            type="text"
-            placeholder="Leader name"
-            value={filters.searchLeader}
-            onChange={(e) => setFilters({ ...filters, searchLeader: e.target.value })}
-          />
-        </div>
-        <div>
-          <label>Search Run Name:</label>
-          <input
-            type="text"
-            placeholder="Run name"
-            value={filters.searchName}
-            onChange={(e) => setFilters({ ...filters, searchName: e.target.value })}
-          />
-        </div>
-        <div>
-          <label>Search Location:</label>
-          <Autocomplete
-            onLoad={(ref) => {
-              locationAutocompleteRef.current = ref;
+            placeholder="Search by location (finds runs within 3 miles)"
+            onChange={(e) => {
+              if (!e.target.value) {
+                setSearchLocationCoords(null);
+              }
             }}
-            onPlaceChanged={handleLocationSelect}
-          >
-            <input
-              type="text"
-              placeholder="Enter location"
-              style={{ width: "100%" }}
-            />
-          </Autocomplete>
-        </div>
-        <button onClick={clearFilters}>Clear Filters</button>
+          />
+        </Autocomplete>
       </div>
     </div>
+    <button onClick={clearFilters}>Clear Filters</button>
+  </div>
   );
-}
+};
 
 export default FilterForm;
 
