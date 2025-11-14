@@ -53,6 +53,9 @@ function RunItem({ run, onLeave, onDelete, showCountdown, isLeader, currentUserI
               day: "numeric",
             })}{" "}
             at {convertTo12Hour(run.start_time)}
+            {showCountdown && countdown && (
+              <span className="countdown"> • {countdown}</span>
+            )}
           </div>
           <h3>{run.name}</h3>
           <div className="run-meta">
@@ -63,10 +66,6 @@ function RunItem({ run, onLeave, onDelete, showCountdown, isLeader, currentUserI
           <div className="run-description">{run.description}</div>
         )}
       </div>
-
-      {showCountdown && (
-        <div className="countdown">{countdown}</div>
-      )}
     </div>
   );
 }

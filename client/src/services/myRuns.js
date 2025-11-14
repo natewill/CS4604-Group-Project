@@ -47,4 +47,3 @@ export const deleteRun = async (runId) => {
     throw new Error(data.error || "Failed to delete run");
   }
 };
-
