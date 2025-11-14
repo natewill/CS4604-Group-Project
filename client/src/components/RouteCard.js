@@ -19,7 +19,7 @@ const RouteCard = ({ run, isSelected, onClick, user, onSaveRoute, onJoinRun }) =
     <div className="route-card-header">
       <h2>{run.name}</h2>
       <div className="route-card-actions">
-        {user && user?.is_leader && (
+        {user && (user.is_leader === 1 || user.is_leader === true) && (
           <button
             type="button"
             onClick={(e) => {
