@@ -1,4 +1,4 @@
-import { formatPace } from '../utils/paceFormatters';
+import { formatPace } from '../utils/formatPace';
 import '../styles/RunFinder.css';
 
 /**
@@ -6,14 +6,46 @@ import '../styles/RunFinder.css';
  * @param {Object} run - The run object
  * @param {boolean} isSelected - Whether the run is selected
  * @param {function} onClick - The function to call when the card is clicked
+ * @param {Object} user - The current user object
+ * @param {function} onSaveRoute - Function to save the route
+ * @param {function} onJoinRun - Function to join the run
  * @returns {React.ReactNode} The RouteCard component
  */
-const RouteCard = ({ run, isSelected, onClick }) => (
+const RouteCard = ({ run, isSelected, onClick, user, onSaveRoute, onJoinRun }) => (
   <div
     onClick={onClick}
     className={`route-card ${isSelected ? 'selected' : ''}`}
   >
-    <h2>{run.name}</h2>
+    <div className="route-card-header">
+      <h2>{run.name}</h2>
+      <div className="route-card-actions">
+        {user && user?.is_leader && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onSaveRoute(run.run_route);
+            }}
+          >
+            Save Route
+          </button>
+        )}
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            if (user) {
+              onJoinRun(run.run_id);
+            } else {
+              alert("Please log in to join runs");
+              window.location.href = "/login";
+            }
+          }}
+        >
+          Join Run
+        </button>
+      </div>
+    </div>
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.5rem' }}>
       <p><strong>Date:</strong> {run.date}</p>
       <p><strong>Time:</strong> {run.start_time}</p>

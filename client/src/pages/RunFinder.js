@@ -56,6 +56,27 @@ const saveRoute = async (routeId) => {
   }
 };
 
+const joinRun = async (runId) => {
+  try {
+    const response = await fetch(`/api/runs/${runId}/join`, {
+      method: "POST",
+      credentials: "include",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+    if (!response.ok) {
+      const data = await response.json();
+      alert(data.error || "Failed to join run");
+      return;
+    }
+    alert("Joined run successfully!");
+  } catch (err) {
+    console.error("Error joining run:", err);
+    alert("Error joining run");
+  }
+};
+
 function RunFinder() {
   const [runs, setRuns] = useState([]);
   const { user, loading } = useAuth();
@@ -284,30 +305,15 @@ function RunFinder() {
                   }}
                 >
                   {runs.map((run) => (
-                    <div key={run.run_id} style={{ position: "relative" }}>
+                    <div key={run.run_id}>
                       <RouteCard
                         run={run}
                         isSelected={selectedRun?.run_id === run.run_id}
                         onClick={() => handleRouteClick(run)}
+                        user={user}
+                        onSaveRoute={saveRoute}
+                        onJoinRun={joinRun}
                       />
-                      {user?.is_leader && (
-                        <button
-                          style={{
-                            position: "absolute",
-                            top: "0.5rem",
-                            right: "0.5rem",
-                            backgroundColor: "#10b981",
-                            color: "white",
-                            border: "none",
-                            padding: "0.25rem 0.5rem",
-                            borderRadius: "0.25rem",
-                            cursor: "pointer",
-                          }}
-                          onClick={() => saveRoute(run.run_route)}
-                        >
-                          Save Route
-                        </button>
-                      )}
                     </div>
                   ))}
                 </div>

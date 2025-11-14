@@ -146,10 +146,17 @@ VALUES
 -- Run Participation
 INSERT INTO run_participation (participation_runner_id, participation_run_id)
 VALUES
-(2, 1), (3, 1), (4, 1), (5, 1),
-(2, 2), (6, 2), (7, 2), 
-(2, 3), (9, 3), (10, 3), 
-(22, 4), (21, 4),
-(9, 5), (12, 5), (13, 5),
-(13, 6), 
-(22, 7); 
+-- Run 1: Morning Easy Run Loop (leader: 2) - 15 participants
+(2, 1), (3, 1), (4, 1), (5, 1), (6, 1), (7, 1), (8, 1), (10, 1), (11, 1), (12, 1), (14, 1), (15, 1), (17, 1), (18, 1), (20, 1),
+-- Run 2: Interval Training (leader: 2) - 12 participants
+(2, 2), (3, 2), (5, 2), (6, 2), (7, 2), (9, 2), (11, 2), (13, 2), (15, 2), (17, 2), (19, 2), (21, 2),
+-- Run 3: Long Distance Run (leader: 2) - 10 participants
+(2, 3), (3, 3), (5, 3), (9, 3), (10, 3), (13, 3), (15, 3), (17, 3), (19, 3), (21, 3),
+-- Run 4: First Run in Weeks (leader: 22) - 8 participants
+(22, 4), (21, 4), (20, 4), (19, 4), (18, 4), (17, 4), (16, 4), (15, 4),
+-- Run 5: Endurance Run (leader: 9) - 11 participants
+(9, 5), (3, 5), (5, 5), (6, 5), (10, 5), (12, 5), (13, 5), (15, 5), (17, 5), (19, 5), (21, 5),
+-- Run 6: Rain Run (leader: 13) - 9 participants
+(13, 6), (14, 6), (15, 6), (16, 6), (17, 6), (18, 6), (19, 6), (20, 6), (21, 6),
+-- Run 7: Sprint Run (leader: 22) - 13 participants
+(22, 7), (2, 7), (3, 7), (5, 7), (6, 7), (7, 7), (9, 7), (11, 7), (13, 7), (15, 7), (17, 7), (19, 7), (21, 7); 
