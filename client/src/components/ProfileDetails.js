@@ -3,95 +3,7 @@ import { useAuth } from "../context/AuthContext";
 import PaceSlider from "./PaceSlider";
 import { formatPace } from "../utils/paceFormatters";
 import { useNavigate } from "react-router-dom";
-
-const styles = {
-  container: {
-    width: "100%",
-    height: "100%",
-    display: "flex",
-    flexDirection: "column",
-    gap: "1.5rem",
-    padding: "1rem",
-    overflowY: "auto", // Enable vertical scrolling
-    overflowX: "hidden", // Prevent horizontal scrolling
-  },
-  buttonContainer: {
-    display: "flex",
-    gap: "0.5rem",
-    marginBottom: "1rem",
-  },
-  button: {
-    padding: "0.5rem 1rem",
-    fontSize: "1rem",
-    cursor: "pointer",
-    border: "1px solid #ccc",
-    borderRadius: "4px",
-    backgroundColor: "#f5f5f5",
-  },
-  logoutButton: {
-    padding: "0.5rem 1rem",
-    fontSize: "1rem",
-    cursor: "pointer",
-    border: "1px solid #ccc",
-    borderRadius: "4px",
-    backgroundColor: "#f5f5f5",
-    marginLeft: "auto", // Pushes button to the right
-  },
-  section: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "1rem",
-    padding: "1rem",
-    border: "1px solid #e0e0e0",
-    borderRadius: "8px",
-    backgroundColor: "#fafafa",
-  },
-  sectionTitle: {
-    fontSize: "1.5rem",
-    fontWeight: "bold",
-    marginBottom: "0.5rem",
-    color: "#333",
-  },
-  row: {
-    display: "flex",
-    gap: "1.5rem",
-    flexWrap: "wrap",
-  },
-  field: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "0.5rem",
-    flex: "1",
-    minWidth: "200px",
-  },
-  fieldLabel: {
-    fontSize: "1.25rem",
-    fontWeight: "600",
-    color: "#555",
-    marginBottom: "0.25rem",
-  },
-  input: {
-    padding: "0.5rem",
-    fontSize: "1rem",
-    fontFamily: "inherit",
-    lineHeight: "1.5",
-    border: "1px solid #ccc",
-    borderRadius: "4px",
-    width: "100%",
-    boxSizing: "border-box",
-  },
-  valueDisplay: {
-    padding: "0.5rem",
-    fontSize: "1rem",
-    fontFamily: "inherit",
-    lineHeight: "1.5",
-    color: "#333",
-    border: "1px solid #fff",
-    borderRadius: "4px",
-    width: "100%",
-    boxSizing: "border-box",
-  },
-};
+import "../styles/ProfileDetails.css";
 /*
   I want to show all the fields of the runner
 
@@ -200,112 +112,129 @@ function ProfileDetails({ onNavigateToPassword }) {
     because it has the same checks and stuff
   */
   return (
-    <div style={styles.container}>
+    <div className="profile-details-container">
       {/* Action Buttons */}
-      <div style={styles.buttonContainer}>
+      <div className="profile-details-button-container">
         {!isEditing && (
-          <button style={styles.button} onClick={() => setIsEditing(true)}>
+          <button
+            className="profile-details-button"
+            onClick={() => setIsEditing(true)}
+          >
             Edit Profile
           </button>
         )}
         {isEditing && (
           <>
-            <button style={styles.button} onClick={cancelEditing}>
+            <button className="profile-details-button" onClick={cancelEditing}>
               Cancel
             </button>
-            <button style={styles.button} onClick={handleSave}>
+            <button className="profile-details-button" onClick={handleSave}>
               Save Changes
             </button>
           </>
         )}
-        <button style={styles.logoutButton} onClick={handleLogout}>
+        <button
+          className="profile-details-logout-button"
+          onClick={handleLogout}
+        >
           Logout
         </button>
       </div>
 
       {/* Personal Information Section */}
-      <div style={styles.section}>
-        <h2 style={styles.sectionTitle}>Personal Information</h2>
-        <div style={styles.row}>
-          <div style={styles.field}>
-            <label style={styles.fieldLabel}>First Name</label>
+      <div className="profile-details-section">
+        <h2 className="profile-details-section-title">Personal Information</h2>
+        <div className="profile-details-row">
+          <div className="profile-details-field">
+            <label className="profile-details-field-label">First Name</label>
             {isEditing ? (
               <input
                 type="text"
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
-                style={styles.input}
+                className="profile-details-input"
               />
             ) : (
-              <div style={styles.valueDisplay}>{firstName}</div>
+              <div className="profile-details-value-display">{firstName}</div>
             )}
           </div>
-          <div style={styles.field}>
-            <label style={styles.fieldLabel}>Middle Initial</label>
+          <div className="profile-details-field">
+            <label className="profile-details-field-label">
+              Middle Initial
+            </label>
             {isEditing ? (
               <input
                 type="text"
                 value={middleInitial}
                 onChange={(e) => setMiddleInitial(e.target.value)}
-                style={styles.input}
+                className="profile-details-input"
                 maxLength={1}
               />
             ) : (
-              <div style={styles.valueDisplay}>{middleInitial || "-"}</div>
+              <div className="profile-details-value-display">
+                {middleInitial || "-"}
+              </div>
             )}
           </div>
-          <div style={styles.field}>
-            <label style={styles.fieldLabel}>Last Name</label>
+          <div className="profile-details-field">
+            <label className="profile-details-field-label">Last Name</label>
             {isEditing ? (
               <input
                 type="text"
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
-                style={styles.input}
+                className="profile-details-input"
               />
             ) : (
-              <div style={styles.valueDisplay}>{lastName}</div>
+              <div className="profile-details-value-display">{lastName}</div>
             )}
           </div>
         </div>
       </div>
 
       {/* Account Information Section */}
-      <div style={styles.section}>
-        <h2 style={styles.sectionTitle}>Account Information</h2>
-        <div style={styles.row}>
-          <div style={styles.field}>
-            <label style={styles.fieldLabel}>Email</label>
+      <div className="profile-details-section">
+        <h2 className="profile-details-section-title">Account Information</h2>
+        <div className="profile-details-row">
+          <div className="profile-details-field">
+            <label className="profile-details-field-label">Email</label>
             {isEditing ? (
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                style={styles.input}
+                className="profile-details-input"
               />
             ) : (
-              <div style={styles.valueDisplay}>{email}</div>
+              <div className="profile-details-value-display">{email}</div>
             )}
           </div>
-          <div style={styles.field}>
-            <label style={styles.fieldLabel}>Password</label>
-            <button style={styles.button} onClick={clickChangePassword}>
+          <div className="profile-details-field">
+            <label className="profile-details-field-label">Password</label>
+            <button
+              className="profile-details-button"
+              onClick={clickChangePassword}
+            >
               Change Password
             </button>
           </div>
-          <div style={styles.field}>
-            <label style={styles.fieldLabel}>Leader Status</label>
-            <div style={styles.valueDisplay}>{isLeader ? "Yes" : "No"}</div>
+          <div className="profile-details-field">
+            <label className="profile-details-field-label">Leader Status</label>
+            <div className="profile-details-value-display">
+              {isLeader ? "Yes" : "No"}
+            </div>
           </div>
         </div>
       </div>
 
       {/* Running Preferences Section */}
-      <div style={styles.section}>
-        <h2 style={styles.sectionTitle}>Running Preferences</h2>
-        <div style={styles.row}>
-          <div style={{ ...styles.field, flex: "1 1 45%" }}>
-            <label style={styles.fieldLabel}>Min Pace (per mile)</label>
+      <div className="profile-details-section">
+        <h2 className="profile-details-section-title">Running Preferences</h2>
+        <div className="profile-details-row">
+          <div className="profile-details-field profile-details-field-wide">
+            <label className="profile-details-field-label">
+              Min Pace (per mile)
+            </label>
             {isEditing ? (
               <PaceSlider
                 label=""
@@ -314,13 +243,15 @@ function ProfileDetails({ onNavigateToPassword }) {
                 defaultValue={240}
               />
             ) : (
-              <div style={styles.valueDisplay}>
+              <div className="profile-details-value-display">
                 {minPace ? formatPace(minPace) : "--:--"}
               </div>
             )}
           </div>
-          <div style={{ ...styles.field, flex: "1 1 45%" }}>
-            <label style={styles.fieldLabel}>Max Pace (per mile)</label>
+          <div className="profile-details-field profile-details-field-wide">
+            <label className="profile-details-field-label">
+              Max Pace (per mile)
+            </label>
             {isEditing ? (
               <PaceSlider
                 label=""
@@ -329,15 +260,17 @@ function ProfileDetails({ onNavigateToPassword }) {
                 defaultValue={900}
               />
             ) : (
-              <div style={styles.valueDisplay}>
+              <div className="profile-details-value-display">
                 {maxPace ? formatPace(maxPace) : "--:--"}
               </div>
             )}
           </div>
         </div>
-        <div style={styles.row}>
-          <div style={styles.field}>
-            <label style={styles.fieldLabel}>Min Distance (miles)</label>
+        <div className="profile-details-row">
+          <div className="profile-details-field">
+            <label className="profile-details-field-label">
+              Min Distance (miles)
+            </label>
             {isEditing ? (
               <input
                 type="number"
@@ -345,14 +278,16 @@ function ProfileDetails({ onNavigateToPassword }) {
                 step="1"
                 value={minDistance}
                 onChange={(e) => setMinDistance(parseInt(e.target.value) || 0)}
-                style={styles.input}
+                className="profile-details-input"
               />
             ) : (
-              <div style={styles.valueDisplay}>{minDistance}</div>
+              <div className="profile-details-value-display">{minDistance}</div>
             )}
           </div>
-          <div style={styles.field}>
-            <label style={styles.fieldLabel}>Max Distance (miles)</label>
+          <div className="profile-details-field">
+            <label className="profile-details-field-label">
+              Max Distance (miles)
+            </label>
             {isEditing ? (
               <input
                 type="number"
@@ -360,10 +295,10 @@ function ProfileDetails({ onNavigateToPassword }) {
                 step="1"
                 value={maxDistance}
                 onChange={(e) => setMaxDistance(parseInt(e.target.value) || 0)}
-                style={styles.input}
+                className="profile-details-input"
               />
             ) : (
-              <div style={styles.valueDisplay}>{maxDistance}</div>
+              <div className="profile-details-value-display">{maxDistance}</div>
             )}
           </div>
         </div>

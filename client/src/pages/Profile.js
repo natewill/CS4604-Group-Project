@@ -3,38 +3,7 @@ import { useAuth } from "../context/AuthContext";
 import ProfileDetails from "../components/ProfileDetails";
 import ProfileStatisitcs from "../components/ProfileStatistics";
 import ChangePassword from "../components/ChangePassword";
-
-const styles = {
-  container: {
-    width: "100%",
-    height: "100%",
-    display: "flex", // This makes it a flex container
-  },
-  sidebar: {
-    width: "20%", // Fixed width for sidebar
-    borderRight: "5px solid black",
-    display: "flex",
-    flexDirection: "column",
-  },
-  sidebar_elem: {
-    borderBottom: "2px solid black",
-    cursor: "pointer",
-  },
-  sidebar_elem_active: {
-    borderBottom: "2px solid black",
-    cursor: "pointer",
-    backgroundColor: "#bbb", // Highlight active item
-    transition: "background-color 0.2s",
-  },
-  main: {
-    width: "80%",
-    flex: 1, // Takes remaining space
-    padding: "1rem",
-    overflow: "hidden", // Prevent main from scrolling
-    display: "flex",
-    flexDirection: "column",
-  },
-};
+import "../styles/Profile.css";
 
 /*
   I want this to be the profile page
@@ -83,16 +52,14 @@ function Profile() {
   };
 
   return (
-    <div style={styles.container}>
+    <div className="profile-container">
       {/* Sidebar */}
-      <div style={styles.sidebar}>
+      <div className="profile-sidebar">
         <div
-          style={
-            activeMainComponent === "details"
-              ? styles.sidebar_elem_active
-              : hoveredItem === "details"
-              ? styles.sidebar_elem_active
-              : styles.sidebar_elem
+          className={
+            activeMainComponent === "details" || hoveredItem === "details"
+              ? "profile-sidebar-elem-active"
+              : "profile-sidebar-elem"
           }
           onClick={() => setActiveMainComponent("details")}
           onMouseEnter={() => setHoveredItem("details")}
@@ -102,12 +69,10 @@ function Profile() {
         </div>
 
         <div
-          style={
-            activeMainComponent === "statistics"
-              ? styles.sidebar_elem_active
-              : hoveredItem === "statistics"
-              ? styles.sidebar_elem_active
-              : styles.sidebar_elem
+          className={
+            activeMainComponent === "statistics" || hoveredItem === "statistics"
+              ? "profile-sidebar-elem-active"
+              : "profile-sidebar-elem"
           }
           onClick={() => setActiveMainComponent("statistics")}
           onMouseEnter={() => setHoveredItem("statistics")}
@@ -118,7 +83,7 @@ function Profile() {
       </div>
 
       {/* Main Content Area */}
-      <div style={styles.main}>{renderMainComponent()}</div>
+      <div className="profile-main">{renderMainComponent()}</div>
     </div>
   );
 }

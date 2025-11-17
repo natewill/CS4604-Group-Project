@@ -1,15 +1,5 @@
 import { React, useState } from "react";
-
-const styles = {
-  container: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "32px",
-  },
-  row: {
-    display: "flex",
-  },
-};
+import "../styles/ChangePassword.css";
 
 /**
  * Component to change user password
@@ -82,9 +72,10 @@ function ChangePassword({ onNavigateBack }) {
   };
 
   return (
-    <div style={styles.container}>
-      <form onSubmit={handleSubmit} style={styles.container}>
-        <div style={styles.row}>
+    <div className="change-password-container">
+      <h2 className="change-password-title">Change Password</h2>
+      <form onSubmit={handleSubmit} className="change-password-container">
+        <div className="change-password-row">
           <label>Old Password</label>
           <input
             type={passwordType}
@@ -94,7 +85,7 @@ function ChangePassword({ onNavigateBack }) {
           />
         </div>
 
-        <div style={styles.row}>
+        <div className="change-password-row">
           <label>New Password</label>
           <input
             type={passwordType}
@@ -104,7 +95,7 @@ function ChangePassword({ onNavigateBack }) {
           />
         </div>
 
-        <div style={styles.row}>
+        <div className="change-password-row">
           <label>Re-Enter New Password</label>
           <input
             type={passwordType}
@@ -114,13 +105,17 @@ function ChangePassword({ onNavigateBack }) {
           />
         </div>
 
-        <button type="button" onClick={() => setSeePassword(!seePassword)}>
+        <button
+          type="button"
+          className="change-password-button"
+          onClick={() => setSeePassword(!seePassword)}
+        >
           {seePassword ? "Hide Password" : "Show Password"}
         </button>
-        <button type="submit">Submit</button>
-        {error && (
-          <div style={{ color: "red", marginTop: "1rem" }}>{error}</div>
-        )}
+        <button type="submit" className="change-password-submit-button">
+          Submit
+        </button>
+        {error && <div className="change-password-error">{error}</div>}
       </form>
     </div>
   );
