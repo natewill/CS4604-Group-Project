@@ -1105,21 +1105,212 @@ router.get("/api/leaders", (req, res) => {
   });
 });
 
-// DELETE a specific run
-router.delete("/api/runs/:id", (req, res) => {
-  const { id } = req.params;
-  db.query("DELETE FROM runs WHERE run_id = ?", [id], (err, result) => {
+// POST: join a run
+router.post("/api/runs/:runId/join", verifyToken, (req, res) => {
+  const runnerId = req.user?.runner_id;
+  const { runId } = req.params;
+
+  if (!runnerId) {
+    return res.status(401).json({ error: "Unauthorized: must be logged in" });
+  }
+
+  if (!runId) {
+    return res.status(400).json({ error: "Run ID is required" });
+  }
+
+  // Check if run exists
+  db.query(
+    "SELECT run_id FROM runs WHERE run_id = ?",
+    [runId],
+    (err, result) => {
+      if (err) {
+        console.error("Error checking run:", err);
+        return res.status(500).json({ error: "Failed to verify run" });
+      }
+
+      if (result.length === 0) {
+        return res.status(404).json({ error: "Run not found" });
+      }
+
+      // Insert participation (use INSERT IGNORE to prevent duplicates)
+      const sql = `
+      INSERT IGNORE INTO run_participation (participation_runner_id, participation_run_id)
+      VALUES (?, ?)
+    `;
+
+      db.query(sql, [runnerId, runId], (partErr, partResult) => {
+        if (partErr) {
+          console.error("Error joining run:", partErr);
+          return res.status(500).json({ error: "Failed to join run" });
+        }
+
+        // Check if a row was actually inserted (0 means duplicate)
+        if (partResult.affectedRows === 0) {
+          return res
+            .status(409)
+            .json({ error: "Already participating in this run" });
+        }
+
+        res.status(201).json({ message: "Successfully joined run" });
+      });
+    }
+  );
+});
+
+// DELETE: leave a run
+router.delete("/api/runs/:runId/leave", verifyToken, (req, res) => {
+  const runnerId = req.user?.runner_id;
+  const { runId } = req.params;
+
+  if (!runnerId) {
+    return res.status(401).json({ error: "Unauthorized: must be logged in" });
+  }
+
+  if (!runId) {
+    return res.status(400).json({ error: "Run ID is required" });
+  }
+
+  const sql = `
+    DELETE FROM run_participation
+    WHERE participation_runner_id = ? AND participation_run_id = ?
+  `;
+
+  db.query(sql, [runnerId, runId], (err, result) => {
     if (err) {
-      console.error("Error deleting run:", err);
-      return res.status(500).json({ error: "Failed to delete run" });
+      console.error("Error leaving run:", err);
+      return res.status(500).json({ error: "Failed to leave run" });
     }
 
     if (result.affectedRows === 0) {
-      return res.status(404).json({ error: "Run not found" });
+      return res.status(404).json({ error: "Participation not found" });
     }
 
-    res.json({ message: "Run deleted successfully" });
+    res.json({ message: "Successfully left run" });
   });
+});
+
+// GET user's runs (scheduled or past)
+router.get("/api/my-runs", verifyToken, (req, res) => {
+  const runnerId = req.user?.runner_id;
+  const { filter } = req.query; // "scheduled" or "past"
+
+  if (!runnerId) {
+    return res.status(401).json({ error: "Unauthorized: must be logged in" });
+  }
+
+  // Build the date condition based on filter
+  let dateCondition = "";
+  if (filter === "scheduled") {
+    dateCondition = "AND r.date >= CURDATE()";
+  } else if (filter === "past") {
+    dateCondition = "AND r.date < CURDATE()";
+  }
+
+  const sql = `
+    SELECT 
+      r.run_id,
+      r.leader_id,
+      r.run_route,
+      r.run_status_id,
+      s.status_description AS status,
+      r.name,
+      r.description,
+      r.pace,
+      DATE_FORMAT(r.date, '%Y-%m-%d') AS date,
+      TIME_FORMAT(r.start_time, '%H:%i:%s') AS start_time,
+      rt.start_lat,
+      rt.start_lng,
+      rt.end_lat,
+      rt.end_lng,
+      rt.start_address,
+      rt.end_address,
+      rt.polyline,
+      rt.distance,
+      CONCAT(leader.first_name, ' ', leader.last_name) AS leader_name
+    FROM run_participation rp
+    JOIN runs r ON rp.participation_run_id = r.run_id
+    JOIN status s ON r.run_status_id = s.status_id
+    JOIN routes rt ON r.run_route = rt.route_id
+    JOIN runners leader ON r.leader_id = leader.runner_id
+    WHERE rp.participation_runner_id = ?
+    ${dateCondition}
+    ORDER BY r.date ASC, r.start_time ASC
+  `;
+
+  db.query(sql, [runnerId], (err, results) => {
+    if (err) {
+      console.error("Database query failed:", err);
+      return res.status(500).json({ error: "Failed to fetch runs" });
+    }
+
+    res.json(results);
+  });
+});
+
+// DELETE a specific run
+router.delete("/api/runs/:id", verifyToken, (req, res) => {
+  const { id } = req.params;
+  const runnerId = req.user?.runner_id;
+
+  if (!runnerId) {
+    return res.status(401).json({ error: "Unauthorized: must be logged in" });
+  }
+
+  // First check if the user is the leader of this run
+  db.query(
+    "SELECT leader_id FROM runs WHERE run_id = ?",
+    [id],
+    (err, result) => {
+      if (err) {
+        console.error("Error checking run leader:", err);
+        return res
+          .status(500)
+          .json({ error: "Failed to verify run ownership" });
+      }
+
+      if (result.length === 0) {
+        return res.status(404).json({ error: "Run not found" });
+      }
+
+      if (result[0].leader_id !== runnerId) {
+        return res
+          .status(403)
+          .json({ error: "Only the run leader can delete the run" });
+      }
+
+      // Delete all participations first (to handle foreign key constraint)
+      db.query(
+        "DELETE FROM run_participation WHERE participation_run_id = ?",
+        [id],
+        (partErr) => {
+          if (partErr) {
+            console.error("Error deleting participations:", partErr);
+            return res
+              .status(500)
+              .json({ error: "Failed to delete run participations" });
+          }
+
+          // Then delete the run
+          db.query(
+            "DELETE FROM runs WHERE run_id = ?",
+            [id],
+            (runErr, runResult) => {
+              if (runErr) {
+                console.error("Error deleting run:", runErr);
+                return res.status(500).json({ error: "Failed to delete run" });
+              }
+
+              if (runResult.affectedRows === 0) {
+                return res.status(404).json({ error: "Run not found" });
+              }
+
+              res.json({ message: "Run deleted successfully" });
+            }
+          );
+        }
+      );
+    }
+  );
 });
 
 module.exports = router;

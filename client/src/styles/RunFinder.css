@@ -26,3 +26,16 @@
   border: 3px solid #2563eb;
   background-color: #eff6ff;
 }
+
+.route-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.route-card-actions {
+  display: flex;
+  gap: 0.5rem;
+}

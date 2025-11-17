@@ -10,6 +10,7 @@ import NewRun from "./pages/NewRun";
 import Home from "./pages/Home";
 import RunFinder from "./pages/RunFinder";
 import Profile from "./pages/Profile";
+import MyRuns from "./pages/MyRuns";
 
 import Layout from "./components/NavLayout";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -53,6 +54,7 @@ function App() {
           <Route path="/runfinder" element={<RunFinder />} />
           <Route path="/create-route" element={<CreateRoute />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/my-runs" element={<MyRuns />} />
         </Route>
       </Routes>
     </AuthProvider>
