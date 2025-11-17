@@ -2,16 +2,12 @@ import { Link, Outlet, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
 function Layout() {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
 
-  const handleLogout = async () => {
-    await logout();
-    navigate("/login");
-  };
   const isLeader = user && (user.is_leader === 1 || user.is_leader === true);
   return (
-    <div>
+    <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
       <nav
         style={{
           display: "flex",
@@ -37,10 +33,12 @@ function Layout() {
               Welcome, {user.first_name} {user.last_name}
             </span>
           )}
-          <button onClick={handleLogout}>Logout</button>
+          <Link to="/profile">Profile</Link>
         </div>
       </nav>
-      <Outlet /> {/* This renders the child routes */}
+      <div style={{ flex: 1, overflow: "auto" }}>
+        <Outlet /> {/* This renders the child routes */}
+      </div>
     </div>
   );
 }
