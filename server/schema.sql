@@ -17,9 +17,9 @@ CREATE TABLE runners (
     user_password   VARCHAR(200),
     is_leader       BOOLEAN DEFAULT FALSE,
     min_pace        INT, -- in seconds, easier for calculations
-    max_pace       INT, -- in seconds, easier for calculations
-    min_dist_pref INT,
-    max_dist_pref INT
+    max_pace        INT, -- in seconds, easier for calculations
+    min_dist_pref   INT,
+    max_dist_pref   INT
 );
 
 CREATE TABLE status (

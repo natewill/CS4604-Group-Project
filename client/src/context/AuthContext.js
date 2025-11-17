@@ -108,6 +108,10 @@ export function AuthProvider({ children }) {
     }
   };
 
+  const updateUserDetails = (updatedUser) => {
+    setUser(updatedUser);
+  };
+
   // Helper function to make authenticated API calls
   // Cookies are automatically sent with credentials: 'include'
   const authFetch = async (url, options = {}) => {
@@ -133,6 +137,7 @@ export function AuthProvider({ children }) {
     authFetch,
     isAuthenticated: !!user,
     isLeader: user?.is_leader || false,
+    updateUserDetails,
   };
 
   // value is available to all child components
