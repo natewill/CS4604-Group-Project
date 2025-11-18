@@ -80,7 +80,7 @@ CREATE TABLE saved_routes (
 INSERT INTO runners (runner_id, first_name, middle_initial, last_name, email, user_password,
    is_leader, min_pace, max_pace, min_dist_pref, max_dist_pref)
 VALUES
-(1, 'test', 't', 'test', 'test@test.com', '$argon2id$v=19$m=65536,t=2,p=1$J0EccGqYCUH1b1Q5sJPwcg$apQph3Am1eekXrnlfXEWgYP+bJ/xfqr+eb2imBYJP78', 0, 0, 0, 0, 0), -- test
+(1, 'test', 't', 'test', 'test@test.com', '$argon2id$v=19$m=65536,t=2,p=1$J0EccGqYCUH1b1Q5sJPwcg$apQph3Am1eekXrnlfXEWgYP+bJ/xfqr+eb2imBYJP78', 1, 0, 0, 0, 0), -- test
 (2, 'Jett', 'W', 'Morrow', 'jettmorrow@vt.edu', '$argon2id$v=19$m=16,t=2,p=1$cnVubmluZzE$q+7h87Qi5iB8m1gNPBROGQ', 1, 480, 540, 3, 15), -- purpleGiraffe21! (8:00, 9:00)
 (3, 'Adam', 'Z', 'Schantz', 'adams03@vt.edu', '$argon2id$v=19$m=16,t=2,p=1$cnVubmluZzE$US/trwyeAJ7z+3gp+DCwXw', 1, 420, 540, 3, 26), -- coffee_and_code (7:00, 9:00)
 (4, 'Emily', 'R', 'Nguyen', 'emily.nguyen@vt.edu', '$argon2id$v=19$m=16,t=2,p=1$cnVubmluZzE$n/+K3wxq+LF4qhbKt/Gxyw,', 0, 540, 600, 2, 6), -- Sunny-day-1987 (9:00, 10:00)

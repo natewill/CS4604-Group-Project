@@ -16,6 +16,7 @@ import {
   polylineOptions,
 } from "../utils/map/directions";
 import validator from "validator";
+import { addEndpoints } from "../utils/map/addEndpoints";
 
 const mapContainerStyle = {
   width: "100%",
@@ -48,7 +49,7 @@ const CreateRoute = ({ onRouteCreated }) => {
 
   const [activePick, setActivePick] = useState(null);
 
-  const [directions, setDirections] = useState(null);
+  const [hasRoute, setHasRoute] = useState(false);
   const [routeStart, setRouteStart] = useState(null);
   const [routeEnd, setRouteEnd] = useState(null);
   const [customIcons, setCustomIcons] = useState(null);
@@ -58,6 +59,8 @@ const CreateRoute = ({ onRouteCreated }) => {
 
   const startAutocompleteRef = useRef(null);
   const endAutocompleteRef = useRef(null);
+  const directionsRendererRef = useRef(null);
+  const initialDirectionsRef = useRef(null);
 
   // Generate route
   const generateRoute = async () => {
@@ -66,7 +69,8 @@ const CreateRoute = ({ onRouteCreated }) => {
         origin: startCoords,
         destination: endCoords,
       });
-      setDirections(result);
+      initialDirectionsRef.current = result;
+      setHasRoute(true);
 
       // this is the start and end locations of the route generated
       const endpoints = extractLegEndpoints(result);
@@ -83,7 +87,11 @@ const CreateRoute = ({ onRouteCreated }) => {
 
   // Save route to DB
   const saveRoute = async () => {
-    if (!directions || !routeStart || !routeEnd) {
+    // Get the latest directions from DirectionsRenderer (handles both initial and dragged routes)
+    // Once DirectionsRenderer loads, it always has the current directions
+    const currentDirections = directionsRendererRef.current?.getDirections();
+
+    if (!currentDirections || !routeStart || !routeEnd) {
       alert("Please generate a route first.");
       return;
     }
@@ -99,8 +107,14 @@ const CreateRoute = ({ onRouteCreated }) => {
         ? null
         : startAddress,
       end_address: validator.isLatLong(endAddress || "") ? null : endAddress,
-      polyline: directions.routes[0].overview_polyline,
-      distance: directions.routes[0].legs[0].distance.value / 1609.344,
+      polyline: await addEndpoints(
+        currentDirections.routes[0].overview_polyline,
+        startCoords.lat,
+        startCoords.lng,
+        endCoords.lat,
+        endCoords.lng
+      ),
+      distance: currentDirections.routes[0].legs[0].distance.value / 1609.344,
     };
 
     try {
@@ -237,7 +251,7 @@ const CreateRoute = ({ onRouteCreated }) => {
           <button
             onClick={saveRoute}
             style={{ marginLeft: "10px" }}
-            disabled={!directions || !routeStart || !routeEnd}
+            disabled={!hasRoute || !routeStart || !routeEnd}
           >
             Save Route
           </button>
@@ -267,13 +281,16 @@ const CreateRoute = ({ onRouteCreated }) => {
         {endCoords && (
           <Marker position={endCoords} icon={customIcons?.endIcon} />
         )}
-        {directions && (
+        {hasRoute && initialDirectionsRef.current && (
           <DirectionsRenderer
-            directions={directions}
+            directions={initialDirectionsRef.current}
             options={{
               suppressMarkers: true,
               draggable: true,
               polylineOptions,
+            }}
+            onLoad={(directionsRenderer) => {
+              directionsRendererRef.current = directionsRenderer;
             }}
           />
         )}
