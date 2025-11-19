@@ -1323,21 +1323,21 @@ router.get("/api/profile-statistics", verifyToken, (req, res) => {
 
   // Main statistics query - all runs (hosted + joined) - completed runs only
   const mainStatsSql = `
-    SELECT
-    	-- Get total runs runner has joined
-	    COUNT(DISTINCT r.run_id) AS total_runs,
-	    -- get distance ran
-	    COALESCE(SUM(rt.distance), 0) AS total_distance,
-	    -- get avg pace
-	    COALESCE(AVG(r.pace), 0) AS average_pace,
-	    -- get fastet pace
-	    MIN(r.pace) AS fastest_pace,
-	    -- get longest run
-	    MAX(rt.distance) AS longest_run
-    FROM runs as r 
-    join routes as rt on r.run_route = rt.route_id
-    join run_participation as rp on rp.participation_run_id = r.run_id
-    where rp.participation_runner_id = ? and r.run_status_id = 2;
+      SELECT
+        -- Get total runs runner has joined
+        COUNT(DISTINCT r.run_id) AS total_runs,
+        -- get distance ran
+        COALESCE(SUM(rt.distance), 0) AS total_distance,
+        -- get avg pace
+        COALESCE(AVG(r.pace), 0) AS average_pace,
+        -- get fastet pace
+        MIN(r.pace) AS fastest_pace,
+        -- get longest run
+        MAX(rt.distance) AS longest_run
+      FROM runs as r 
+      join routes as rt on r.run_route = rt.route_id
+      join run_participation as rp on rp.participation_run_id = r.run_id
+      where rp.participation_runner_id = ? and r.run_status_id = 2;
   `;
 
   // Leader-specific statistics query - completed runs only
