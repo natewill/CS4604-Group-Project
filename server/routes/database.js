@@ -886,9 +886,22 @@ router.post("/api/runs", verifyToken, (req, res) => {
         return res.status(500).json({ error: "Failed to create run" });
       }
 
-      res.status(201).json({
-        message: "Run created successfully",
-        run_id: result.insertId,
+      const runId = result.insertId;
+
+      const participationSql = `
+        INSERT INTO run_participation (participation_runner_id, participation_run_id)
+        VALUES (?, ?)
+      `;
+
+      db.query(participationSql, [runnerId, runId], (err) => {
+        if (err) {
+          console.error("Error adding leader to participation:", err);
+        }
+
+        res.status(201).json({
+          message: "Run created successfully",
+          run_id: runId,
+        });
       });
     });
   });
