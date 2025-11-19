@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 import ProfileDetails from "../components/ProfileDetails";
-import ProfileStatisitcs from "../components/ProfileStatistics";
+import ProfileStatistics from "../components/ProfileStatistics";
 import ChangePassword from "../components/ChangePassword";
 import "../styles/Profile.css";
 
@@ -20,7 +20,6 @@ import "../styles/Profile.css";
 
 */
 function Profile() {
-  const { user } = useAuth();
   const [activeMainComponent, setActiveMainComponent] = useState("details");
   const [hoveredItem, setHoveredItem] = useState(null); // Track which item is hovered
 
@@ -39,7 +38,7 @@ function Profile() {
           />
         );
       case "statistics":
-        return <ProfileStatisitcs />;
+        return <ProfileStatistics />;
       case "password":
         return (
           <ChangePassword

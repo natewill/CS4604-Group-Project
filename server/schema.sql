@@ -80,7 +80,7 @@ CREATE TABLE saved_routes (
 INSERT INTO runners (runner_id, first_name, middle_initial, last_name, email, user_password,
    is_leader, min_pace, max_pace, min_dist_pref, max_dist_pref)
 VALUES
-(1, 'test', 't', 'test', 'test@test.com', '$argon2id$v=19$m=65536,t=2,p=1$J0EccGqYCUH1b1Q5sJPwcg$apQph3Am1eekXrnlfXEWgYP+bJ/xfqr+eb2imBYJP78', 1, 0, 0, 0, 0), -- test
+(1, 'test', 't', 'test', 'test@test.com', '$argon2id$v=19$m=65536,t=2,p=1$J0EccGqYCUH1b1Q5sJPwcg$apQph3Am1eekXrnlfXEWgYP+bJ/xfqr+eb2imBYJP78', 1, 400, 800, 3, 50), -- test
 (2, 'Jett', 'W', 'Morrow', 'jettmorrow@vt.edu', '$argon2id$v=19$m=16,t=2,p=1$cnVubmluZzE$q+7h87Qi5iB8m1gNPBROGQ', 1, 480, 540, 3, 15), -- purpleGiraffe21! (8:00, 9:00)
 (3, 'Adam', 'Z', 'Schantz', 'adams03@vt.edu', '$argon2id$v=19$m=16,t=2,p=1$cnVubmluZzE$US/trwyeAJ7z+3gp+DCwXw', 1, 420, 540, 3, 26), -- coffee_and_code (7:00, 9:00)
 (4, 'Emily', 'R', 'Nguyen', 'emily.nguyen@vt.edu', '$argon2id$v=19$m=16,t=2,p=1$cnVubmluZzE$n/+K3wxq+LF4qhbKt/Gxyw,', 0, 540, 600, 2, 6), -- Sunny-day-1987 (9:00, 10:00)
@@ -131,7 +131,10 @@ VALUES
 (4, 22, 4, 1, 'First Run in Weeks', 'Slow tempo run on Huckle Berry', 660, '2025-10-25', '07:15:00'),
 (5, 9, 5, 2, 'Endurance Run', 'Climbing hills on a trail', 510, '2025-09-07', '08:00:00'),
 (6, 13, 6, 4, 'Rain Run', 'Short run, so wet, wow such a wet run', 555, '2025-10-20', '18:30:00'),
-(7, 22, 7, 3, 'Sprint Run', 'Sprinted to class.', 465, '2025-10-20', '13:00:00');
+(7, 22, 7, 3, 'Sprint Run', 'Sprinted to class.', 465, '2025-10-20', '13:00:00'),
+(8, 1, 1, 2, 'Morning Easy Run Loop', 'A relaxed run to start the day', 540, '2024-01-01', '06:30:00'),
+(9, 1, 1, 2, 'Night Run', 'running at night wooo', 540, '2025-01-01', '06:30:00');
+
 
 INSERT INTO saved_routes (runner_id, route_id)
 VALUES
@@ -159,4 +162,8 @@ VALUES
 -- Run 6: Rain Run (leader: 13) - 9 participants
 (13, 6), (14, 6), (15, 6), (16, 6), (17, 6), (18, 6), (19, 6), (20, 6), (21, 6),
 -- Run 7: Sprint Run (leader: 22) - 13 participants
-(22, 7), (2, 7), (3, 7), (5, 7), (6, 7), (7, 7), (9, 7), (11, 7), (13, 7), (15, 7), (17, 7), (19, 7), (21, 7); 
+(22, 7), (2, 7), (3, 7), (5, 7), (6, 7), (7, 7), (9, 7), (11, 7), (13, 7), (15, 7), (17, 7), (19, 7), (21, 7),
+-- Run 8: Morning Easy Run Loop (leader: 1) - add participation (ensure leader 1 included)
+(1, 8), (2, 8), (3, 8), (4, 8), (5, 8), (6, 8), (7, 8), (9, 8), (10, 8), (11, 8), (12, 8), (13, 8), (14, 8), (15, 8),
+-- Run 9: Night Run (leader: 1) - add participation (ensure leader 1 included)
+(1, 9), (2, 9), (3, 9), (4, 9), (5, 9), (6, 9), (7, 9), (8, 9), (10, 9), (11, 9), (12, 9), (13, 9), (14, 9);
