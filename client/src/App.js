@@ -11,6 +11,7 @@ import Home from "./pages/Home";
 import RunFinder from "./pages/RunFinder";
 import Profile from "./pages/Profile";
 import MyRuns from "./pages/MyRuns";
+import LeaderDashboard from "./pages/LeaderDashboard";
 
 import Layout from "./components/NavLayout";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -55,6 +56,7 @@ function App() {
           <Route path="/create-route" element={<CreateRoute />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/my-runs" element={<MyRuns />} />
+          <Route path="/leader-dashboard" element={<LeaderDashboard />} />
         </Route>
       </Routes>
     </AuthProvider>
