@@ -1,14 +1,16 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import StartTimePicker from "../components/StartTimePicker";
 import PaceSlider from "../components/PaceSlider";
 import { useNavigate } from "react-router-dom";
 import CreateRoute from "./CreateRoute";
+import { buildIcons } from "../utils/map/icons";
 import {
   GoogleMap,
   Marker,
   Polyline,
   useJsApiLoader,
 } from "@react-google-maps/api";
+import { polylineOptions } from "../utils/map/directions";
 import polyline from "@mapbox/polyline";
 import { useAuth } from "../context/AuthContext";
 
@@ -18,6 +20,7 @@ function NewRun() {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
 
+  const [customIcons, setCustomIcons] = useState(null);
   const [routes, setRoutes] = useState([]);
   const [form, setForm] = useState({
     run_route: "",
@@ -29,6 +32,7 @@ function NewRun() {
   });
   const [selectedRoute, setSelectedRoute] = useState(null);
   const [creatingRoute, setCreatingRoute] = useState(false);
+  const mapRef = useRef(null);
 
   const { isLoaded } = useJsApiLoader({
     googleMapsApiKey: GOOGLE_MAPS_API_KEY,
@@ -51,6 +55,34 @@ function NewRun() {
       .then((data) => setRoutes(data))
       .catch((err) => console.error("Failed to fetch routes:", err));
   }, []);
+
+  // Update the map to fit the route when the selected route updates
+  useEffect(() => {
+    if (!mapRef.current || !selectedRoute?.polyline) return;
+
+    try {
+      const decodedPath = polyline
+        .decode(selectedRoute.polyline)
+        .map(([lat, lng]) => ({ lat, lng }));
+
+      const bounds = new window.google.maps.LatLngBounds();
+      decodedPath.forEach((point) => {
+        bounds.extend(point);
+      });
+      // Also include start and end markers in bounds
+      bounds.extend({
+        lat: parseFloat(selectedRoute.start_lat),
+        lng: parseFloat(selectedRoute.start_lng),
+      });
+      bounds.extend({
+        lat: parseFloat(selectedRoute.end_lat),
+        lng: parseFloat(selectedRoute.end_lng),
+      });
+      mapRef.current.fitBounds(bounds);
+    } catch (err) {
+      console.error("Error fitting bounds:", err);
+    }
+  }, [selectedRoute]);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -116,6 +148,11 @@ function NewRun() {
         console.error(err);
         alert("Error creating run.");
       });
+  };
+
+  const loadIcons = () => {
+    const icons = buildIcons(window.google);
+    if (icons) setCustomIcons(icons);
   };
 
   if (loading) return <p>Loading...</p>;
@@ -235,34 +272,49 @@ function NewRun() {
               <GoogleMap
                 mapContainerStyle={{ width: "100%", height: "100%" }}
                 center={{
-                  lat: parseFloat(selectedRoute.start_lat || 37.23),
-                  lng: parseFloat(selectedRoute.start_lng || -80.42),
+                  lat:
+                    (parseFloat(selectedRoute.start_lat) +
+                      parseFloat(selectedRoute.end_lat)) /
+                    2,
+                  lng:
+                    (parseFloat(selectedRoute.start_lng) +
+                      parseFloat(selectedRoute.end_lng)) /
+                    2,
                 }}
                 zoom={13}
+                options={{
+                  streetViewControl: false,
+                  fullscreenControl: false,
+                  draggableCursor: "default",
+                  draggingCursor: "grab",
+                }}
+                onLoad={(map) => {
+                  // We have to call this here to ensure google maps is fully loaded
+                  map.setMapTypeId("hybrid");
+                  loadIcons();
+                  mapRef.current = map;
+                }}
               >
                 <Marker
                   position={{
                     lat: parseFloat(selectedRoute.start_lat),
                     lng: parseFloat(selectedRoute.start_lng),
                   }}
-                  label="Start"
+                  icon={customIcons?.startIcon}
                 />
                 <Marker
                   position={{
                     lat: parseFloat(selectedRoute.end_lat),
                     lng: parseFloat(selectedRoute.end_lng),
                   }}
-                  label="End"
+                  icon={customIcons?.endIcon}
                 />
                 {selectedRoute.polyline && (
                   <Polyline
                     path={polyline
                       .decode(selectedRoute.polyline)
                       .map(([lat, lng]) => ({ lat, lng }))}
-                    options={{
-                      strokeColor: "#ff4081",
-                      strokeWeight: 4,
-                    }}
+                    options={polylineOptions}
                   />
                 )}
               </GoogleMap>

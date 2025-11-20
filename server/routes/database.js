@@ -1326,4 +1326,129 @@ router.delete("/api/runs/:id", verifyToken, (req, res) => {
   );
 });
 
+// GET: profile statistics for the authenticated user
+router.get("/api/profile-statistics", verifyToken, (req, res) => {
+  const runnerId = req.user?.runner_id;
+
+  if (!runnerId) {
+    return res.status(401).json({ error: "Unauthorized: must be logged in" });
+  }
+
+  // Main statistics query - all runs (hosted + joined) - completed runs only
+  const mainStatsSql = `
+      SELECT
+        -- Get total runs runner has joined
+        COUNT(DISTINCT r.run_id) AS total_runs,
+        -- get distance ran
+        COALESCE(SUM(rt.distance), 0) AS total_distance,
+        -- get avg pace
+        COALESCE(AVG(r.pace), 0) AS average_pace,
+        -- get fastet pace
+        MIN(r.pace) AS fastest_pace,
+        -- get longest run
+        MAX(rt.distance) AS longest_run
+      FROM runs as r 
+      join routes as rt on r.run_route = rt.route_id
+      join run_participation as rp on rp.participation_run_id = r.run_id
+      where rp.participation_runner_id = ? and r.run_status_id = 2;
+  `;
+
+  // Leader-specific statistics query - completed runs only
+  const leaderStatsSql = `
+    WITH hosted_runs AS (
+      SELECT * FROM runs
+      WHERE leader_id = ?
+      AND run_status_id = 2
+    ),
+    participants_per_run AS (
+      SELECT rp.participation_run_id, COUNT(*) AS participant_count
+      FROM run_participation rp
+      JOIN hosted_runs hr 
+      ON hr.run_id = rp.participation_run_id
+      GROUP BY rp.participation_run_id
+    )
+    SELECT 
+      (SELECT COUNT(*) FROM hosted_runs) AS runs_hosted,
+      (SELECT SUM(participant_count) FROM participants_per_run) AS total_run_participants,
+      (SELECT MAX(participant_count) FROM participants_per_run) AS max_participants,
+      (SELECT AVG(r.distance)
+	      FROM hosted_runs hr
+        JOIN routes r ON r.route_id = hr.run_route) AS avg_hosted_dist,
+      (SELECT AVG(pace) FROM hosted_runs) AS avg_hosted_pace;
+  `;
+
+  // Execute main stats query
+  db.query(mainStatsSql, [runnerId, runnerId], (err, mainResults) => {
+    if (err) {
+      console.error("Database query failed:", err);
+      return res
+        .status(500)
+        .json({ error: "Failed to fetch profile statistics" });
+    }
+
+    // If user is a leader, fetch leader-specific stats
+    if (req.user?.is_leader) {
+      db.query(leaderStatsSql, [runnerId], (leaderErr, leaderResults) => {
+        if (leaderErr) {
+          console.error("Database query failed for leader stats:", leaderErr);
+          return res
+            .status(500)
+            .json({ error: "Failed to fetch leader statistics" });
+        }
+
+        // return both queried results
+        res.json({
+          ...mainResults[0],
+          ...leaderResults[0],
+        });
+      });
+    } else {
+      // Non-leaders only get main stats
+      res.json(mainResults[0]);
+    }
+  });
+});
+
+// GET: most recent completed run for user
+router.get("/api/most-recent-run", verifyToken, (req, res) => {
+  const runnerId = req.user?.runner_id;
+
+  if (!runnerId) {
+    return res.status(401).json({ error: "Unauthorized: must be logged in" });
+  }
+
+  const sqlQuery = `
+    select 
+	    rt.start_lat, 
+      rt.start_lng, 
+      rt.end_lat, 
+      rt.end_lng, 
+      rt.polyline, 
+      rt.distance, 
+	    r.name, 
+      r.description, 
+      r.pace, 
+      r.date, 
+      r.start_time
+    from routes as rt 
+    join runs as r on rt.route_id = r.run_route 
+    join run_participation as rp on rp.participation_run_id = r.run_id
+    where rp.participation_runner_id = ? and r.run_status_id = 2
+    order by r.date desc, r.start_time desc limit 1;
+  `;
+
+  db.query(sqlQuery, [runnerId], (err, queryResults) => {
+    if (err) {
+      console.error("Database query failed for most recent run:", err);
+      return res.status(500).json({ error: "Failed to fetch most recent run" });
+    }
+
+    if (!queryResults || queryResults.length === 0) {
+      return res.json(null);
+    }
+
+    res.json(queryResults[0]);
+  });
+});
+
 module.exports = router;
