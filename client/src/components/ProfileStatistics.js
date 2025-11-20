@@ -3,6 +3,7 @@ import { useAuth } from "../context/AuthContext";
 import { formatPace } from "../utils/paceFormatters";
 import { getStaticMapUrl } from "../utils/mapUtils";
 import { convertTo12Hour } from "../utils/timeUtils";
+import LeaderStatistics from "./LeaderStatistics";
 import "../styles/ProfileStatistics.css";
 
 function ProfileStatistics() {
@@ -124,68 +125,7 @@ function ProfileStatistics() {
       </div>
 
       {/* Leader-Specific Statistics Section - Only for Leaders */}
-      {isLeader && (
-        <div className="profile-statistics-section">
-          <h2 className="profile-statistics-section-title">
-            Leader Statistics
-          </h2>
-          <div className="profile-statistics-grid">
-            <div className="profile-statistics-card">
-              <div className="profile-statistics-label">Runs Hosted</div>
-              <div className="profile-statistics-value">
-                {stats.runs_hosted || 0}
-              </div>
-              <div className="profile-statistics-description">
-                Runs you've created and led
-              </div>
-            </div>
-
-            <div className="profile-statistics-card">
-              <div className="profile-statistics-label">Total Participants</div>
-              <div className="profile-statistics-value">
-                {stats.total_run_participants || 0}
-              </div>
-              <div className="profile-statistics-description">
-                Total people that have joined your runs
-              </div>
-            </div>
-
-            <div className="profile-statistics-card">
-              <div className="profile-statistics-label">Max Participants</div>
-              <div className="profile-statistics-value">
-                {stats.max_participants || 0}
-              </div>
-              <div className="profile-statistics-description">
-                The most participants you have had join your run
-              </div>
-            </div>
-
-            <div className="profile-statistics-card">
-              <div className="profile-statistics-label">Average Distance</div>
-              <div className="profile-statistics-value">
-                {stats.avg_hosted_dist
-                  ? `${parseFloat(stats.avg_hosted_dist).toFixed(2)} mi`
-                  : "--"}
-              </div>
-              <div className="profile-statistics-description">
-                The average distance of your hosted runs
-              </div>
-            </div>
-
-            <div className="profile-statistics-card">
-              <div className="profile-statistics-label">Average Pace</div>
-              <div className="profile-statistics-value">
-                {stats.avg_hosted_pace && stats.avg_hosted_pace > 0
-                  ? formatPace(Math.round(stats.avg_hosted_pace))
-                  : "--:--"}
-              </div>
-              <div className="profile-statistics-description">
-                The average pace for your hosted runs
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      {isLeader && <LeaderStatistics />}
 
       {/* Most Recent Run Section */}
       {mostRecentRunDetails && (

@@ -1,0 +1,132 @@
+/* Participant Modal Styles */
+
+.participant-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.participant-modal-content {
+  background: white;
+  border-radius: 8px;
+  max-width: 500px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.participant-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.participant-modal-header h2 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 500;
+}
+
+.participant-modal-close {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #666;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+}
+
+.participant-modal-close:hover {
+  background-color: #f5f5f5;
+}
+
+.participant-modal-body {
+  padding: 1.5rem;
+}
+
+.participant-modal-error {
+  color: red;
+}
+
+.participants-list {
+  margin-top: 1rem;
+}
+
+.participant-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid #f0f0f0;
+  gap: 1rem;
+}
+
+.participant-item:last-child {
+  border-bottom: none;
+}
+
+.participant-info {
+  flex: 1;
+}
+
+.participant-name {
+  font-weight: 500;
+  margin-bottom: 0.25rem;
+}
+
+.participant-email {
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.participant-remove-icon {
+  background: none;
+  border: none;
+  font-size: 1.25rem;
+  cursor: pointer;
+  color: #666;
+  padding: 0.25rem 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  width: 28px;
+  height: 28px;
+}
+
+.participant-remove-icon:hover {
+  background-color: #f5f5f5;
+  color: #f44336;
+}
+
+@media (max-width: 768px) {
+  .participant-modal-content {
+    width: 95%;
+    margin: 1rem;
+  }
+  
+  .participant-modal-header {
+    padding: 1rem;
+  }
+  
+  .participant-modal-body {
+    padding: 1rem;
+  }
+}
+
