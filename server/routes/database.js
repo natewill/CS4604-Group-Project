@@ -20,17 +20,6 @@ const {
 const MAX_DISTANCE_MILES = 3;
 const PASSWORD_MIN_LENGTH = 6;
 
-// GET all runners
-router.get("/api/runners", (req, res) => {
-  db.query("SELECT * FROM runners", (err, results) => {
-    if (err) {
-      console.error(err);
-      return res.status(500).json({ error: "Database query failed" });
-    }
-    res.json(results);
-  });
-});
-
 // Post to check whether the email and password are available for signup
 router.post("/signup/check", async (req, res) => {
   const email = String(req.body.email || "")
@@ -162,7 +151,7 @@ router.post("/login", async (req, res) => {
   // result is the runner_id, now fetch full user details
   try {
     db.query(
-      "SELECT runner_id, first_name, last_name, middle_initial, email, is_leader, min_pace, max_pace, min_dist_pref, max_dist_pref FROM runners WHERE runner_id = ?",
+      "SELECT runner_id, first_name, last_name, middle_initial, email, is_leader, is_admin, min_pace, max_pace, min_dist_pref, max_dist_pref FROM runners WHERE runner_id = ?",
       [result],
       (err, results) => {
         if (err) {
@@ -458,7 +447,7 @@ router.put("/api/edit-profile", verifyToken, async (req, res) => {
 
     // I have to subquery in order to get the updated runner
     db.query(
-      "SELECT runner_id, first_name, last_name, middle_initial, email, is_leader, min_pace, max_pace, min_dist_pref, max_dist_pref FROM runners WHERE runner_id = ?",
+      "SELECT runner_id, first_name, last_name, middle_initial, email, is_leader, is_admin, min_pace, max_pace, min_dist_pref, max_dist_pref FROM runners WHERE runner_id = ?",
       [runnerId],
       (fetchErr, fetchResults) => {
         if (fetchErr) {
@@ -1448,6 +1437,91 @@ router.get("/api/most-recent-run", verifyToken, (req, res) => {
     }
 
     res.json(queryResults[0]);
+  });
+});
+
+// Admin API calls
+// Get all runners
+router.get("/api/runners", verifyToken, (req, res) => {
+  const runnerId = req.user?.runner_id;
+
+  if (!runnerId) {
+    return res.status(401).json({ error: "Unauthorized: must be logged in" });
+  }
+
+  // request must be from admin
+  if (!req.user.is_admin) {
+    return res
+      .status(401)
+      .json({ error: "Unauthorized: user is not an admin" });
+  }
+
+  const sql = `select 
+    runner_id, 
+    CONCAT(first_name, ' ', COALESCE(middle_initial, ''), ' ', last_name) AS full_name, 
+    email, 
+    is_leader, 
+    is_admin 
+    from runners
+    where runner_id <> ?;`;
+
+  db.query(sql, [runnerId], (err, queryResults) => {
+    if (err) {
+      console.error("Database query failed for runners:", err);
+      return res.status(500).json({ error: "Failed to fetch runners info" });
+    }
+
+    res.json(queryResults);
+  });
+});
+
+//Make runner an admin (only grants admin status, cannot revoke)
+router.put("/api/make-admin/:newAdminID", verifyToken, (req, res) => {
+  const { newAdminID } = req.params;
+  const runnerId = req.user?.runner_id;
+
+  if (!runnerId) {
+    return res.status(401).json({ error: "Unauthorized: must be logged in" });
+  }
+
+  // request must be from admin
+  if (!req.user.is_admin) {
+    return res
+      .status(403)
+      .json({ error: "Unauthorized: user is not an admin" });
+  }
+
+  // Only grant admin status (set to true)
+  const updateSql = `UPDATE runners SET is_admin = 1 WHERE runner_id = ?`;
+  db.query(updateSql, [newAdminID], (updateErr, updateResults) => {
+    if (updateErr) {
+      console.error("Database update failed:", updateErr);
+      return res.status(500).json({ error: "Failed to update admin status" });
+    }
+
+    // Fetch updated user data
+    const getUpdatedSql = `select 
+      runner_id, 
+      CONCAT(first_name, ' ', COALESCE(middle_initial, ''), ' ', last_name) AS full_name, 
+      email, 
+      is_leader, 
+      is_admin 
+      from runners
+      where runner_id = ?;`;
+
+    db.query(getUpdatedSql, [newAdminID], (fetchErr, fetchResults) => {
+      if (fetchErr) {
+        console.error("Database query failed:", fetchErr);
+        return res
+          .status(500)
+          .json({ error: "Admin status updated but failed to fetch user" });
+      }
+
+      res.json({
+        message: "User promoted to admin successfully",
+        user: fetchResults[0],
+      });
+    });
   });
 });
 

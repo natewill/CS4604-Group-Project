@@ -137,6 +137,7 @@ export function AuthProvider({ children }) {
     authFetch,
     isAuthenticated: !!user,
     isLeader: user?.is_leader || false,
+    isAdmin: user?.is_admin || false,
     updateUserDetails,
   };
 

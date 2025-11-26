@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 import ProfileDetails from "../components/ProfileDetails";
 import ProfileStatistics from "../components/ProfileStatistics";
+import ProfileAdmin from "../components/ProfileAdmin";
 import ChangePassword from "../components/ChangePassword";
 import "../styles/Profile.css";
 
@@ -20,6 +21,7 @@ import "../styles/Profile.css";
 
 */
 function Profile() {
+  const { user } = useAuth();
   const [activeMainComponent, setActiveMainComponent] = useState("details");
   const [hoveredItem, setHoveredItem] = useState(null); // Track which item is hovered
 
@@ -45,6 +47,8 @@ function Profile() {
             onNavigateBack={() => setActiveMainComponent("details")}
           />
         );
+      case "admin":
+        return <ProfileAdmin />;
       default:
         return;
     }
@@ -66,7 +70,6 @@ function Profile() {
         >
           <h2>Account Details</h2>
         </div>
-
         <div
           className={
             activeMainComponent === "statistics" || hoveredItem === "statistics"
@@ -79,6 +82,22 @@ function Profile() {
         >
           <h2>Statistics</h2>
         </div>
+        {/* Only admin can see */}
+        {user.is_admin ? (
+          <div
+            className={
+              activeMainComponent === "admin" || hoveredItem === "admin"
+                ? "profile-sidebar-elem-active"
+                : "profile-sidebar-elem"
+            }
+            onClick={() => setActiveMainComponent("admin")}
+            onMouseEnter={() => setHoveredItem("admin")}
+            onMouseLeave={() => setHoveredItem(null)}
+          >
+            <h2>Admin Options</h2>
+          </div>
+        ) : null}
+        ;
       </div>
 
       {/* Main Content Area */}

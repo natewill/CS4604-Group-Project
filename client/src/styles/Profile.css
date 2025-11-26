@@ -27,7 +27,8 @@
   width: 80%;
   flex: 1;
   padding: 1rem;
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
   display: flex;
   flex-direction: column;
 }
