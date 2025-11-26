@@ -21,6 +21,7 @@ function generateJWT(runner) {
     middle_initial: runner.middle_initial,
     email: runner.email,
     is_leader: runner.is_leader,
+    is_admin: runner.is_admin,
     min_pace: runner.min_pace,
     max_pace: runner.max_pace,
     min_dist_pref: runner.min_dist_pref,

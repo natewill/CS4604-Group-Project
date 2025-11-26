@@ -55,8 +55,6 @@ function ProfileStatistics() {
     );
   }
 
-  console.log({ stats });
-
   return (
     <div className="profile-statistics-container">
       {/* General Runner Statistics Section - For Everyone */}
