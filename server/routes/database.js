@@ -1525,4 +1525,84 @@ router.put("/api/make-admin/:newAdminID", verifyToken, (req, res) => {
   });
 });
 
+//Toggle leader status for a user (admin only)
+router.put("/api/toggle-leader/:targetRunnerId", verifyToken, (req, res) => {
+  const { targetRunnerId } = req.params;
+  const runnerId = req.user?.runner_id;
+
+  if (!runnerId) {
+    return res.status(401).json({ error: "Unauthorized: must be logged in" });
+  }
+
+  // request must be from admin
+  if (!req.user.is_admin) {
+    return res
+      .status(403)
+      .json({ error: "Unauthorized: user is not an admin" });
+  }
+
+  // First get current leader status
+  const getStatusSql = `SELECT is_leader FROM runners WHERE runner_id = ?`;
+  db.query(getStatusSql, [targetRunnerId], (err, results) => {
+    if (err) {
+      console.error("Database query failed:", err);
+      return res.status(500).json({ error: "Failed to fetch user status" });
+    }
+
+    if (results.length === 0) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    const currentLeaderStatus = results[0].is_leader;
+    const newLeaderStatus = !currentLeaderStatus;
+
+    // Update leader status
+    const updateSql = `UPDATE runners SET is_leader = ? WHERE runner_id = ?`;
+    db.query(
+      updateSql,
+      [newLeaderStatus, targetRunnerId],
+      (updateErr, updateResults) => {
+        if (updateErr) {
+          console.error("Database update failed:", updateErr);
+          return res
+            .status(500)
+            .json({ error: "Failed to update leader status" });
+        }
+
+        // Fetch updated user data
+        const getUpdatedSql = `SELECT 
+        runner_id, 
+        CONCAT(first_name, ' ', COALESCE(middle_initial, ''), ' ', last_name) AS full_name, 
+        email, 
+        is_leader, 
+        is_admin 
+        FROM runners
+        WHERE runner_id = ?`;
+
+        db.query(getUpdatedSql, [targetRunnerId], (fetchErr, fetchResults) => {
+          if (fetchErr) {
+            console.error("Database query failed:", fetchErr);
+            return res.status(500).json({
+              error: "Leader status updated but failed to fetch user",
+            });
+          }
+
+          if (fetchResults.length === 0) {
+            return res
+              .status(404)
+              .json({ error: "User not found after update" });
+          }
+
+          res.json({
+            message: `User ${
+              newLeaderStatus ? "promoted to" : "removed from"
+            } leader successfully`,
+            user: fetchResults[0],
+          });
+        });
+      }
+    );
+  });
+});
+
 module.exports = router;
