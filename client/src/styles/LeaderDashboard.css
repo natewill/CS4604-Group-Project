@@ -1,0 +1,97 @@
+/* Leader Dashboard Styles */
+
+.leader-dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+/* Tab Navigation */
+.leader-dashboard-tabs {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.leader-dashboard-tab {
+  padding: 0.5rem 1.5rem;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.leader-dashboard-tab.active {
+  background-color: #000;
+  color: #fff;
+}
+
+.leader-dashboard-tab.inactive {
+  background-color: #f5f5f5;
+  color: #666;
+}
+
+.leader-dashboard-tab.inactive:hover {
+  background-color: #e8e8e8;
+  color: #000;
+}
+
+/* Action Buttons */
+.leader-dashboard-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.leader-dashboard-action-btn {
+  padding: 0.5rem 1rem;
+  background-color: #4CAF50;
+  color: #fff;
+  border: none;
+  border-radius: 0;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 400;
+  transition: all 0.2s ease;
+}
+
+.leader-dashboard-action-btn:hover {
+  background-color: #45a049;
+}
+
+/* View Toggle */
+.leader-dashboard-view-toggle {
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+}
+
+.leader-dashboard-view-link {
+  padding: 0;
+  background-color: transparent;
+  color: #2196F3;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 400;
+  text-decoration: underline;
+  text-decoration-color: #2196F3;
+  transition: all 0.2s ease;
+}
+
+.leader-dashboard-view-link:hover {
+  color: #1976D2;
+  text-decoration-color: #1976D2;
+}
+
+/* Routes Empty State */
+.leader-dashboard-routes-empty {
+  text-align: center;
+  padding: 3rem;
+}
+
+.leader-dashboard-routes-empty-subtitle {
+  color: #666;
+  margin-top: 1rem;
+}
+

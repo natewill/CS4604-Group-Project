@@ -6,7 +6,7 @@ import {
   useJsApiLoader,
 } from "@react-google-maps/api";
 import polyline from "@mapbox/polyline";
-import { fetchRuns as fetchRunsService } from "../services/fetchRuns";
+import { fetchPublicRuns } from "../services/runService";
 import RouteCard from "../components/RouteCard";
 import FilterForm from "../components/FilterForm";
 import { buildIcons } from "../utils/map/icons";
@@ -150,7 +150,7 @@ function RunFinder() {
 
   // Fetch runs from server with filters
   const fetchRuns = useCallback(async () => {
-    const data = await fetchRunsService(
+        const data = await fetchPublicRuns(
       filters,
       searchLocationCoords,
       userLocation

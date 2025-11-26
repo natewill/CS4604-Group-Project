@@ -3,9 +3,15 @@ import { convertTo12Hour } from "../utils/timeUtils";
 import { useCountdown } from "../utils/useCountdown";
 import { getStaticMapUrl } from "../utils/mapUtils";
 
-function RunItem({ run, onLeave, onDelete, showCountdown, isLeader, currentUserId }) {
+function RunItem({ run, onLeave, onDelete, onViewParticipants, onSaveRoute, showCountdown, isLeader, currentUserId }) {
   const countdown = useCountdown(run.date, run.start_time);
   const isRunLeader = isLeader && run.leader_id === currentUserId;
+  
+  // Check if run is in the past
+  const runDate = new Date(run.date);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const isPast = runDate < today;
 
   const handleLeave = () => {
     if (window.confirm(`Are you sure you want to leave "${run.name}"?`)) {
@@ -20,20 +26,49 @@ function RunItem({ run, onLeave, onDelete, showCountdown, isLeader, currentUserI
   };
 
   return (
-    <div className={`run-item ${!showCountdown ? "past" : ""}`}>
+    <div className={`run-item ${isPast ? "past" : ""}`}>
       <div className="run-actions-top">
         {showCountdown ? (
           <>
             {isRunLeader ? (
-              <button onClick={handleDelete}>Delete</button>
+              <>
+                {onViewParticipants && (
+                  <button onClick={() => onViewParticipants(run)} style={{ marginRight: "0.5rem" }}>
+                    View Participants
+                  </button>
+                )}
+                <button onClick={handleDelete}>Delete</button>
+              </>
             ) : (
-              <button onClick={handleLeave}>Leave</button>
+              <>
+                {isLeader && onSaveRoute && (
+                  <button onClick={() => onSaveRoute(run)} style={{ marginRight: "0.5rem" }}>
+                    Save Route
+                  </button>
+                )}
+                <button onClick={handleLeave}>Leave</button>
+              </>
             )}
           </>
         ) : (
           <>
-            {isRunLeader && (
-              <button onClick={handleDelete}>Delete</button>
+            {isRunLeader ? (
+              <>
+                {onViewParticipants && (
+                  <button onClick={() => onViewParticipants(run)} style={{ marginRight: "0.5rem" }}>
+                    View Participants
+                  </button>
+                )}
+                <button onClick={handleDelete}>Delete</button>
+              </>
+            ) : (
+              <>
+                {isLeader && onSaveRoute && (
+                  <button onClick={() => onSaveRoute(run)}>
+                    Save Route
+                  </button>
+                )}
+              </>
             )}
           </>
         )}

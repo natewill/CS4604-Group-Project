@@ -1194,7 +1194,7 @@ router.delete("/api/runs/:runId/leave", verifyToken, (req, res) => {
 // GET user's runs (scheduled or past)
 router.get("/api/my-runs", verifyToken, (req, res) => {
   const runnerId = req.user?.runner_id;
-  const { filter } = req.query; // "scheduled" or "past"
+  const { filter, type } = req.query; // "scheduled" or "past", "hosted" or default (joined)
 
   if (!runnerId) {
     return res.status(401).json({ error: "Unauthorized: must be logged in" });
@@ -1208,7 +1208,8 @@ router.get("/api/my-runs", verifyToken, (req, res) => {
     dateCondition = "AND r.date < CURDATE()";
   }
 
-  const sql = `
+  // Base SELECT clause - common fields for both hosted and joined runs
+  let sql = `
     SELECT 
       r.run_id,
       r.leader_id,
@@ -1218,8 +1219,8 @@ router.get("/api/my-runs", verifyToken, (req, res) => {
       r.name,
       r.description,
       r.pace,
-      DATE_FORMAT(r.date, '%Y-%m-%d') AS date,
-      TIME_FORMAT(r.start_time, '%H:%i:%s') AS start_time,
+      DATE_FORMAT(r.date, '%Y-%m-%d') AS date,        -- Format date as YYYY-MM-DD
+      TIME_FORMAT(r.start_time, '%H:%i:%s') AS start_time,  -- Format time as HH:MM:SS
       rt.start_lat,
       rt.start_lng,
       rt.end_lat,
@@ -1228,18 +1229,46 @@ router.get("/api/my-runs", verifyToken, (req, res) => {
       rt.end_address,
       rt.polyline,
       rt.distance,
-      CONCAT(leader.first_name, ' ', leader.last_name) AS leader_name
-    FROM run_participation rp
-    JOIN runs r ON rp.participation_run_id = r.run_id
-    JOIN status s ON r.run_status_id = s.status_id
-    JOIN routes rt ON r.run_route = rt.route_id
-    JOIN runners leader ON r.leader_id = leader.runner_id
-    WHERE rp.participation_runner_id = ?
+      CONCAT(leader.first_name, ' ', leader.last_name) AS leader_name`;  // Combine first and last name
+
+  // Different query structure based on whether we want hosted runs or joined runs
+  if (type === "hosted") {
+    // For hosted runs: get runs where user is the leader + participant count
+    sql += `,
+      COALESCE(pc.participant_count, 0) AS participant_count    -- Add participant count (0 if none)
+    FROM runs r
+    JOIN status s ON r.run_status_id = s.status_id             -- Get status description
+    JOIN routes rt ON r.run_route = rt.route_id                -- Get route details
+    JOIN runners leader ON r.leader_id = leader.runner_id      -- Get leader name
+    LEFT JOIN (
+      -- Subquery to count participants for each run
+      SELECT participation_run_id, COUNT(*) as participant_count
+      FROM run_participation
+      GROUP BY participation_run_id
+    ) pc ON r.run_id = pc.participation_run_id                 -- LEFT JOIN ensures runs with 0 participants still show
+    WHERE r.leader_id = ?`;                                    // Filter to runs led by this user
+  } else {
+    // For joined runs: get runs where user is a participant (default behavior)
+    sql += `
+    FROM run_participation rp                                  -- Start from participation table
+    JOIN runs r ON rp.participation_run_id = r.run_id         -- Get run details
+    JOIN status s ON r.run_status_id = s.status_id            -- Get status description
+    JOIN routes rt ON r.run_route = rt.route_id               -- Get route details
+    JOIN runners leader ON r.leader_id = leader.runner_id     -- Get leader name
+    WHERE rp.participation_runner_id = ? 
+    AND r.leader_id != ?`;                                     // Filter to runs this user joined (but not hosting)
+  }
+
+  // Add date condition and ordering
+  sql += `
     ${dateCondition}
     ORDER BY r.date ASC, r.start_time ASC
   `;
 
-  db.query(sql, [runnerId], (err, results) => {
+  // Set up parameters based on query type
+  const params = type === "hosted" ? [runnerId] : [runnerId, runnerId];
+
+  db.query(sql, params, (err, results) => {
     if (err) {
       console.error("Database query failed:", err);
       return res.status(500).json({ error: "Failed to fetch runs" });
@@ -1440,15 +1469,66 @@ router.get("/api/most-recent-run", verifyToken, (req, res) => {
   });
 });
 
-// Admin API calls
-// Get all runners
-router.get("/api/runners", verifyToken, (req, res) => {
+// GET participants for a specific run (leaders only)
+router.get("/api/runs/:runId/participants", verifyToken, (req, res) => {
   const runnerId = req.user?.runner_id;
+  const { runId } = req.params;
 
   if (!runnerId) {
     return res.status(401).json({ error: "Unauthorized: must be logged in" });
   }
 
+  if (!runId) {
+    return res.status(400).json({ error: "Run ID is required" });
+  }
+
+  // First verify that the user is the leader of this run
+  db.query(
+    "SELECT leader_id FROM runs WHERE run_id = ?",
+    [runId],
+    (err, runResult) => {
+      if (err) {
+        console.error("Error checking run leader:", err);
+        return res.status(500).json({ error: "Failed to verify run ownership" });
+      }
+
+      if (runResult.length === 0) {
+        return res.status(404).json({ error: "Run not found" });
+      }
+
+      if (runResult[0].leader_id !== runnerId) {
+        return res.status(403).json({ error: "Only the run leader can view participants" });
+      }
+
+      // Get all participants for this run
+      const sql = `
+        SELECT 
+          r.runner_id,
+          r.first_name,
+          r.last_name,
+          r.email
+        FROM run_participation rp
+        JOIN runners r ON rp.participation_runner_id = r.runner_id
+        WHERE rp.participation_run_id = ?
+        ORDER BY r.first_name, r.last_name
+      `;
+
+      db.query(sql, [runId], (participantErr, participants) => {
+        if (participantErr) {
+          console.error("Error fetching participants:", participantErr);
+          return res.status(500).json({ error: "Failed to fetch participants" });
+        }
+
+        res.json(participants);
+      });
+    }
+  );
+});
+
+// DELETE a participant from a run (leaders only)
+router.delete("/api/runs/:runId/participants/:participantId", verifyToken, (req, res) => {
+  const runnerId = req.user?.runner_id;
+  const { runId, participantId } = req.params;
   // request must be from admin
   if (!req.user.is_admin) {
     return res
@@ -1534,6 +1614,47 @@ router.put("/api/toggle-leader/:targetRunnerId", verifyToken, (req, res) => {
     return res.status(401).json({ error: "Unauthorized: must be logged in" });
   }
 
+  if (!runId || !participantId) {
+    return res.status(400).json({ error: "Run ID and Participant ID are required" });
+  }
+
+  // First verify that the user is the leader of this run
+  db.query(
+    "SELECT leader_id FROM runs WHERE run_id = ?",
+    [runId],
+    (err, runResult) => {
+      if (err) {
+        console.error("Error checking run leader:", err);
+        return res.status(500).json({ error: "Failed to verify run ownership" });
+      }
+
+      if (runResult.length === 0) {
+        return res.status(404).json({ error: "Run not found" });
+      }
+
+      if (runResult[0].leader_id !== runnerId) {
+        return res.status(403).json({ error: "Only the run leader can remove participants" });
+      }
+
+      // Remove the participant from the run
+      db.query(
+        "DELETE FROM run_participation WHERE participation_run_id = ? AND participation_runner_id = ?",
+        [runId, participantId],
+        (deleteErr, deleteResult) => {
+          if (deleteErr) {
+            console.error("Error removing participant:", deleteErr);
+            return res.status(500).json({ error: "Failed to remove participant" });
+          }
+
+          if (deleteResult.affectedRows === 0) {
+            return res.status(404).json({ error: "Participant not found in this run" });
+          }
+
+          res.json({ message: "Participant removed successfully" });
+        }
+      );
+    }
+  );
   // request must be from admin
   if (!req.user.is_admin) {
     return res

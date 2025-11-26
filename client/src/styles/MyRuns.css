@@ -35,8 +35,13 @@
   margin-bottom: 0.5rem;
 }
 
-.run-item.past {
+.run-item.past .map-thumbnail,
+.run-item.past .run-info {
   opacity: 0.5;
+}
+
+.run-item.past .run-actions-top {
+  opacity: 1;
 }
 
 .run-actions-top {
