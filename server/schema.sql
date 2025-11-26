@@ -16,6 +16,7 @@ CREATE TABLE runners (
     email           VARCHAR(100),
     user_password   VARCHAR(200),
     is_leader       BOOLEAN DEFAULT FALSE,
+    is_admin        BOOLEAN DEFAULT FALSE,
     min_pace        INT, -- in seconds, easier for calculations
     max_pace        INT, -- in seconds, easier for calculations
     min_dist_pref   INT,
@@ -78,31 +79,31 @@ CREATE TABLE saved_routes (
 
 -- Runners
 INSERT INTO runners (runner_id, first_name, middle_initial, last_name, email, user_password,
-   is_leader, min_pace, max_pace, min_dist_pref, max_dist_pref)
+   is_leader, is_admin, min_pace, max_pace, min_dist_pref, max_dist_pref)
 VALUES
-(1, 'test', 't', 'test', 'test@test.com', '$argon2id$v=19$m=65536,t=2,p=1$J0EccGqYCUH1b1Q5sJPwcg$apQph3Am1eekXrnlfXEWgYP+bJ/xfqr+eb2imBYJP78', 1, 400, 800, 3, 50), -- test
-(2, 'Jett', 'W', 'Morrow', 'jettmorrow@vt.edu', '$argon2id$v=19$m=16,t=2,p=1$cnVubmluZzE$q+7h87Qi5iB8m1gNPBROGQ', 1, 480, 540, 3, 15), -- purpleGiraffe21! (8:00, 9:00)
-(3, 'Adam', 'Z', 'Schantz', 'adams03@vt.edu', '$argon2id$v=19$m=16,t=2,p=1$cnVubmluZzE$US/trwyeAJ7z+3gp+DCwXw', 1, 420, 540, 3, 26), -- coffee_and_code (7:00, 9:00)
-(4, 'Emily', 'R', 'Nguyen', 'emily.nguyen@vt.edu', '$argon2id$v=19$m=16,t=2,p=1$cnVubmluZzE$n/+K3wxq+LF4qhbKt/Gxyw,', 0, 540, 600, 2, 6), -- Sunny-day-1987 (9:00, 10:00)
-(5, 'Liam', 'T', 'Chen', 'liam.chen@vt.edu', '$argon2id$v=19$m=16,t=2,p=1$cnVubmluZzE$daWsC5sHSLEuFIzgmUz4tA', 0, 360, 420, 5, 20), -- iliketacos4eva (6:00, 7:00)
-(6, 'Sofia', 'M', 'Patel', 'sofia.patel@vt.edu', '$argon2id$v=19$m=16,t=2,p=1$cnVubmluZzE$GS6at2s7w3YozsnCr5nsuA', 1, 420, 480, 4, 13), -- MoonlightDrive77 (7:00, 8:00)
-(7, 'Noah', 'B', 'Johnson', 'noah.johnson@vt.edu', '$argon2id$v=19$m=16,t=2,p=1$cnVubmluZzE$ZvM7CvkdLLqGrBWrGiynWA', 0, 480, 540, 3, 10), -- blue.skies&88 (8:00, 9:00)
-(8, 'Ava', 'K', 'Davis', 'ava.davis@vt.edu', '$argon2id$v=19$m=16,t=2,p=1$cnVubmluZzE$rc6CwixWsUoaJWLucsOgEg', 0, 540, 600, 2, 5), -- green-hat7 (9:00, 10:00)
-(9, 'Ethan', 'J', 'Wilson', 'ethan.wilson@vt.edu', '$argon2id$v=19$m=16,t=2,p=1$cnVubmluZzE$NAf+nJiZkxxF68OxXqnnrw', 1, 360, 480, 5, 26), -- RedPineapple#5 (6:00, 8:00)
-(10, 'Olivia', 'L', 'Martinez', 'olivia.martinez@vt.edu', '$argon2id$v=19$m=16,t=2,p=1$cnVubmluZzE$Tp1/qPncWZSNJ7G9GLJ7yA', 0, 420, 480, 3, 8), -- chocolate.monday9 (7:00, 8:00)
-(11, 'Mason', 'C', 'Brown', 'mason.brown@vt.edu', '$argon2id$v=19$m=16,t=2,p=1$cnVubmluZzE$e5kxpX1D0hDL/fQC6vBkNA', 0, 480, 540, 4, 10), -- dogeatdogworld12 (8:00, 9:00)
-(12, 'Isabella', 'P', 'Clark', 'isabella.clark@vt.edu', '$argon2id$v=19$m=16,t=2,p=1$cnVubmluZzE$8Bndt/gryd5p4eOTO9YC8A', 0, 540, 600, 3, 6), -- walkthedog2nite! (9:00, 10:00)
-(13, 'James', 'A', 'Lopez', 'james.lopez@vt.edu', '$argon2id$v=19$m=16,t=2,p=1$cnVubmluZzE$+8vZg9uAlQxN3TyZxzcclA', 1, 360, 420, 10, 26), -- slowCoffee_42 (6:00, 7:00)
-(14, 'Charlotte', 'D', 'Gonzalez', 'charlotte.gonzalez@vt.edu', '$argon2id$v=19$m=16,t=2,p=1$cnVubmluZzE$yBT2S2O7qEJyNJX0ArBTng', 0, 480, 540, 3, 15), -- ticketToMars23 (8:00, 9:00)
-(15, 'Lucas', 'N', 'Perez', 'lucas.perez@vt.edu', '$argon2id$v=19$m=16,t=2,p=1$cnVubmluZzE$dr92IHJxPDfQrWPNOGPUEg', 0, 420, 480, 5, 13), -- lazyRiver_1984 (7:00, 8:00)
-(16, 'Amelia', 'S', 'Hernandez', 'amelia.hernandez@vt.edu', '$argon2id$v=19$m=16,t=2,p=1$cnVubmluZzE$CNNyOPZ+WE7wHAO7b64NMA', 1, 540, 600, 2, 8), -- bronze-rocket11 (9:00, 10:00)
-(17, 'Benjamin', 'E', 'Lewis', 'benjamin.lewis@vt.edu', '$argon2id$v=19$m=16,t=2,p=1$cnVubmluZzE$SvgerouohOb6xd+ScEMGfA', 0, 480, 540, 3, 12), -- quiet+library7 (8:00, 9:00)
-(18, 'Mia', 'F', 'Hall', 'mia.hall@vt.edu', '$argon2id$v=19$m=16,t=2,p=1$cnVubmluZzE$GOY0tgX0obhooyw40m6f+Q', 0, 420, 480, 4, 9), -- sk8boarder_1995 (7:00, 8:00)
-(19, 'Henry', 'G', 'Young', 'henry.young@vt.edu', '$argon2id$v=19$m=16,t=2,p=1$cnVubmluZzE$OdhJBdhfCBjrht2zjiyvZA', 1, 360, 420, 10, 26), -- paperclips&dreams (6:00, 7:00)
-(20, 'Harper', 'Q', 'Allen', 'harper.allen@vt.edu', '$argon2id$v=19$m=16,t=2,p=1$cnVubmluZzE$29Ppdbdu8sLo1mi8Ya+/vw', 0, 480, 540, 3, 10), -- fuzzyBlanket#3 (8:00, 9:00)
-(21, 'Alexander', 'V', 'King', 'alex.king@vt.edu', '$argon2id$v=19$m=16,t=2,p=1$cnVubmluZzE$3cPUrQ+yTPNG7Q6u7bJy3w', 1, 420, 480, 5, 20), -- city-lights_9pm (7:00, 8:00)
-(22, 'Nate', 'D', 'Williams', 'natewilliams@vt.edu', '$argon2id$v=19$m=16,t=2,p=1$cnVubmluZzE$8ifrTk+98PBcbldrTtgjhA', 1, 660, 720, 2, 3), -- trainspotter_06 (11:00, 12:00)
-(23, 'Alex', 'R', 'Shaw', 'ashaw4@vt.edu', '$argon2id$v=19$m=65536,t=2,p=1$zizQWPgquPuhcbaKSpyIdA$vvSvw/Y1Ac9XBXM95dUTcKsUjI5bcsOLeiM0n4yRDME', 1, 360, 540, 1, 10); -- BottomlandBucks25! (6:00, 9:00)
+(1, 'test', 't', 'test', 'test@test.com', '$argon2id$v=19$m=65536,t=2,p=1$J0EccGqYCUH1b1Q5sJPwcg$apQph3Am1eekXrnlfXEWgYP+bJ/xfqr+eb2imBYJP78', 1, 1, 400, 800, 3, 50), -- test
+(2, 'Jett', 'W', 'Morrow', 'jettmorrow@vt.edu', '$argon2id$v=19$m=16,t=2,p=1$cnVubmluZzE$q+7h87Qi5iB8m1gNPBROGQ', 1, 0, 480, 540, 3, 15), -- purpleGiraffe21! (8:00, 9:00)
+(3, 'Adam', 'Z', 'Schantz', 'adams03@vt.edu', '$argon2id$v=19$m=16,t=2,p=1$cnVubmluZzE$US/trwyeAJ7z+3gp+DCwXw', 1, 0, 420, 540, 3, 26), -- coffee_and_code (7:00, 9:00)
+(4, 'Emily', 'R', 'Nguyen', 'emily.nguyen@vt.edu', '$argon2id$v=19$m=16,t=2,p=1$cnVubmluZzE$n/+K3wxq+LF4qhbKt/Gxyw,', 0, 0, 540, 600, 2, 6), -- Sunny-day-1987 (9:00, 10:00)
+(5, 'Liam', 'T', 'Chen', 'liam.chen@vt.edu', '$argon2id$v=19$m=16,t=2,p=1$cnVubmluZzE$daWsC5sHSLEuFIzgmUz4tA', 0, 0, 360, 420, 5, 20), -- iliketacos4eva (6:00, 7:00)
+(6, 'Sofia', 'M', 'Patel', 'sofia.patel@vt.edu', '$argon2id$v=19$m=16,t=2,p=1$cnVubmluZzE$GS6at2s7w3YozsnCr5nsuA', 1, 0, 420, 480, 4, 13), -- MoonlightDrive77 (7:00, 8:00)
+(7, 'Noah', 'B', 'Johnson', 'noah.johnson@vt.edu', '$argon2id$v=19$m=16,t=2,p=1$cnVubmluZzE$ZvM7CvkdLLqGrBWrGiynWA', 0, 0, 480, 540, 3, 10), -- blue.skies&88 (8:00, 9:00)
+(8, 'Ava', 'K', 'Davis', 'ava.davis@vt.edu', '$argon2id$v=19$m=16,t=2,p=1$cnVubmluZzE$rc6CwixWsUoaJWLucsOgEg', 0, 0, 540, 600, 2, 5), -- green-hat7 (9:00, 10:00)
+(9, 'Ethan', 'J', 'Wilson', 'ethan.wilson@vt.edu', '$argon2id$v=19$m=16,t=2,p=1$cnVubmluZzE$NAf+nJiZkxxF68OxXqnnrw', 1, 0, 360, 480, 5, 26), -- RedPineapple#5 (6:00, 8:00)
+(10, 'Olivia', 'L', 'Martinez', 'olivia.martinez@vt.edu', '$argon2id$v=19$m=16,t=2,p=1$cnVubmluZzE$Tp1/qPncWZSNJ7G9GLJ7yA', 0, 0, 420, 480, 3, 8), -- chocolate.monday9 (7:00, 8:00)
+(11, 'Mason', 'C', 'Brown', 'mason.brown@vt.edu', '$argon2id$v=19$m=16,t=2,p=1$cnVubmluZzE$e5kxpX1D0hDL/fQC6vBkNA', 0, 0, 480, 540, 4, 10), -- dogeatdogworld12 (8:00, 9:00)
+(12, 'Isabella', 'P', 'Clark', 'isabella.clark@vt.edu', '$argon2id$v=19$m=16,t=2,p=1$cnVubmluZzE$8Bndt/gryd5p4eOTO9YC8A', 0, 0, 540, 600, 3, 6), -- walkthedog2nite! (9:00, 10:00)
+(13, 'James', 'A', 'Lopez', 'james.lopez@vt.edu', '$argon2id$v=19$m=16,t=2,p=1$cnVubmluZzE$+8vZg9uAlQxN3TyZxzcclA', 1, 0, 360, 420, 10, 26), -- slowCoffee_42 (6:00, 7:00)
+(14, 'Charlotte', 'D', 'Gonzalez', 'charlotte.gonzalez@vt.edu', '$argon2id$v=19$m=16,t=2,p=1$cnVubmluZzE$yBT2S2O7qEJyNJX0ArBTng', 0, 0, 480, 540, 3, 15), -- ticketToMars23 (8:00, 9:00)
+(15, 'Lucas', 'N', 'Perez', 'lucas.perez@vt.edu', '$argon2id$v=19$m=16,t=2,p=1$cnVubmluZzE$dr92IHJxPDfQrWPNOGPUEg', 0, 0, 420, 480, 5, 13), -- lazyRiver_1984 (7:00, 8:00)
+(16, 'Amelia', 'S', 'Hernandez', 'amelia.hernandez@vt.edu', '$argon2id$v=19$m=16,t=2,p=1$cnVubmluZzE$CNNyOPZ+WE7wHAO7b64NMA', 1, 0, 540, 600, 2, 8), -- bronze-rocket11 (9:00, 10:00)
+(17, 'Benjamin', 'E', 'Lewis', 'benjamin.lewis@vt.edu', '$argon2id$v=19$m=16,t=2,p=1$cnVubmluZzE$SvgerouohOb6xd+ScEMGfA', 0, 0, 480, 540, 3, 12), -- quiet+library7 (8:00, 9:00)
+(18, 'Mia', 'F', 'Hall', 'mia.hall@vt.edu', '$argon2id$v=19$m=16,t=2,p=1$cnVubmluZzE$GOY0tgX0obhooyw40m6f+Q', 0, 0, 420, 480, 4, 9), -- sk8boarder_1995 (7:00, 8:00)
+(19, 'Henry', 'G', 'Young', 'henry.young@vt.edu', '$argon2id$v=19$m=16,t=2,p=1$cnVubmluZzE$OdhJBdhfCBjrht2zjiyvZA', 1, 0, 360, 420, 10, 26), -- paperclips&dreams (6:00, 7:00)
+(20, 'Harper', 'Q', 'Allen', 'harper.allen@vt.edu', '$argon2id$v=19$m=16,t=2,p=1$cnVubmluZzE$29Ppdbdu8sLo1mi8Ya+/vw', 0, 0, 480, 540, 3, 10), -- fuzzyBlanket#3 (8:00, 9:00)
+(21, 'Alexander', 'V', 'King', 'alex.king@vt.edu', '$argon2id$v=19$m=16,t=2,p=1$cnVubmluZzE$3cPUrQ+yTPNG7Q6u7bJy3w', 1, 0, 420, 480, 5, 20), -- city-lights_9pm (7:00, 8:00)
+(22, 'Nate', 'D', 'Williams', 'natewilliams@vt.edu', '$argon2id$v=19$m=16,t=2,p=1$cnVubmluZzE$8ifrTk+98PBcbldrTtgjhA', 1, 0, 660, 720, 2, 3), -- trainspotter_06 (11:00, 12:00)
+(23, 'Alex', 'R', 'Shaw', 'ashaw4@vt.edu', '$argon2id$v=19$m=65536,t=2,p=1$zizQWPgquPuhcbaKSpyIdA$vvSvw/Y1Ac9XBXM95dUTcKsUjI5bcsOLeiM0n4yRDME', 1, 0, 360, 540, 1, 10); -- BottomlandBucks25! (6:00, 9:00)
 
 -- Status
 INSERT INTO status (status_id, status_description)
