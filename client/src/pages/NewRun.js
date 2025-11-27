@@ -13,6 +13,7 @@ import {
 import { polylineOptions } from "../utils/map/directions";
 import polyline from "@mapbox/polyline";
 import { useAuth } from "../context/AuthContext";
+import "../styles/NewRun.css";
 
 const GOOGLE_MAPS_API_KEY = process.env.REACT_APP_GOOGLE_MAPS_API_KEY;
 
@@ -163,57 +164,17 @@ function NewRun() {
   }
 
   return (
-    <div
-      style={{
-        padding: "2rem",
-        minHeight: "100vh",
-        background: "var(--bg-primary)",
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "flex-start",
-      }}
-    >
-      <div
-        style={{
-          background: "var(--bg-secondary)",
-          padding: "2rem 2.5rem",
-          borderRadius: "16px",
-          boxShadow: "0 8px 20px rgba(0,0,0,0.3)",
-          width: "100%",
-          maxWidth: "800px",
-        }}
-      >
-        <h1
-          style={{
-            textAlign: "center",
-            color: "var(--text-primary)",
-            marginBottom: "1.5rem",
-          }}
-        >
-          Create New Run
-        </h1>
+    <div className="new-run-container">
+      <div className="new-run-card">
+        <h1 className="new-run-title">Create New Run</h1>
 
-        <form
-          onSubmit={handleSubmit}
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: "1.25rem",
-          }}
-        >
+        <form onSubmit={handleSubmit} className="new-run-form">
           {/* Route Section */}
-          <div
-            style={{
-              background: "var(--bg-primary)",
-              padding: "1rem",
-              borderRadius: "8px",
-              border: "1px solid var(--border-color)",
-            }}
-          >
-            <label style={styles.label}>Route</label>
+          <div className="new-run-route-section">
+            <label className="new-run-label">Route</label>
             {creatingRoute ? (
               <div>
-                <h3 style={{ color: "var(--text-primary)" }}>Create a New Route</h3>
+                <h3 className="new-run-route-title">Create a New Route</h3>
                 <CreateRoute
                   onRouteCreated={(routeId) => {
                     setForm((prev) => ({ ...prev, run_route: routeId }));
@@ -233,7 +194,7 @@ function NewRun() {
                     const routeId = e.target.value;
                     if (routeId) fetchRouteDetails(routeId);
                   }}
-                  style={styles.select}
+                  className="new-run-select"
                 >
                   <option value="">Select an existing route</option>
                   {routes.map((route) => {
@@ -253,7 +214,7 @@ function NewRun() {
                 <button
                   type="button"
                   onClick={() => setCreatingRoute(true)}
-                  style={styles.secondaryButton}
+                  className="new-run-secondary-button"
                 >
                   + Create New Route
                 </button>
@@ -263,13 +224,7 @@ function NewRun() {
 
           {/* Map Preview */}
           {isLoaded && selectedRoute && (
-            <div
-              style={{
-                height: "400px",
-                borderRadius: "8px",
-                overflow: "hidden",
-              }}
-            >
+            <div className="new-run-map-preview">
               <GoogleMap
                 mapContainerStyle={{ width: "100%", height: "100%" }}
                 center={{
@@ -323,7 +278,7 @@ function NewRun() {
           )}
 
           {/* Other Fields */}
-          <div style={{ display: "flex", justifyContent: "center" }}>
+          <div className="new-run-pace-container">
             <PaceSlider
               label="Pace (min:sec per mile)"
               value={form.pace}
@@ -334,47 +289,43 @@ function NewRun() {
             />
           </div>
 
-          <label style={styles.label}>Name</label>
+          <label className="new-run-label">Name</label>
           <input
             type="text"
             name="name"
             value={form.name}
             onChange={handleChange}
             required
-            style={styles.input}
+            className="new-run-input"
           />
 
-          <label style={styles.label}>Description</label>
+          <label className="new-run-label">Description</label>
           <textarea
             name="description"
             value={form.description}
             onChange={handleChange}
-            style={styles.textarea}
+            className="new-run-textarea"
           />
 
-          <div style={styles.row}>
-            <div style={styles.column}>
-              <label style={styles.label}>Date</label>
+          <div className="new-run-row">
+            <div className="new-run-column">
+              <label className="new-run-label">Date</label>
               <input
                 type="date"
                 name="date"
                 value={form.date}
                 onChange={handleChange}
                 required
-                style={styles.input}
+                className="new-run-input"
               />
             </div>
 
-            <StartTimePicker form={form} setForm={setForm} styles={styles} />
+            <StartTimePicker form={form} setForm={setForm} />
           </div>
 
           <button
             type="submit"
-            style={{
-              ...styles.primaryButton,
-              opacity: isFormComplete ? 1 : 0.6,
-              cursor: isFormComplete ? "pointer" : "not-allowed",
-            }}
+            className="new-run-primary-button"
             disabled={!isFormComplete}
           >
             Create Run
@@ -384,74 +335,5 @@ function NewRun() {
     </div>
   );
 }
-
-const styles = {
-  label: {
-    fontWeight: "600",
-    color: "var(--text-primary)",
-    display: "block",
-    marginBottom: "0.25rem",
-  },
-  input: {
-    width: "100%",
-    padding: "0.6rem",
-    borderRadius: "6px",
-    border: "1px solid var(--border-color)",
-    backgroundColor: "var(--bg-primary)",
-    color: "var(--text-primary)",
-    outline: "none",
-    transition: "0.2s",
-  },
-  select: {
-    width: "100%",
-    padding: "0.6rem",
-    borderRadius: "6px",
-    border: "1px solid var(--border-color)",
-    backgroundColor: "var(--bg-primary)",
-    color: "var(--text-primary)",
-    outline: "none",
-    transition: "0.2s",
-  },
-  textarea: {
-    width: "100%",
-    padding: "0.6rem",
-    minHeight: "80px",
-    borderRadius: "6px",
-    border: "1px solid var(--border-color)",
-    backgroundColor: "var(--bg-primary)",
-    color: "var(--text-primary)",
-    outline: "none",
-  },
-  primaryButton: {
-    backgroundColor: "#861F41",
-    color: "white",
-    padding: "0.75rem",
-    borderRadius: "8px",
-    border: "none",
-    cursor: "pointer",
-    marginTop: "1rem",
-    fontWeight: "bold",
-    fontSize: "1rem",
-    transition: "0.3s",
-  },
-  secondaryButton: {
-    backgroundColor: "var(--bg-primary)",
-    color: "var(--text-primary)",
-    padding: "0.5rem 1rem",
-    borderRadius: "6px",
-    border: "1px solid var(--border-color)",
-    cursor: "pointer",
-    fontWeight: "500",
-    marginTop: "0.5rem",
-    transition: "0.2s",
-  },
-  row: {
-    display: "flex",
-    gap: "1rem",
-  },
-  column: {
-    flex: 1,
-  },
-};
 
 export default NewRun;

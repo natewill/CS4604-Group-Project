@@ -10,7 +10,7 @@
   align-items: center;
   padding: 1rem 2rem;
   background: #1a1a1a;
-  border-bottom: 2px solid #333;
+  border-bottom: 3px solid #861f41;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
@@ -21,6 +21,11 @@
   text-decoration: none;
   margin-right: 2rem;
   letter-spacing: -0.5px;
+  transition: color 0.2s ease;
+}
+
+.navbar-brand:hover {
+  color: #e87f9e;
 }
 
 .navbar-left {
