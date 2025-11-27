@@ -14,11 +14,11 @@
   text-align: center;
   padding: 2rem;
   font-size: 1.2rem;
-  color: #666;
+  color: var(--text-secondary);
 }
 
 .profile-statistics-error {
-  color: #d32f2f;
+  color: var(--accent);
 }
 
 .profile-statistics-section {
@@ -28,7 +28,7 @@
   padding: 1rem;
   border: none;
   border-radius: 8px;
-  background-color: #fafafa;
+  background-color: var(--bg-secondary);
   width: 100%;
 }
 
@@ -36,17 +36,17 @@
   font-size: 1.5rem;
   font-weight: bold;
   margin-bottom: 0.5rem;
-  color: #333;
+  color: var(--text-primary);
 }
 
 .profile-statistics-note {
   font-size: 0.9rem;
-  color: #666;
+  color: var(--text-secondary);
   font-style: italic;
   margin-bottom: 1rem;
   padding: 0.5rem;
-  background-color: #f0f0f0;
-  border-left: 3px solid #666;
+  background-color: var(--bg-primary);
+  border-left: 3px solid var(--border-color);
   padding-left: 1rem;
   border-radius: 4px;
 }
@@ -59,8 +59,8 @@
 }
 
 .profile-statistics-card {
-  background-color: #f5f5f5;
-  border: 1px solid #e0e0e0;
+  background-color: var(--bg-primary);
+  border: 1px solid var(--border-color);
   border-radius: 8px;
   padding: 1rem;
   display: flex;
@@ -70,27 +70,27 @@
 
 .profile-statistics-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
 }
 
 .profile-statistics-label {
   font-size: 1.25rem;
   font-weight: 600;
-  color: #555;
+  color: var(--text-secondary);
   margin-bottom: 0.25rem;
 }
 
 .profile-statistics-value {
   font-size: 1.5rem;
   font-weight: bold;
-  color: #333;
+  color: var(--text-primary);
   margin-bottom: 0.5rem;
   padding: 0.5rem 0;
 }
 
 .profile-statistics-description {
   font-size: 0.9rem;
-  color: #666;
+  color: var(--text-secondary);
   font-style: italic;
 }
 
@@ -112,8 +112,8 @@
   height: 300px;
   object-fit: cover;
   border-radius: 8px;
-  border: 1px solid #e0e0e0;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border: 1px solid var(--border-color);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 .profile-statistics-map-placeholder {
@@ -122,10 +122,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: #f5f5f5;
-  border: 1px solid #e0e0e0;
+  background-color: var(--bg-primary);
+  border: 1px solid var(--border-color);
   border-radius: 8px;
-  color: #888;
+  color: var(--text-secondary);
   font-style: italic;
 }
 
@@ -138,10 +138,10 @@
 .profile-statistics-recent-run-name {
   font-size: 1.75rem;
   font-weight: bold;
-  color: #333;
+  color: var(--text-primary);
   margin: 0;
   padding-bottom: 0.5rem;
-  border-bottom: 2px solid #e0e0e0;
+  border-bottom: 2px solid var(--border-color);
 }
 
 .profile-statistics-recent-run-details {
@@ -159,21 +159,21 @@
 .profile-statistics-recent-run-label {
   font-size: 1rem;
   font-weight: 600;
-  color: #555;
+  color: var(--text-secondary);
   min-width: 80px;
 }
 
 .profile-statistics-recent-run-value {
   font-size: 1rem;
-  color: #333;
+  color: var(--text-primary);
 }
 
 .profile-statistics-recent-run-description {
   margin-top: 0.5rem;
   padding-top: 1rem;
-  border-top: 1px solid #e0e0e0;
+  border-top: 1px solid var(--border-color);
   font-size: 1rem;
-  color: #444;
+  color: var(--text-primary);
   line-height: 1.6;
   font-style: italic;
 }

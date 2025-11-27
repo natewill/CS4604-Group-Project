@@ -167,7 +167,7 @@ function NewRun() {
       style={{
         padding: "2rem",
         minHeight: "100vh",
-        background: "linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)",
+        background: "var(--bg-primary)",
         display: "flex",
         justifyContent: "center",
         alignItems: "flex-start",
@@ -175,10 +175,10 @@ function NewRun() {
     >
       <div
         style={{
-          background: "white",
+          background: "var(--bg-secondary)",
           padding: "2rem 2.5rem",
           borderRadius: "16px",
-          boxShadow: "0 8px 20px rgba(0,0,0,0.1)",
+          boxShadow: "0 8px 20px rgba(0,0,0,0.3)",
           width: "100%",
           maxWidth: "800px",
         }}
@@ -186,7 +186,7 @@ function NewRun() {
         <h1
           style={{
             textAlign: "center",
-            color: "#3f51b5",
+            color: "var(--text-primary)",
             marginBottom: "1.5rem",
           }}
         >
@@ -204,15 +204,16 @@ function NewRun() {
           {/* Route Section */}
           <div
             style={{
-              background: "#f9f9ff",
+              background: "var(--bg-primary)",
               padding: "1rem",
               borderRadius: "8px",
+              border: "1px solid var(--border-color)",
             }}
           >
             <label style={styles.label}>Route</label>
             {creatingRoute ? (
               <div>
-                <h3 style={{ color: "#3f51b5" }}>Create a New Route</h3>
+                <h3 style={{ color: "var(--text-primary)" }}>Create a New Route</h3>
                 <CreateRoute
                   onRouteCreated={(routeId) => {
                     setForm((prev) => ({ ...prev, run_route: routeId }));
@@ -387,7 +388,7 @@ function NewRun() {
 const styles = {
   label: {
     fontWeight: "600",
-    color: "#333",
+    color: "var(--text-primary)",
     display: "block",
     marginBottom: "0.25rem",
   },
@@ -395,7 +396,9 @@ const styles = {
     width: "100%",
     padding: "0.6rem",
     borderRadius: "6px",
-    border: "1px solid #ccc",
+    border: "1px solid var(--border-color)",
+    backgroundColor: "var(--bg-primary)",
+    color: "var(--text-primary)",
     outline: "none",
     transition: "0.2s",
   },
@@ -403,7 +406,9 @@ const styles = {
     width: "100%",
     padding: "0.6rem",
     borderRadius: "6px",
-    border: "1px solid #ccc",
+    border: "1px solid var(--border-color)",
+    backgroundColor: "var(--bg-primary)",
+    color: "var(--text-primary)",
     outline: "none",
     transition: "0.2s",
   },
@@ -412,11 +417,13 @@ const styles = {
     padding: "0.6rem",
     minHeight: "80px",
     borderRadius: "6px",
-    border: "1px solid #ccc",
+    border: "1px solid var(--border-color)",
+    backgroundColor: "var(--bg-primary)",
+    color: "var(--text-primary)",
     outline: "none",
   },
   primaryButton: {
-    backgroundColor: "#3f51b5",
+    backgroundColor: "#861F41",
     color: "white",
     padding: "0.75rem",
     borderRadius: "8px",
@@ -428,11 +435,11 @@ const styles = {
     transition: "0.3s",
   },
   secondaryButton: {
-    backgroundColor: "#e0e0ff",
-    color: "#3f51b5",
+    backgroundColor: "var(--bg-primary)",
+    color: "var(--text-primary)",
     padding: "0.5rem 1rem",
     borderRadius: "6px",
-    border: "none",
+    border: "1px solid var(--border-color)",
     cursor: "pointer",
     fontWeight: "500",
     marginTop: "0.5rem",

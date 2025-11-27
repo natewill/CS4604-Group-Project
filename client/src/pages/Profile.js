@@ -97,7 +97,6 @@ function Profile() {
             <h2>Admin Options</h2>
           </div>
         ) : null}
-        ;
       </div>
 
       {/* Main Content Area */}
