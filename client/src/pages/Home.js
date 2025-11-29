@@ -62,7 +62,10 @@ function Home() {
               </p>
             </div>
             <div className="home-distance-badge">
-              {user?.min_dist_pref && user?.max_dist_pref
+              {user?.min_dist_pref !== null &&
+              user?.min_dist_pref !== undefined &&
+              user?.max_dist_pref !== null &&
+              user?.max_dist_pref !== undefined
                 ? `${user.min_dist_pref}-${user.max_dist_pref} mi preference`
                 : "Set your distance preferences"}
             </div>
