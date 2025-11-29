@@ -32,8 +32,9 @@ Client
 - 
 ## NOTE: all runs are in blacksburg and christiansburg within the database, so in the runfinder page, make sure to set search location to blacksburg or christiansburg to see runs
 
-## Authentication System
+-AI Assistance:
 
+	cursor to ask questions about topics, help debug, come up with ideas and show sample code, while the styling and function descriptions, was written with AI assistance
 This application uses **JWT (JSON Web Token) authentication with HTTP-only cookies** for secure user authentication.
 
 ### Overview
