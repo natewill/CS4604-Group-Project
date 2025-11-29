@@ -30,7 +30,7 @@ Client
 
 - You can start the frontend by running npm start in the client directory
 - 
-## NOTE: all runs are in blacksburg and christiansburg, so in the runfinder page, make sure to set search location to blacksburg or christiansburg to see runs
+## NOTE: all runs are in blacksburg and christiansburg within the database, so in the runfinder page, make sure to set search location to blacksburg or christiansburg to see runs
 
 ## Authentication System
 
