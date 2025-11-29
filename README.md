@@ -29,6 +29,8 @@ Server
 Client
 
 - You can start the frontend by running npm start in the client directory
+- 
+## NOTE: all runs are in blacksburg and christiansburg, so in the runfinder page, make sure to set search location to blacksburg or christiansburg to see runs
 
 ## Authentication System
 
@@ -68,7 +70,6 @@ This application uses **JWT (JSON Web Token) authentication with HTTP-only cooki
 
 ### Server-Side Implementation
 
-##NOTE: all runs are in blacksburg and christiansburg, so in the runfinder page, make sure to set search location to blacksburg or christiansburg to see runs
 
 #### Authentication Middleware (`server/auth.js`)
 
