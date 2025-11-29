@@ -9,8 +9,12 @@ const FilterForm = ({
   locationAutocompleteRef,
   handleLocationSelect,
   setSearchLocationCoords,
+  distanceDefaults,
 }) => {
+  const distanceMinDefault = distanceDefaults?.min ?? 0;
+  const distanceMaxDefault = distanceDefaults?.max ?? 15;
   const handleChange = (field) => (e) => setFilters({ ...filters, [field]: e.target.value });
+
 
   return (
     <div>
@@ -31,13 +35,13 @@ const FilterForm = ({
         label="Distance Min"
         value={filters.distanceMin}
         onChange={(value) => setFilters({ ...filters, distanceMin: value })}
-        defaultValue={0}
+        defaultValue={distanceMinDefault}
       />
       <DistanceSlider
         label="Distance Max"
         value={filters.distanceMax}
         onChange={(value) => setFilters({ ...filters, distanceMax: value })}
-        defaultValue={15}
+        defaultValue={distanceMaxDefault}
       />
       <div>
         <label>Date From</label>
@@ -79,4 +83,3 @@ const FilterForm = ({
 };
 
 export default FilterForm;
-

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import {
   GoogleMap,
   Marker,
@@ -89,6 +89,13 @@ function RunFinder() {
   const [searchLocationCoords, setSearchLocationCoords] = useState(null);
   const locationAutocompleteRef = useRef(null);
   const [customIcons, setCustomIcons] = useState(null);
+  const distanceDefaults = useMemo(
+    () => ({
+      min: user?.min_dist_pref ?? 0,
+      max: user?.max_dist_pref ?? 15,
+    }),
+    [user]
+  );
 
   // Search filter states - consolidated
   const [filters, setFilters] = useState({
@@ -231,6 +238,7 @@ function RunFinder() {
             locationAutocompleteRef={locationAutocompleteRef}
             handleLocationSelect={handleLocationSelect}
             setSearchLocationCoords={setSearchLocationCoords}
+            distanceDefaults={distanceDefaults}
           />
         )}
       </div>
