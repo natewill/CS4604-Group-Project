@@ -66,6 +66,12 @@
   font-weight: 600;
 }
 
+.navbar-user-type {
+  color: #888;
+  font-size: 0.85rem;
+  font-weight: 400;
+}
+
 .content-area {
   flex: 1;
   overflow: auto;

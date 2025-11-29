@@ -1,12 +1,15 @@
-import { Link, Outlet, useNavigate } from "react-router-dom";
+import { Link, Outlet } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import "../styles/NavLayout.css";
 
 function Layout() {
-  const { user } = useAuth();
-  const navigate = useNavigate();
+  const { user, isLeader, isAdmin } = useAuth();
 
-  const isLeader = user && (user.is_leader === 1 || user.is_leader === true);
+  const getUserType = () => {
+    if (isAdmin) return "Admin";
+    if (isLeader) return "Leader";
+    return "Runner";
+  };
   return (
     <div className="layout-container">
       <nav className="navbar">
@@ -33,9 +36,14 @@ function Layout() {
 
         <div className="navbar-right">
           {user && (
-            <span className="navbar-welcome">
-              Welcome, <strong>{user.first_name} {user.last_name}</strong>
-            </span>
+            <>
+              <span className="navbar-welcome">
+                Welcome, <strong>{user.first_name} {user.last_name}</strong>
+              </span>
+              <span className="navbar-user-type">
+                {getUserType()}
+              </span>
+            </>
           )}
           <Link to="/profile" className="nav-link">
             Profile
