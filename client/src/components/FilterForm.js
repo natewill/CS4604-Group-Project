@@ -1,5 +1,6 @@
 import { Autocomplete } from '@react-google-maps/api';
 import PaceSlider from './PaceSlider';
+import DistanceSlider from './DistanceSlider';
 
 const FilterForm = ({
   filters,
@@ -25,6 +26,18 @@ const FilterForm = ({
         value={filters.paceMax}
         onChange={(value) => setFilters({ ...filters, paceMax: value })}
         defaultValue={600}
+      />
+      <DistanceSlider
+        label="Distance Min"
+        value={filters.distanceMin}
+        onChange={(value) => setFilters({ ...filters, distanceMin: value })}
+        defaultValue={0}
+      />
+      <DistanceSlider
+        label="Distance Max"
+        value={filters.distanceMax}
+        onChange={(value) => setFilters({ ...filters, distanceMax: value })}
+        defaultValue={15}
       />
       <div>
         <label>Date From</label>

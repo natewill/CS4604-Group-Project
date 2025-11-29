@@ -94,6 +94,8 @@ function RunFinder() {
   const [filters, setFilters] = useState({
     paceMin: "",
     paceMax: "",
+    distanceMin: "",
+    distanceMax: "",
     dateFrom: "",
     dateTo: "",
     searchLeader: "",
@@ -108,6 +110,19 @@ function RunFinder() {
       alert("google maps api not working");
     },
   });
+
+  // Initialize filters with user preferences when user data loads
+  useEffect(() => {
+    if (user && !loading) {
+      setFilters((prevFilters) => ({
+        ...prevFilters,
+        paceMin: user.min_pace || "",
+        paceMax: user.max_pace || "",
+        distanceMin: user.min_dist_pref !== null && user.min_dist_pref !== undefined ? user.min_dist_pref : "",
+        distanceMax: user.max_dist_pref !== null && user.max_dist_pref !== undefined ? user.max_dist_pref : "",
+      }));
+    }
+  }, [user, loading]);
 
   // Get user's current location
   useEffect(() => {
@@ -165,11 +180,13 @@ function RunFinder() {
     }
   }, [filters, searchLocationCoords, userLocation]);
 
-  // Clear all filters
+  // Clear all filters - reset to user preferences for pace/distance
   const clearFilters = () => {
     setFilters({
-      paceMin: "",
-      paceMax: "",
+      paceMin: user?.min_pace || "",
+      paceMax: user?.max_pace || "",
+      distanceMin: user?.min_dist_pref !== null && user?.min_dist_pref !== undefined ? user.min_dist_pref : "",
+      distanceMax: user?.max_dist_pref !== null && user?.max_dist_pref !== undefined ? user.max_dist_pref : "",
       dateFrom: "",
       dateTo: "",
       searchLeader: "",

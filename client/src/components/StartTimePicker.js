@@ -1,7 +1,7 @@
 import React from "react";
 import { convertTo24Hour } from "../utils/timeUtils";
 
-function StartTimePicker({ form, setForm, styles }) {
+function StartTimePicker({ form, setForm, styles = {} }) {
   const updateTime = (hour, minute, ampm) => {
     const time24 = convertTo24Hour(hour, minute, ampm);
     setForm((prev) => ({
@@ -14,8 +14,8 @@ function StartTimePicker({ form, setForm, styles }) {
   };
 
   return (
-    <div style={styles.column}>
-      <label style={styles.label}>Start Time</label>
+    <div style={styles.column || {}}>
+      <label style={styles.label || {}}>Start Time</label>
       <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
         {/* Hour */}
         <select
@@ -23,7 +23,7 @@ function StartTimePicker({ form, setForm, styles }) {
           onChange={(e) =>
             updateTime(parseInt(e.target.value), form.start_time_minute || 0, form.start_time_ampm || "AM")
           }
-          style={{ ...styles.select, width: "80px" }}
+          style={{ ...(styles.select || {}), width: "80px" }}
         >
           <option value="">Hr</option>
           {[...Array(12).keys()].map((h) => (
@@ -39,7 +39,7 @@ function StartTimePicker({ form, setForm, styles }) {
           onChange={(e) =>
             updateTime(form.start_time_hour || 12, parseInt(e.target.value), form.start_time_ampm || "AM")
           }
-          style={{ ...styles.select, width: "80px" }}
+          style={{ ...(styles.select || {}), width: "80px" }}
         >
           <option value="">Min</option>
           {[...Array(60).keys()].map((m) => (
@@ -55,7 +55,7 @@ function StartTimePicker({ form, setForm, styles }) {
           onChange={(e) =>
             updateTime(form.start_time_hour || 12, form.start_time_minute || 0, e.target.value)
           }
-          style={{ ...styles.select, width: "80px" }}
+          style={{ ...(styles.select || {}), width: "80px" }}
         >
           <option value="AM">AM</option>
           <option value="PM">PM</option>

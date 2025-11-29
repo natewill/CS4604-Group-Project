@@ -4,7 +4,7 @@
 
 /**
  * Fetches public runs from the server with optional filters (for RunFinder)
- * @param {Object} filters - Filter object with paceMin, paceMax, dateFrom, dateTo, searchLeader, searchName
+ * @param {Object} filters - Filter object with paceMin, paceMax, distanceMin, distanceMax, dateFrom, dateTo, searchLeader, searchName
  * @param {Object} searchLocationCoords - Search location coordinates { lat, lng }
  * @param {Object} userLocation - User location coordinates { lat, lng }
  * @returns {Promise<Array>} Promise that resolves to an array of run objects
@@ -16,12 +16,20 @@ export const fetchPublicRuns = async (
 ) => {
   const queryParams = new URLSearchParams();
 
-  // Add pace filters (already in seconds)
+  // Add pace filters (in seconds) - these override user account preferences if provided
   if (filters.paceMin) {
     queryParams.append("paceMin", filters.paceMin);
   }
   if (filters.paceMax) {
     queryParams.append("paceMax", filters.paceMax);
+  }
+
+  // Add distance filters (in miles) - these override user account preferences if provided
+  if (filters.distanceMin !== "" && filters.distanceMin !== null && filters.distanceMin !== undefined) {
+    queryParams.append("distanceMin", filters.distanceMin);
+  }
+  if (filters.distanceMax !== "" && filters.distanceMax !== null && filters.distanceMax !== undefined) {
+    queryParams.append("distanceMax", filters.distanceMax);
   }
 
   // Add date filters
@@ -47,7 +55,9 @@ export const fetchPublicRuns = async (
     queryParams.append("lng", locationForDistance.lng.toString());
   }
 
-  const res = await fetch(`/api/runs?${queryParams.toString()}`);
+  const res = await fetch(`/api/runs?${queryParams.toString()}`, {
+    credentials: "include", // Include cookies to send JWT for user preferences
+  });
   if (!res.ok) {
     throw new Error("Failed to fetch runs");
   }

@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const db = require("../connection");
+const jwt = require("jsonwebtoken");
 const {
   signup,
   login,
@@ -19,6 +20,7 @@ const {
 // Backend configuration: Maximum distance for location-based filtering (in miles)
 const MAX_DISTANCE_MILES = 3;
 const PASSWORD_MIN_LENGTH = 6;
+const JWT_SECRET = process.env.JWT_SECRET;
 
 // Post to check whether the email and password are available for signup
 router.post("/signup/check", async (req, res) => {
@@ -697,6 +699,8 @@ router.get("/api/runs", (req, res) => {
   const {
     paceMin,
     paceMax,
+    distanceMin,
+    distanceMax,
     dateFrom,
     dateTo,
     searchLeader,
@@ -705,14 +709,30 @@ router.get("/api/runs", (req, res) => {
     lng,
   } = req.query;
 
+  // Try to get user preferences from cookie (if authenticated)
+  let userPreferences = null;
+  const token = req.cookies?.CMIYC;
+  if (token && JWT_SECRET) {
+    try {
+      const decoded = jwt.verify(token, JWT_SECRET);
+      userPreferences = {
+        min_pace: decoded.min_pace,
+        max_pace: decoded.max_pace,
+        min_dist_pref: decoded.min_dist_pref,
+        max_dist_pref: decoded.max_dist_pref,
+      };
+    } catch (err) {
+      // Token invalid or expired - continue without user preferences
+      userPreferences = null;
+    }
+  }
+
   // Base SQL query
   let sql = `
-    SELECT 
+    SELECT
       r.run_id,
       r.leader_id,
       r.run_route,
-      r.run_status_id,
-      s.status_description AS status,
       r.name,
       r.description,
       r.pace,
@@ -728,25 +748,39 @@ router.get("/api/runs", (req, res) => {
       rt.distance,
       CONCAT(leader.first_name, ' ', leader.last_name) AS leader_name
     FROM runs r
-    JOIN status s ON r.run_status_id = s.status_id
     JOIN routes rt ON r.run_route = rt.route_id
     JOIN runners leader ON r.leader_id = leader.runner_id
   `; //leader_name is just the first and last name together
-  // join the runs table with the status table on the run_status_id
   // join the routes table on the run_route
   // join the runners table on the leader_id
 
   const conditions = [];
   const params = [];
 
-  // Pace range filtering
-  if (paceMin) {
+  // Pace filtering: Manual filters override user account preferences
+  const effectivePaceMin = paceMin || (userPreferences?.min_pace);
+  const effectivePaceMax = paceMax || (userPreferences?.max_pace);
+
+  if (effectivePaceMin !== null && effectivePaceMin !== undefined) {
     conditions.push("r.pace >= ?");
-    params.push(parseInt(paceMin, 10));
+    params.push(parseInt(effectivePaceMin, 10));
   }
-  if (paceMax) {
+  if (effectivePaceMax !== null && effectivePaceMax !== undefined) {
     conditions.push("r.pace <= ?");
-    params.push(parseInt(paceMax, 10));
+    params.push(parseInt(effectivePaceMax, 10));
+  }
+
+  // Distance filtering: Manual filters override user account preferences
+  const effectiveDistanceMin = distanceMin !== undefined ? distanceMin : (userPreferences?.min_dist_pref);
+  const effectiveDistanceMax = distanceMax !== undefined ? distanceMax : (userPreferences?.max_dist_pref);
+
+  if (effectiveDistanceMin !== null && effectiveDistanceMin !== undefined && effectiveDistanceMin !== "") {
+    conditions.push("rt.distance >= ?");
+    params.push(parseFloat(effectiveDistanceMin));
+  }
+  if (effectiveDistanceMax !== null && effectiveDistanceMax !== undefined && effectiveDistanceMax !== "") {
+    conditions.push("rt.distance <= ?");
+    params.push(parseFloat(effectiveDistanceMax));
   }
 
   // Date range filtering
@@ -780,12 +814,12 @@ router.get("/api/runs", (req, res) => {
 
     // Haversine formula to calculate distance between two points on a sphere,
     // idk if there is a better way to do this
-    conditions.push(`( 
+    conditions.push(`(
       6371 * acos(
-        cos(radians(?)) * 
-        cos(radians(rt.start_lat)) * 
-        cos(radians(rt.start_lng) - radians(?)) + 
-        sin(radians(?)) * 
+        cos(radians(?)) *
+        cos(radians(rt.start_lat)) *
+        cos(radians(rt.start_lng) - radians(?)) +
+        sin(radians(?)) *
         sin(radians(rt.start_lat))
       )
     ) <= ?`);
@@ -836,7 +870,6 @@ router.post("/api/runs", verifyToken, (req, res) => {
     // Extract all fields from request
     const {
       run_route,
-      run_status_id,
       name,
       description,
       pace,
@@ -844,24 +877,20 @@ router.post("/api/runs", verifyToken, (req, res) => {
       start_time,
     } = req.body;
 
-    // Validate required fields (status not required)
+    // Validate required fields
     if (!run_route || !name || pace === undefined || !date || !start_time) {
       return res.status(400).json({ error: "Missing required run fields" });
     }
 
-    // Default run_status_id to 1 (Scheduled) if not provided
-    const statusId = run_status_id && !isNaN(run_status_id) ? run_status_id : 1;
-
     const insertRunSql = `
       INSERT INTO runs
-        (leader_id, run_route, run_status_id, name, description, pace, date, start_time)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        (leader_id, run_route, name, description, pace, date, start_time)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
     `;
 
     const values = [
       runnerId,
       run_route,
-      statusId,
       name,
       description || null,
       pace,
@@ -972,7 +1001,6 @@ router.put("/api/runs/:id", (req, res) => {
   const {
     leader_id,
     run_route,
-    run_status_id,
     name,
     description,
     pace,
@@ -984,7 +1012,6 @@ router.put("/api/runs/:id", (req, res) => {
   if (
     !leader_id &&
     !run_route &&
-    !run_status_id &&
     !name &&
     !description &&
     !pace &&
@@ -1005,10 +1032,6 @@ router.put("/api/runs/:id", (req, res) => {
   if (run_route) {
     updates.push("run_route = ?");
     values.push(run_route);
-  }
-  if (run_status_id) {
-    updates.push("run_status_id = ?");
-    values.push(run_status_id);
   }
   if (name) {
     updates.push("name = ?");
@@ -1234,12 +1257,10 @@ router.get("/api/my-runs", verifyToken, (req, res) => {
 
   // Base SELECT clause - common fields for both hosted and joined runs
   let sql = `
-    SELECT 
+    SELECT
       r.run_id,
       r.leader_id,
       r.run_route,
-      r.run_status_id,
-      s.status_description AS status,
       r.name,
       r.description,
       r.pace,
@@ -1261,7 +1282,6 @@ router.get("/api/my-runs", verifyToken, (req, res) => {
     sql += `,
       COALESCE(pc.participant_count, 0) AS participant_count    -- Add participant count (0 if none)
     FROM runs r
-    JOIN status s ON r.run_status_id = s.status_id             -- Get status description
     JOIN routes rt ON r.run_route = rt.route_id                -- Get route details
     JOIN runners leader ON r.leader_id = leader.runner_id      -- Get leader name
     LEFT JOIN (
@@ -1276,10 +1296,9 @@ router.get("/api/my-runs", verifyToken, (req, res) => {
     sql += `
     FROM run_participation rp                                  -- Start from participation table
     JOIN runs r ON rp.participation_run_id = r.run_id         -- Get run details
-    JOIN status s ON r.run_status_id = s.status_id            -- Get status description
     JOIN routes rt ON r.run_route = rt.route_id               -- Get route details
     JOIN runners leader ON r.leader_id = leader.runner_id     -- Get leader name
-    WHERE rp.participation_runner_id = ? 
+    WHERE rp.participation_runner_id = ?
     AND r.leader_id != ?`;                                     // Filter to runs this user joined (but not hosting)
   }
 
@@ -1392,7 +1411,7 @@ router.get("/api/profile-statistics", verifyToken, (req, res) => {
       FROM runs as r 
       join routes as rt on r.run_route = rt.route_id
       join run_participation as rp on rp.participation_run_id = r.run_id
-      where rp.participation_runner_id = ? and r.run_status_id = 2;
+      where rp.participation_runner_id = ? and r.date < CURDATE();
   `;
 
   // Leader-specific statistics query - completed runs only
@@ -1400,7 +1419,7 @@ router.get("/api/profile-statistics", verifyToken, (req, res) => {
     WITH hosted_runs AS (
       SELECT * FROM runs
       WHERE leader_id = ?
-      AND run_status_id = 2
+      AND date < CURDATE()
     ),
     participants_per_run AS (
       SELECT rp.participation_run_id, COUNT(*) AS participant_count
@@ -1475,7 +1494,7 @@ router.get("/api/most-recent-run", verifyToken, (req, res) => {
     from routes as rt 
     join runs as r on rt.route_id = r.run_route 
     join run_participation as rp on rp.participation_run_id = r.run_id
-    where rp.participation_runner_id = ? and r.run_status_id = 2
+    where rp.participation_runner_id = ? and r.date < CURDATE()
     order by r.date desc, r.start_time desc limit 1;
   `;
 
