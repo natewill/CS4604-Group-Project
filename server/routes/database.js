@@ -1603,6 +1603,56 @@ router.get("/api/runners", verifyToken, (req, res) => {
   });
 });
 
+// GET admin-wide statistics (admin only)
+router.get("/api/admin-statistics", verifyToken, (req, res) => {
+  const runnerId = req.user?.runner_id;
+
+  if (!runnerId) {
+    return res.status(401).json({ error: "Unauthorized: must be logged in" });
+  }
+
+  if (!req.user.is_admin) {
+    return res
+      .status(403)
+      .json({ error: "Unauthorized: user is not an admin" });
+  }
+
+  const sql = `
+    SELECT
+      (SELECT COUNT(*) FROM runs) AS total_runs,
+      (SELECT COALESCE(SUM(rt.distance), 0)
+         FROM runs r
+         JOIN routes rt ON r.run_route = rt.route_id) AS total_distance,
+      (SELECT COUNT(*) FROM runners) AS total_users,
+      (SELECT COUNT(*) FROM routes) AS total_routes,
+      (SELECT MIN(pace) FROM runs) AS fastest_pace,
+      (SELECT MAX(rt.distance)
+         FROM runs r
+         JOIN routes rt ON r.run_route = rt.route_id) AS longest_run,
+      (SELECT AVG(rt.distance)
+         FROM runs r
+         JOIN routes rt ON r.run_route = rt.route_id) AS average_distance;
+  `;
+
+  db.query(sql, (err, results) => {
+    if (err) {
+      console.error("Database query failed for admin statistics:", err);
+      return res.status(500).json({ error: "Failed to fetch admin statistics" });
+    }
+
+    const row = results?.[0] || {};
+    res.json({
+      total_runs: row.total_runs ?? 0,
+      total_distance: Number(row.total_distance) || 0,
+      total_users: row.total_users ?? 0,
+      total_routes: row.total_routes ?? 0,
+      fastest_pace: row.fastest_pace ?? null,
+      longest_run: row.longest_run ?? null,
+      average_distance: row.average_distance ?? null,
+    });
+  });
+});
+
 // DELETE a participant from a run (leaders only)
 router.delete("/api/runs/:runId/participants/:participantId", verifyToken, (req, res) => {
   const runnerId = req.user?.runner_id;

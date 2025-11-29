@@ -3,6 +3,7 @@ import { useAuth } from "../context/AuthContext";
 import ProfileDetails from "../components/ProfileDetails";
 import ProfileStatistics from "../components/ProfileStatistics";
 import ProfileAdmin from "../components/ProfileAdmin";
+import AdminStatistics from "../components/AdminStatistics";
 import ChangePassword from "../components/ChangePassword";
 import "../styles/Profile.css";
 
@@ -41,6 +42,8 @@ function Profile() {
         );
       case "statistics":
         return <ProfileStatistics />;
+      case "adminStatistics":
+        return <AdminStatistics />;
       case "password":
         return (
           <ChangePassword
@@ -83,7 +86,22 @@ function Profile() {
           <h2>Statistics</h2>
         </div>
         {/* Only admin can see */}
-        {user.is_admin ? (
+        {user?.is_admin ? (
+          <div
+            className={
+              activeMainComponent === "adminStatistics" ||
+              hoveredItem === "adminStatistics"
+                ? "profile-sidebar-elem-active"
+                : "profile-sidebar-elem"
+            }
+            onClick={() => setActiveMainComponent("adminStatistics")}
+            onMouseEnter={() => setHoveredItem("adminStatistics")}
+            onMouseLeave={() => setHoveredItem(null)}
+          >
+            <h2>Admin Statistics</h2>
+          </div>
+        ) : null}
+        {user?.is_admin ? (
           <div
             className={
               activeMainComponent === "admin" || hoveredItem === "admin"
