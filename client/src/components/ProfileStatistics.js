@@ -1,13 +1,10 @@
 import React, { useState, useEffect } from "react";
-import { useAuth } from "../context/AuthContext";
 import { formatPace } from "../utils/paceFormatters";
 import { getStaticMapUrl } from "../utils/mapUtils";
 import { convertTo12Hour } from "../utils/timeUtils";
-import LeaderStatistics from "./LeaderStatistics";
 import "../styles/ProfileStatistics.css";
 
 function ProfileStatistics() {
-  const { isLeader } = useAuth();
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [mostRecentRunDetails, setMostRecentRunDetails] = useState();
@@ -121,9 +118,6 @@ function ProfileStatistics() {
           </div>
         </div>
       </div>
-
-      {/* Leader-Specific Statistics Section - Only for Leaders */}
-      {isLeader && <LeaderStatistics />}
 
       {/* Most Recent Run Section */}
       {mostRecentRunDetails && (

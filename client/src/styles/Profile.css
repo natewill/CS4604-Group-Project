@@ -6,20 +6,27 @@
 
 .profile-sidebar {
   width: 20%;
-  border-right: 5px solid black;
+  border-right: 2px solid var(--border-color);
   display: flex;
   flex-direction: column;
 }
 
 .profile-sidebar-elem {
-  border-bottom: 2px solid black;
+  border-bottom: 1px solid var(--border-color);
   cursor: pointer;
+  padding: 1rem;
+  transition: background-color 0.2s;
+}
+
+.profile-sidebar-elem:hover {
+  background-color: var(--bg-secondary);
 }
 
 .profile-sidebar-elem-active {
-  border-bottom: 2px solid black;
+  border-bottom: 1px solid var(--border-color);
   cursor: pointer;
-  background-color: #bbb;
+  background-color: var(--bg-secondary);
+  padding: 1rem;
   transition: background-color 0.2s;
 }
 

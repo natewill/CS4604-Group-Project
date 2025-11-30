@@ -20,7 +20,7 @@
 
 .date-header {
   font-weight: 500;
-  color: #666;
+  color: var(--text-secondary);
   margin: 2rem 0 1rem 0;
   font-size: 1rem;
 }
@@ -31,7 +31,9 @@
   grid-template-columns: 350px 1fr auto;
   gap: 1.5rem;
   padding: 1.5rem;
-  border: 1px solid #ccc;
+  border: 1px solid var(--border-color);
+  background-color: var(--bg-secondary);
+  border-radius: 8px;
   margin-bottom: 0.5rem;
 }
 
@@ -70,7 +72,7 @@
 
 .run-datetime {
   font-size: 1.1rem;
-  color: #666;
+  color: var(--text-secondary);
   margin-bottom: 0.25rem;
 }
 
@@ -82,21 +84,21 @@
 
 .run-meta {
   font-size: 1.1rem;
-  color: #666;
+  color: var(--text-secondary);
 }
 
 .run-description {
   margin-top: 1.5rem;
   padding-top: 1rem;
-  border-top: 1px solid #e0e0e0;
+  border-top: 1px solid var(--border-color);
   font-size: 1rem;
-  color: #444;
+  color: var(--text-primary);
   line-height: 1.5;
 }
 
 .countdown {
   font-size: 1.1rem;
-  color: #666;
+  color: var(--text-secondary);
   white-space: nowrap;
 }
 

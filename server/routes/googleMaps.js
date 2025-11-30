@@ -79,4 +79,78 @@ router.post("/api/validate-address", async (req, res) => {
   }
 });
 
+// Scenic photos near a city (minimal version)
+router.get("/api/scenic-photos", async (req, res) => {
+  try {
+    const { city, limit = 6 } = req.query;
+    const apiKey = process.env.GOOGLE_MAPS_API_KEY;
+    if (!apiKey) return res.status(500).json({ error: "Google Maps API key not configured" });
+    if (!city) return res.status(400).json({ error: "Missing city parameter" });
+
+    // Geocode city to lat/lng
+    const geo = await axios.get("https://maps.googleapis.com/maps/api/geocode/json", {
+      params: { address: city, key: apiKey },
+    });
+
+    const locationCoords = geo.data?.results?.[0]?.geometry?.location;
+    if (!locationCoords) return res.status(400).json({ error: "Could not geocode city" });
+    const location = `${locationCoords.lat},${locationCoords.lng}`;
+
+    // Nearby scenic-ish spots
+    const nearby = await axios.get("https://maps.googleapis.com/maps/api/place/nearbysearch/json", {
+      params: {
+        location,
+        radius: 5000,
+        keyword: "park trail scenic",
+        key: apiKey,
+      },
+    });
+
+    const exclude = ["florist", "d'rose"];
+    const picks = (nearby.data?.results || [])
+      .filter((p) => {
+        if (!p?.photos?.length) return false;
+        const text = `${p.name || ""} ${p.vicinity || ""}`.toLowerCase();
+        return !exclude.some((k) => text.includes(k));
+      })
+      .slice(0, Math.min(Number(limit) || 6, 10))
+      .map((p) => ({
+        name: p.name,
+        vicinity: p.vicinity,
+        placeId: p.place_id,
+        photoUrl: `/api/scenic-photo?ref=${encodeURIComponent(p.photos[0].photo_reference)}`,
+      }));
+
+    if (!picks.length) return res.status(404).json({ error: "No scenic photos found" });
+    res.json(picks);
+  } catch (err) {
+    console.error("/api/scenic-photos error", err.response?.data || err.message);
+    res.status(500).json({ error: "Failed to fetch scenic photos" });
+  }
+});
+
+// Proxy a single scenic photo so referrer restrictions don't block the image
+router.get("/api/scenic-photo", async (req, res) => {
+  try {
+    const { ref, maxwidth = 1200 } = req.query;
+    const apiKey = process.env.GOOGLE_MAPS_API_KEY;
+    if (!ref) {
+      return res.status(400).json({ error: "Missing ref" });
+    }
+    if (!apiKey) {
+      return res.status(500).json({ error: "Google Maps API key not configured" });
+    }
+
+    const photoUrl = `https://maps.googleapis.com/maps/api/place/photo?maxwidth=${maxwidth}&photo_reference=${ref}&key=${apiKey}`;
+    const response = await axios.get(photoUrl, { responseType: "arraybuffer" });
+
+    const contentType = response.headers["content-type"] || "image/jpeg";
+    res.set("Content-Type", contentType);
+    res.send(response.data);
+  } catch (err) {
+    console.error("/api/scenic-photo error", err.response?.data || err.message);
+    res.status(500).json({ error: "Failed to fetch scenic photo" });
+  }
+});
+
 module.exports = router;

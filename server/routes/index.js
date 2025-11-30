@@ -3,11 +3,18 @@ const router = express.Router();
 
 // Import route modules
 const googleMapsRoutes = require("./googleMaps");
-const databaseRoutes = require("./database");
+const authRoutes = require("./authRoutes");
+const profileRoutes = require("./profileRoutes");
+const routeRoutes = require("./routeRoutes");
+const runRoutes = require("./runRoutes");
+const adminRoutes = require("./adminRoutes");
 
 // Mount route modules
+router.use(authRoutes);
+router.use(profileRoutes);
+router.use(routeRoutes);
+router.use(runRoutes);
+router.use(adminRoutes);
 router.use(googleMapsRoutes);
-router.use(databaseRoutes);
 
 module.exports = router;
-

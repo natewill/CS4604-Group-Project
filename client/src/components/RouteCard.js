@@ -50,7 +50,6 @@ const RouteCard = ({ run, isSelected, onClick, user, onSaveRoute, onJoinRun }) =
       <p><strong>Date:</strong> {run.date}</p>
       <p><strong>Time:</strong> {run.start_time}</p>
       <p><strong>Pace:</strong> {formatPace(run.pace)}</p>
-      <p><strong>Status:</strong> {run.status}</p>
       {run.leader_name && <p><strong>Leader:</strong> {run.leader_name.trim()}</p>}
       {run.distanceFromUser && <p><strong>Distance:</strong> {(run.distanceFromUser / 1609.344).toFixed(2)} miles away</p>}
       {run.distance != null && <p><strong>Route Distance:</strong> {Number(run.distance).toFixed(2)} miles</p>}
