@@ -19,12 +19,15 @@
 .route-card {
   padding: 1rem;
   cursor: pointer;
-  border: 1px solid #ccc;
+  border: 1px solid var(--border-color);
+  background-color: var(--bg-secondary);
+  border-radius: 8px;
+  margin-bottom: 0.5rem;
 }
 
 .route-card.selected {
-  border: 3px solid #2563eb;
-  background-color: #eff6ff;
+  border: 2px solid var(--accent);
+  background-color: rgba(134, 31, 65, 0.2);
 }
 
 .route-card-header {
