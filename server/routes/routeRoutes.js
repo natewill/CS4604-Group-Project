@@ -175,4 +175,33 @@ router.post("/api/routes/save/:routeId", verifyToken, (req, res) => {
   });
 });
 
+// DELETE: remove a saved route for the authenticated user
+router.delete("/api/routes/:routeId", verifyToken, (req, res) => {
+  const runnerId = req.user?.runner_id;
+  const { routeId } = req.params;
+
+  if (!runnerId) {
+    return res.status(401).json({ error: "Unauthorized: must be logged in" });
+  }
+
+  if (!routeId) {
+    return res.status(400).json({ error: "Route ID is required" });
+  }
+
+  // Delete the saved route entry
+  const deleteSql = `
+      DELETE FROM saved_routes
+      WHERE runner_id = ? AND route_id = ?
+    `;
+
+  db.query(deleteSql, [runnerId, routeId], (deleteErr) => {
+    if (deleteErr) {
+      console.error("Failed to delete saved route:", deleteErr);
+      return res.status(500).json({ error: "Failed to delete saved route" });
+    }
+
+    res.status(200).json({ message: "Saved route deleted successfully" });
+  });
+});
+
 module.exports = router;

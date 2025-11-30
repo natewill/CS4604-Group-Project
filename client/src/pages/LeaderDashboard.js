@@ -4,6 +4,7 @@ import "../styles/MyRuns.css";
 import "../styles/LeaderDashboard.css";
 import { useAuth } from "../context/AuthContext";
 import RunItem from "../components/RunItem";
+import SavedRouteItem from "../components/SavedRouteItem";
 import ParticipantModal from "../components/ParticipantModal";
 import LeaderStatistics from "../components/LeaderStatistics";
 import { getDateLabel, groupRunsByDate } from "../utils/dateUtils";
@@ -13,6 +14,7 @@ import {
   deleteRun,
   removeParticipant,
 } from "../services/runService";
+import { fetchSavedRoutes, deleteSavedRoute } from "../services/routeService";
 
 function LeaderDashboard() {
   const { user, isLeader, loading: authLoading } = useAuth();
@@ -23,6 +25,11 @@ function LeaderDashboard() {
   const [runs, setRuns] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  // Routes state
+  const [savedRoutes, setSavedRoutes] = useState([]);
+  const [routesLoading, setRoutesLoading] = useState(false);
+  const [routesError, setRoutesError] = useState(null);
 
   // Modal state
   const [modalOpen, setModalOpen] = useState(false);
@@ -61,6 +68,28 @@ function LeaderDashboard() {
       loadRuns();
     }
   }, [activeTab, view]);
+
+  const loadRoutes = async () => {
+    setRoutesLoading(true);
+    setRoutesError(null);
+
+    try {
+      const data = await fetchSavedRoutes();
+      setSavedRoutes(data);
+    } catch (err) {
+      console.error("Error fetching saved routes:", err);
+      setRoutesError(err.message);
+    } finally {
+      setRoutesLoading(false);
+    }
+  };
+
+  // Fetch saved routes
+  useEffect(() => {
+    if (activeTab === "routes") {
+      loadRoutes();
+    }
+  }, [activeTab]);
 
   // Group runs by date
   const groupedRuns = groupRunsByDate(runs);
@@ -140,6 +169,20 @@ function LeaderDashboard() {
     } catch (err) {
       console.error("Error removing participant:", err);
       alert(err.message || "Failed to remove participant. Please try again.");
+    }
+  };
+
+  // Handle delete saved route
+  const handleDeleteSavedRoute = async (routeId) => {
+    try {
+      await deleteSavedRoute(routeId);
+      // Remove the route from the list
+      setSavedRoutes((prevRoutes) =>
+        prevRoutes.filter((route) => route.route_id !== routeId)
+      );
+    } catch (err) {
+      console.error("Error deleting saved route:", err);
+      alert(err.message || "Failed to delete saved route. Please try again.");
     }
   };
 
@@ -254,12 +297,37 @@ function LeaderDashboard() {
 
       {/* Routes Tab Content */}
       {activeTab === "routes" && (
-        <div className="leader-dashboard-routes-empty">
-          <p className="empty-state">No saved routes yet</p>
-          <p className="leader-dashboard-routes-empty-subtitle">
-            Create your first route to get started!
-          </p>
-        </div>
+        <>
+          {/* Loading State */}
+          {routesLoading && <p className="empty-state">Loading...</p>}
+
+          {/* Error State */}
+          {routesError && (
+            <p className="empty-state" style={{ color: "red" }}>
+              Error: {routesError}
+            </p>
+          )}
+
+          {/* Routes List */}
+          {!routesLoading && !routesError && savedRoutes.length === 0 ? (
+            <div className="leader-dashboard-routes-empty">
+              <p className="empty-state">No saved routes yet</p>
+              <p className="leader-dashboard-routes-empty-subtitle">
+                Create your first route to get started!
+              </p>
+            </div>
+          ) : !routesLoading && !routesError ? (
+            <div>
+              {savedRoutes.map((route) => (
+                <SavedRouteItem
+                  key={route.route_id}
+                  route={route}
+                  onDelete={handleDeleteSavedRoute}
+                />
+              ))}
+            </div>
+          ) : null}
+        </>
       )}
 
       {/* Participant Modal */}
