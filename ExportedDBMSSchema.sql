@@ -1,6 +1,6 @@
 -- MySQL dump 10.13  Distrib 9.2.0, for Win64 (x86_64)
 --
--- Host: localhost    Database: cache_me_if_you_can_db
+-- Host: localhost    Database: cache_me_if_you_can_db (schema for Cache Me If You Can application)
 -- ------------------------------------------------------
 -- Server version	9.2.0
 
@@ -18,6 +18,8 @@
 --
 -- Table structure for table `routes`
 --
+-- the 'routes' table stores information about running routes including start 
+-- and end coordinates, addresses, polyline data, and distance
 
 DROP TABLE IF EXISTS `routes`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
@@ -49,6 +51,7 @@ UNLOCK TABLES;
 --
 -- Table structure for table `run_participation`
 --
+-- The 'run_participation' table links runners to the runs they are participating in
 
 DROP TABLE IF EXISTS `run_participation`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
@@ -76,6 +79,8 @@ UNLOCK TABLES;
 --
 -- Table structure for table `runners`
 --
+-- The 'runners' table stores information about runners including their
+-- authenticatinon details and running preferences
 
 DROP TABLE IF EXISTS `runners`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
@@ -110,6 +115,8 @@ UNLOCK TABLES;
 --
 -- Table structure for table `runs`
 --
+-- The 'runs' table stores information about scheduled runs including
+-- the leader, route, pace, date, and time
 
 DROP TABLE IF EXISTS `runs`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
@@ -144,6 +151,8 @@ UNLOCK TABLES;
 --
 -- Table structure for table `saved_routes`
 --
+-- The 'saved_routes' table links runners to their saved routes
+-- It acts as a many-to-many relationship between runners and routes
 
 DROP TABLE IF EXISTS `saved_routes`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
