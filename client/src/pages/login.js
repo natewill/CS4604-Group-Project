@@ -30,25 +30,35 @@ export default function Signin() {
   }
 
   return (
-    <div>
-      <h1>Login</h1>
-      <form onSubmit={handleLogin} style={{ display: "grid", gap: 8 }}>
-        <input
-          placeholder="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
-        <input
-          placeholder="password"
-          type="password"
-          value={password}
-          onChange={(event) => setPassword(event.target.value)}
-        />
-        <button type="submit">Login</button>
-      </form>
-      {err && <div style={{ color: "crimson" }}>{err}</div>}
-      <div style={{ marginTop: "1rem", textAlign: "center" }}>
-        If you don't have an account, <Link to="/signup">Sign up</Link>
+    <div
+      style={{
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        minHeight: "100vh",
+        padding: "1rem",
+      }}
+    >
+      <div style={{ display: "grid", gap: 12, maxWidth: 360, width: "100%" }}>
+        <h1 style={{ textAlign: "center" }}>Login</h1>
+        <form onSubmit={handleLogin} style={{ display: "grid", gap: 8 }}>
+          <input
+            placeholder="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
+          <input
+            placeholder="password"
+            type="password"
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+          />
+          <button type="submit">Login</button>
+        </form>
+        {err && <div style={{ color: "crimson" }}>{err}</div>}
+        <div style={{ marginTop: "1rem", textAlign: "center" }}>
+          If you don't have an account, <Link to="/signup">Sign up</Link>
+        </div>
       </div>
     </div>
   );
